@@ -10,7 +10,7 @@ from botocore.exceptions import ClientError
 def password_reset_email(user_email, password_reset_link):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
-    SENDER = "no-reply@angelfund.ai"
+    SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Password reset link for your ANGELFUND account"

@@ -9,13 +9,14 @@ def user_load(user_id):
 
 
 class Users(db.Document, UserMixin):
-    username = db.StringField(required=True, unique=True)
-    email = db.EmailField(required=True, unique=True)
     password = db.StringField(required=True)
-    first_name = db.StringField(max_length=50)
+    password_reset_meta_data = db.DictField()
     last_name = db.StringField(max_length=50)
-    created = db.DateTimeField(default=datetime.datetime.utcnow())
+    first_name = db.StringField(max_length=50)
     email_confirmed = db.BooleanField(default=False)
+    email = db.EmailField(required=True, unique=True)
+    username = db.StringField(required=True, unique=True)
+    created = db.DateTimeField(default=datetime.datetime.utcnow())
 
     meta = {
         'indexes': ['username', 'email', '-created']
