@@ -1,8 +1,9 @@
-import datetime
+import threading
 from project import serial
 from common_utilities import CONSTANT
 from project.users.models import Users
 from flask import url_for, request, Blueprint, jsonify
+from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,7 +34,8 @@ def login():
             message = "please confirm your email address"
             token = serial.dumps(email, salt='email_confirm')
             link = url_for('users.email_confirmed', token=token, _external=True)
-            email_confirmation(email, link)                                      # asyncio call
+            thread = threading.Thread(target=email_confirmation, args=(email, link,))
+            thread.start()
             return return_data_results(False, message)
 
         if user and check_password_hash(user.password, password):
@@ -71,7 +73,8 @@ def username_login():
             message = "please confirm your email address"
             token = serial.dumps(email, salt='email_confirm')
             link = url_for('users.email_confirmed', token=token, _external=True)
-            email_confirmation(email, link)                                      # asyncio call
+            thread = threading.Thread(target=email_confirmation, args=(email, link,))
+            thread.start()
             return return_data_results(False, message)
 
         if user and check_password_hash(user.password, password):
@@ -130,7 +133,8 @@ def forgot_password():
         link = url_for('users.reset_link', token=token, _external=True)
         user.password_reset_meta_data = {"is_clicked": False}
         user.save()
-        password_reset_email(email, link)                                    # asyncio call
+        thread = threading.Thread(target=password_reset_email, args=(email, link,))
+        thread.start()
         message = "frontend password reset link sent template"
         return return_data_results(True, message)
 
@@ -155,6 +159,7 @@ def register():
         password = request.form.get('password', None)
         last_name = request.form.get('last_name', None)
         first_name = request.form.get('first_name', None)
+        profile_photo = request.files.get('profile_pic', None)
 
         if email is None:
             return return_none_results("email")
@@ -177,16 +182,31 @@ def register():
             message = "username exists"
             return return_data_results(False, message)
 
-        # noinspection PyArgumentList
-        new_user = Users(email=email,
-                         username=username,
-                         last_name=last_name,
-                         first_name=first_name,
-                         password=generate_password_hash(password))
-        new_user.save()
+        if profile_photo:
+            profile_photo_name = profile_photo.filename.strip().replace(' ', '')
+            public_profile_pic_link = file_upload_to_s3(profile_photo, profile_photo_name)
+            # noinspection PyArgumentList
+            new_user = Users(email=email,
+                             username=username,
+                             last_name=last_name,
+                             first_name=first_name,
+                             profile_pic_link=public_profile_pic_link,
+                             password=generate_password_hash(password))
+            new_user.save()
+        else:
+            # noinspection PyArgumentList
+            new_user = Users(email=email,
+                             username=username,
+                             last_name=last_name,
+                             first_name=first_name,
+                             password=generate_password_hash(password))
+            new_user.save()
+
+
         token = serial.dumps(email, salt='email_confirm')
         link = url_for('users.email_confirmed', token=token, _external=True)
-        email_confirmation(email, link)                                         # asyncio call
+        thread = threading.Thread(target=email_confirmation, args=(email, link,))
+        thread.start()
         message = "frontend email confirmation template"
         return return_data_results(True, message)
     
@@ -225,6 +245,7 @@ def return_none_results(name, status_code=200):
         "message": f"{name} cannot be empty"
     }
     return jsonify(return_obj)
+
 
 def return_data_results(result, message, status_code=200):
     return_obj = {

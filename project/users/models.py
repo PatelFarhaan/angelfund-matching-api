@@ -11,9 +11,10 @@ def user_load(user_id):
 class Users(db.Document, UserMixin):
     password = db.StringField(required=True)
     password_reset_meta_data = db.DictField()
-    last_name = db.StringField(max_length=50)
-    first_name = db.StringField(max_length=50)
+    last_name = db.StringField(max_length=70)
+    first_name = db.StringField(max_length=70)
     email_confirmed = db.BooleanField(default=False)
+    profile_pic_link = db.StringField(max_length=256)
     email = db.EmailField(required=True, unique=True)
     username = db.StringField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())

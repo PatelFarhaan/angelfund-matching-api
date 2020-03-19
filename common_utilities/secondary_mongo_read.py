@@ -25,5 +25,5 @@ key = "company_name"
 value = "google.com"
 collection = "companies"
 query_obj = {key: value}
-resp = search_multiple_obj_in_database(database, collection, query_obj)
+resp = search_single_obj_in_database(database, collection, query_obj)
 print(resp)
