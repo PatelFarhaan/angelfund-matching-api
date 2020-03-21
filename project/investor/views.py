@@ -3,7 +3,7 @@ from project import serial
 from project.models import Investor
 from common_utilities import CONSTANT
 from flask import url_for, request, Blueprint, jsonify
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
@@ -182,6 +182,28 @@ def email_confirmed(token):
         return return_data_results(True, message)
     else:
         message = "user does not exist"
+        return return_data_results(False, message)
+
+
+@investor_blueprint.route('/update_investor_info', methods=['PATCH'])
+@login_required
+def update_user_info():
+    if current_user.is_authenticated:
+        input_data = request.get_json()
+        input_data_fields = [*input_data]
+        available_fields = ["sectors", "deals", "bio", "location",
+                            "accreditation", "syndicate", "angel", "investor"]
+        # for field in available_fields:
+        #     if field in input_data_fields:
+        #         setattr(current_user, field, input_data[field])
+        for field in input_data_fields:
+            if field in available_fields:
+                setattr(current_user, field, input_data[field])
+            else:
+                message = "invalid user field"
+                return return_data_results(False, message)
+    else:
+        message = "user is not authenticated"
         return return_data_results(False, message)
 
 

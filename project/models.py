@@ -22,6 +22,15 @@ class Investor(db.Document, UserMixin):
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
+    sectors = db.StringField()
+    deals = db.StringField()
+    bio = db.StringField()
+    location = db.StringField()
+    accreditation = db.StringField()
+    syndicate = db.StringField()
+    angel = db.BooleanField()
+    investor = db.BooleanField()
+
     meta = dict(indexes=['email', '-created'])
 
     def get_id(self):
