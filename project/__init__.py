@@ -4,6 +4,7 @@ from common_utilities import CONSTANT
 from flask_mongoengine import MongoEngine
 from itsdangerous import URLSafeTimedSerializer
 
+
 ############# DETAILS ###################
 app = Flask(__name__)
 app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
@@ -14,12 +15,18 @@ db = MongoEngine(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'users.login'
+login_manager.blueprint_login_views = {
+    "startup": "startup.login",
+    "investor": "investor.login"
+}
 
 ##############  BLUEPRINT #################
 
-from project.users.views import users_blueprint
+from project.startup.views import startup_blueprint
+from project.investor.views import investor_blueprint
 from project.error.error_handler import errorpage_blueprint
 
-app.register_blueprint(users_blueprint)
+app.register_blueprint(startup_blueprint)
+app.register_blueprint(investor_blueprint)
 app.register_blueprint(errorpage_blueprint)
+

@@ -1,0 +1,50 @@
+import datetime
+from flask_login import UserMixin
+from project import db, login_manager
+
+
+@login_manager.user_loader
+def user_load(user_obj):
+    user_id = user_obj["user_id"]
+    if user_obj["role"] == "investor":
+        return Investor.objects.get(pk=user_id)
+    elif user_obj["role"] == "startup":
+        return Startup.objects.get(pk=user_id)
+
+
+class Investor(db.Document, UserMixin):
+    password = db.StringField(required=True)
+    password_reset_meta_data = db.DictField()
+    last_name = db.StringField(max_length=70)
+    first_name = db.StringField(max_length=70)
+    email_confirmed = db.BooleanField(default=False)
+    profile_pic_link = db.StringField(max_length=256)
+    email = db.EmailField(required=True, unique=True)
+    created = db.DateTimeField(default=datetime.datetime.utcnow())
+
+    meta = dict(indexes=['email', '-created'])
+
+    def get_id(self):
+        return {
+            "user_id": str(self.id),
+            "role": "investor"
+        }
+
+
+class Startup(db.Document, UserMixin):
+    password = db.StringField(required=True)
+    password_reset_meta_data = db.DictField()
+    last_name = db.StringField(max_length=70)
+    first_name = db.StringField(max_length=70)
+    email_confirmed = db.BooleanField(default=False)
+    profile_pic_link = db.StringField(max_length=256)
+    email = db.EmailField(required=True, unique=True)
+    created = db.DateTimeField(default=datetime.datetime.utcnow())
+
+    meta = dict(indexes=['email', '-created'])
+
+    def get_id(self):
+        return {
+            "user_id": str(self.id),
+            "role": "startup"
+        }

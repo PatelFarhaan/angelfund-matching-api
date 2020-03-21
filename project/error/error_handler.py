@@ -23,6 +23,16 @@ def error_404(e):
     return jsonify(return_obj)
 
 
+@errorpage_blueprint.app_errorhandler(405)
+def error_405(e):
+    return_obj = {
+        "result": False,
+        "status_code": 405,
+        "message": "method not allowed",
+    }
+    return jsonify(return_obj)
+
+
 @errorpage_blueprint.app_errorhandler(500)
 def error_500(e):
     return_obj = {
