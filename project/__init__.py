@@ -12,7 +12,6 @@ serial = URLSafeTimedSerializer(CONSTANT.SECRET_KEY.value)
 app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
 db = MongoEngine(app)
 
-
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.blueprint_login_views = {

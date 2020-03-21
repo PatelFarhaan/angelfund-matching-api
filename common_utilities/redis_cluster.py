@@ -1,7 +1,6 @@
+import sys
 import json
 import requests
-
-import sys
 sys.path.append('../')
 from common_utilities import CONSTANT
 

@@ -1,10 +1,12 @@
-import boto3
-
 import sys
+import boto3
+import logging
 sys.path.append('../')
 from common_utilities import CONSTANT
-
 from botocore.exceptions import ClientError
+
+
+logger = logging.getLogger(__name__)
 
 
 def email_confirmation(user_email, email_confirm_link):
@@ -63,7 +65,6 @@ def email_confirmation(user_email, email_confirm_link):
             Source=SENDER,
         )
     except ClientError as e:
-        print(e.response['Error']['Message'])
+        logger.error(f"common utilities: email confirmation: failed {user_email}")
     else:
-        print("Email sent! Message ID:"),
-        print(response['MessageId'])
+        logger.debug(f"common utilities: email confirmation: success {user_email}")

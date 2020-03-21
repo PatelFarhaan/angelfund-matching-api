@@ -1,7 +1,6 @@
-from pymongo import MongoClient
-
 import sys
 sys.path.append('../')
+from pymongo import MongoClient
 from common_utilities import CONSTANT
 
 
