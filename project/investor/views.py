@@ -185,9 +185,9 @@ def email_confirmed(token):
         return return_data_results(False, message)
 
 
-@investor_blueprint.route('/update_investor_info', methods=['PATCH'])
+@investor_blueprint.route('/update-info', methods=['PATCH'])
 @login_required
-def update_user_info():
+def update_info():
     if current_user.is_authenticated:
         input_data = request.get_json()
         input_data_fields = [*input_data]

@@ -29,7 +29,6 @@ class Investor(db.Document, UserMixin):
     accreditation = db.StringField()
     syndicate = db.StringField()
     angel = db.BooleanField()
-    investor = db.BooleanField()
 
     meta = dict(indexes=['email', '-created'])
 
