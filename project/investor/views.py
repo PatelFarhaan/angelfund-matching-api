@@ -6,6 +6,7 @@ from common_utilities import CONSTANT
 from flask import url_for, request, Blueprint, jsonify
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
+from project.investor.marshmallow_serialize import InvestorSchema
 from common_utilities.email_confirmation import email_confirmation
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
@@ -43,10 +44,13 @@ def login():
 
             if user and check_password_hash(user.password, password):
                 login_user(user)
-                # generate jwt token
                 logger.debug(f"investor logged in: {email}")
-                message = "user logged in successfully"
-                return return_data_results(True, message)
+
+                ma_schema = InvestorSchema()
+                return ma_schema.dump(user)
+                # generate jwt token
+                # message = "user logged in successfully"
+                # return return_data_results(True, message)
             else:
                 logger.debug(f"investor wrong credentials: {email}")
                 message = "wrong credentails"

@@ -2,8 +2,8 @@ from flask import Flask
 from flask_login import LoginManager
 from common_utilities import CONSTANT
 from flask_mongoengine import MongoEngine
+from flask_marshmallow import Marshmallow
 from itsdangerous import URLSafeTimedSerializer
-
 
 ############# DETAILS ###################
 app = Flask(__name__)
@@ -11,6 +11,7 @@ app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
 serial = URLSafeTimedSerializer(CONSTANT.SECRET_KEY.value)
 app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
 db = MongoEngine(app)
+ma = Marshmallow(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
