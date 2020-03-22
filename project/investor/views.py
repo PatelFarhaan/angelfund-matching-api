@@ -1,13 +1,16 @@
+import json
 import logging
+import requests
 import threading
-from project import serial
 from project.models import Investor
 from common_utilities import CONSTANT
-from flask import url_for, request, Blueprint, jsonify
+from project import serial, google_client
+from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
-from project.investor.marshmallow_serialize import InvestorSchema
 from common_utilities.email_confirmation import email_confirmation
+from common_utilities.google_email import google_email_confirmation
+from project.investor.marshmallow_serialize import InvestorUserSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_user, logout_user, login_required, current_user
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema,
@@ -17,6 +20,83 @@ from common_utilities.json_schema_investor_validation import (validate_inv_first
 
 logger = logging.getLogger(__name__)
 investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
+
+
+##############################################################################################################################
+@investor_blueprint.route("/google-login")
+def google_login():
+    google_provider_cfg = requests.get(CONSTANT.GOOGLE_DISCOVERY_URL.value).json()
+    print(google_provider_cfg)
+    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
+    request_uri = google_client.prepare_request_uri(
+        authorization_endpoint,
+        redirect_uri="https://127.0.0.1:5000/investor/login/callback",
+        scope=["openid", "email", "profile"],
+    )
+    return redirect(request_uri)
+
+@investor_blueprint.route("/login/callback")
+def callback():
+    code = request.args.get("code")
+    google_provider_cfg = requests.get(CONSTANT.GOOGLE_DISCOVERY_URL.value).json()
+    token_endpoint = google_provider_cfg["token_endpoint"]
+
+    token_url, headers, body = google_client.prepare_token_request(
+        token_endpoint,
+        code=code,
+        redirect_url=request.base_url,
+        authorization_response=request.url)
+
+    token_response = requests.post(
+        token_url,
+        data=body,
+        headers=headers,
+        auth=(CONSTANT.GOOGLE_CLIENT_ID.value, CONSTANT.GOOGLE_CLIENT_SECRET.value))
+
+    google_client.parse_request_body_response(json.dumps(token_response.json()))
+    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
+    uri, headers, body = google_client.add_token(userinfo_endpoint)
+    userinfo_response = requests.get(uri, headers=headers, data=body)
+
+    if userinfo_response.json().get("email_verified"):
+        email = userinfo_response.json().get("email", None)
+
+        user = Investor.objects.filter(email=email).first()
+        if user:
+            login_user(user)
+            logger.debug(f"investor logged in: {email}")
+
+            ma_schema = InvestorUserSchema()
+            return ma_schema.dump(user)
+        else:
+            picture = userinfo_response.json().get("picture", None)
+            first_name = userinfo_response.json().get("given_name", None)
+            last_name = userinfo_response.json().get("family_name", None)
+
+            # noinspection PyArgumentList
+            new_user = Investor(email=email,
+                                last_name=last_name,
+                                email_confirmed=True,
+                                first_name=first_name,
+                                is_google_signup=True,
+                                profile_pic_link=picture)
+            new_user.save()
+            logger.debug(f"investor created {email} via Google OAuth")
+
+            thread = threading.Thread(target=google_email_confirmation, args=(email,))
+            thread.start()
+
+            user = Investor.objects.filter(email=email).first()
+            login_user(user)
+            logger.debug(f"investor logged in: {email}")
+
+            ma_schema = InvestorUserSchema()
+            return ma_schema.dump(user)
+    else:
+        message = "User email not available or not verified by Google."
+        logger.debug(f"{message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
+        return return_data_results(False, message, 400)
+##############################################################################################################################
 
 
 @investor_blueprint.route('/login', methods=['GET', 'POST'])
@@ -34,6 +114,14 @@ def login():
                 logger.debug(f"investor does not exixt: {email}")
                 return return_data_results(False, message)
 
+            if user.email_confirmed:
+                return_obj = {
+                    "status_code": 200,
+                    "message": "registered with google account",
+                    "redirect_url": "https://127.0.0.1:5000/investor/login/callback"
+                }
+                return jsonify(return_obj)
+
             if not user.email_confirmed:
                 message = "please confirm your email address"
                 token = serial.dumps(email, salt='email_confirm')
@@ -46,11 +134,9 @@ def login():
                 login_user(user)
                 logger.debug(f"investor logged in: {email}")
 
-                ma_schema = InvestorSchema()
+                ma_schema = InvestorUserSchema()
                 return ma_schema.dump(user)
                 # generate jwt token
-                # message = "user logged in successfully"
-                # return return_data_results(True, message)
             else:
                 logger.debug(f"investor wrong credentials: {email}")
                 message = "wrong credentails"

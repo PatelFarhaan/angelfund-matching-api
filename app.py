@@ -21,4 +21,4 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(__name__)
     logger.info(f"flask reserver started at {datetime.datetime.utcnow()}")
-    app.run(debug=True, use_reloader=True)
+    app.run(debug=True, use_reloader=True, ssl_context="adhoc")

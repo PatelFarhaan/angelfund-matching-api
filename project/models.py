@@ -13,16 +13,17 @@ def user_load(user_obj):
 
 
 class Investor(db.Document, UserMixin):
-    password = db.StringField(required=True)
+    password = db.StringField()
+    profile_pic_link = db.StringField()
     password_reset_meta_data = db.DictField()
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
     email_confirmed = db.BooleanField(default=False)
-    profile_pic_link = db.StringField(max_length=256)
+    is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
-    meta = dict(indexes=['email', '-created'])
+    meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
         return {
@@ -32,12 +33,13 @@ class Investor(db.Document, UserMixin):
 
 
 class Startup(db.Document, UserMixin):
-    password = db.StringField(required=True)
+    password = db.StringField()
+    profile_pic_link = db.StringField()
     password_reset_meta_data = db.DictField()
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
     email_confirmed = db.BooleanField(default=False)
-    profile_pic_link = db.StringField(max_length=256)
+    is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
