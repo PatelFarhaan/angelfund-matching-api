@@ -12,12 +12,12 @@ if __name__ == "__main__":
                         filename=CONSTANT.LOG_FILE.value)
 
     # only enable flask app (system log calls) which have a level CRITICAL and above.
-    logging.getLogger("sys").setLevel(logging.CRITICAL)
-    logging.getLogger("boto3").setLevel(logging.CRITICAL)
-    logging.getLogger("urllib3").setLevel(logging.CRITICAL)
-    logging.getLogger("werkzeug").setLevel(logging.CRITICAL)
-    logging.getLogger("botocore").setLevel(logging.CRITICAL)
-    logging.getLogger("requests").setLevel(logging.CRITICAL)
+    # logging.getLogger("sys").setLevel(logging.CRITICAL)
+    # logging.getLogger("boto3").setLevel(logging.CRITICAL)
+    # logging.getLogger("urllib3").setLevel(logging.CRITICAL)
+    # logging.getLogger("werkzeug").setLevel(logging.CRITICAL)
+    # logging.getLogger("botocore").setLevel(logging.CRITICAL)
+    # logging.getLogger("requests").setLevel(logging.CRITICAL)
 
     logger = logging.getLogger(__name__)
     logger.info(f"flask reserver started at {datetime.datetime.utcnow()}")

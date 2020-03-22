@@ -3,21 +3,4 @@ from project import ma
 
 class InvestorUserSchema(ma.Schema):
     class Meta:
-        fields = ("first_name", "last_name", "email")
-
-
-
-
-
-'''
-// For serialization purpose, the frontend will need the following fields:
-    last_name = db.StringField(max_length=70)
-    first_name = db.StringField(max_length=70)
-    sectors = db.StringField()
-    deals = db.StringField()
-    bio = db.StringField()
-    location = db.StringField()
-    accreditation = db.StringField()
-    syndicate = db.StringField()
-    angel = db.BooleanField()
-'''
+        fields = ("first_name", "last_name", "sectors", "deals", "bio", "location", "accreditation", "syndicate", "angel")

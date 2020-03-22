@@ -26,7 +26,6 @@ investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
 @investor_blueprint.route("/google-login")
 def google_login():
     google_provider_cfg = requests.get(CONSTANT.GOOGLE_DISCOVERY_URL.value).json()
-    print(google_provider_cfg)
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
     request_uri = google_client.prepare_request_uri(
         authorization_endpoint,
@@ -114,7 +113,7 @@ def login():
                 logger.debug(f"investor does not exixt: {email}")
                 return return_data_results(False, message)
 
-            if user.email_confirmed:
+            if user.is_google_signup:
                 return_obj = {
                     "status_code": 200,
                     "message": "registered with google account",
@@ -232,9 +231,7 @@ def register():
         response = validate_inv_first_page_schema(input_request)
         if response["result"]:
             email = response["data"]["email"]
-            password = response["data"]["password"]
-            last_name = response["data"]["last_name"]
-            first_name = response["data"]["first_name"]
+
             email_exist = Investor.objects.filter(email=email).first()
 
             if email_exist:
@@ -245,20 +242,16 @@ def register():
             if profile_photo:
                 profile_photo_name = profile_photo.filename.strip().replace(' ', '')
                 public_profile_pic_link = file_upload_to_s3(profile_photo, profile_photo_name)
-                # noinspection PyArgumentList
-                new_user = Investor(email=email,
-                                    last_name=last_name,
-                                    first_name=first_name,
-                                    profile_pic_link=public_profile_pic_link,
-                                    password=generate_password_hash(password))
+
+                input_request["profile_pic_link"] = public_profile_pic_link
+                input_request["password"] = generate_password_hash(input_request["password"])
+
+                new_user = Investor(**input_request)
                 new_user.save()
                 logger.debug(f"investor created {email}")
             else:
-                # noinspection PyArgumentList
-                new_user = Investor(email=email,
-                                    last_name=last_name,
-                                    first_name=first_name,
-                                    password=generate_password_hash(password))
+                input_request["password"] = generate_password_hash(input_request["password"])
+                new_user = Investor(**input_request)
                 new_user.save()
                 logger.debug(f"investor created {email}")
 

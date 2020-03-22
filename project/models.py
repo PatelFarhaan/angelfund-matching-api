@@ -13,7 +13,14 @@ def user_load(user_obj):
 
 
 class Investor(db.Document, UserMixin):
+    bio = db.StringField()
+    deals = db.StringField()
+    sectors = db.ListField()
+    angel = db.BooleanField()
+    location = db.StringField()
+    syndicate = db.StringField()
     password = db.StringField()
+    accreditation = db.StringField()
     profile_pic_link = db.StringField()
     password_reset_meta_data = db.DictField()
     last_name = db.StringField(max_length=70)
@@ -22,6 +29,7 @@ class Investor(db.Document, UserMixin):
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
+
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
