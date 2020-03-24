@@ -1,16 +1,21 @@
+import logging
 import threading
 from project import serial
 from project.models import Investor
 from common_utilities import CONSTANT
 from flask import url_for, request, Blueprint, jsonify
-from flask_login import login_user, logout_user, login_required, current_user
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
+from project.investor.marshmallow_serialize import InvestorSchema
 from common_utilities.email_confirmation import email_confirmation
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import login_user, logout_user, login_required, current_user
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema,
-validate_inv_login_schema, validate_inv_password_reset_schema, validate_email_schema)
+                                                              validate_inv_login_schema, validate_email_schema,
+                                                              validate_inv_password_reset_schema)
 
+
+logger = logging.getLogger(__name__)
 investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
 
 
@@ -26,6 +31,7 @@ def login():
             user = Investor.objects.filter(email=email).first()
             if user is None:
                 message = "user does not exist"
+                logger.debug(f"investor does not exixt: {email}")
                 return return_data_results(False, message)
 
             if not user.email_confirmed:
@@ -38,10 +44,15 @@ def login():
 
             if user and check_password_hash(user.password, password):
                 login_user(user)
+                logger.debug(f"investor logged in: {email}")
+
+                ma_schema = InvestorSchema()
+                return ma_schema.dump(user)
                 # generate jwt token
-                message = "user logged in successfully"
-                return return_data_results(True, message)
+                # message = "user logged in successfully"
+                # return return_data_results(True, message)
             else:
+                logger.debug(f"investor wrong credentials: {email}")
                 message = "wrong credentails"
                 return return_data_results(False, message)
         else:
@@ -67,9 +78,11 @@ def reset_link(token):  # Both click and time based
                         user.password = generate_password_hash(password)
                         user.password_reset_meta_data = {}
                         user.save()
+                        logger.debug(f"investor password changed: {email}")
                         message = "password changed successfully"
                         return return_data_results(True, message)
                     else:
+                        logger.debug(f"investor password reset link expired: {email}")
                         message = "password reset link expired"
                         return return_data_results(False, message)
                 else:
@@ -93,6 +106,7 @@ def forgot_password():
             user = Investor.objects.filter(email=email).first()
 
             if user is None:
+                logger.debug(f"investor does not exist: {email}")
                 message = "user does not exist"
                 return return_data_results(False, message)
 
@@ -102,6 +116,7 @@ def forgot_password():
             user.save()
             thread = threading.Thread(target=password_reset_email, args=(email, link,))
             thread.start()
+            logger.debug(f"investor password reset link sent: {email}")
             message = "frontend password reset link sent template"
             return return_data_results(True, message)
         else:
@@ -115,7 +130,9 @@ def forgot_password():
 @investor_blueprint.route('/logout', methods=['GET'])
 @login_required
 def logout():
+    email = current_user.email
     logout_user()
+    logger.debug(f"investor logged out: {email}")
     message = "user logged out successfully"
     return return_data_results(True, message)
 
@@ -135,6 +152,7 @@ def register():
             email_exist = Investor.objects.filter(email=email).first()
 
             if email_exist:
+                logger.debug(f"investor exists: {email}")
                 message = "email exists"
                 return return_data_results(False, message)
 
@@ -148,6 +166,7 @@ def register():
                                     profile_pic_link=public_profile_pic_link,
                                     password=generate_password_hash(password))
                 new_user.save()
+                logger.debug(f"investor created {email}")
             else:
                 # noinspection PyArgumentList
                 new_user = Investor(email=email,
@@ -155,6 +174,7 @@ def register():
                                     first_name=first_name,
                                     password=generate_password_hash(password))
                 new_user.save()
+                logger.debug(f"investor created {email}")
 
             token = serial.dumps(email, salt='email_confirm')
             link = url_for('investor.email_confirmed', token=token, _external=True)
@@ -174,13 +194,14 @@ def register():
 def email_confirmed(token):
     email = serial.loads(token, salt='email_confirm')
     user = Investor.objects.filter(email=email).first()
-    print("user", user)
     if user:
         user.email_confirmed = True
         user.save()
+        logger.debug(f"investor email confirmed {email}")
         message = "frontend email confirmed template"
         return return_data_results(True, message)
     else:
+        logger.debug(f"investor does not exist {email}")
         message = "user does not exist"
         return return_data_results(False, message)
 

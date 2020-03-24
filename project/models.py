@@ -56,3 +56,9 @@ class Startup(db.Document, UserMixin):
             "user_id": str(self.id),
             "role": "startup"
         }
+
+
+class SignUpMappings(db.Document):
+    deals_data = db.DictField()
+    sector_data = db.DictField()
+    accreditation_data = db.DictField()
