@@ -2,6 +2,7 @@ import json
 import logging
 import requests
 import threading
+from flask_login import login_user
 from project.models import Investor
 from common_utilities import CONSTANT
 from project import serial, google_client
@@ -12,7 +13,7 @@ from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
 from project.investor.marshmallow_serialize import InvestorUserSchema
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema,
                                                               validate_inv_login_schema, validate_email_schema,
                                                               validate_inv_password_reset_schema)
@@ -22,7 +23,6 @@ logger = logging.getLogger(__name__)
 investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
 
 
-##############################################################################################################################
 @investor_blueprint.route("/google-login")
 def google_login():
     google_provider_cfg = requests.get(CONSTANT.GOOGLE_DISCOVERY_URL.value).json()
@@ -66,7 +66,15 @@ def callback():
             logger.debug(f"investor logged in: {email}")
 
             ma_schema = InvestorUserSchema()
-            return ma_schema.dump(user)
+            user_objs = ma_schema.dump(user)
+            access_token = create_access_token(identity=email)
+            user.is_authenticated = True
+            ret_obj = {
+                "result": True,
+                "user": user_objs,
+                "token": access_token,
+            }
+            return ret_obj
         else:
             picture = userinfo_response.json().get("picture", None)
             first_name = userinfo_response.json().get("given_name", None)
@@ -87,15 +95,22 @@ def callback():
 
             user = Investor.objects.filter(email=email).first()
             login_user(user)
+
             logger.debug(f"investor logged in: {email}")
 
             ma_schema = InvestorUserSchema()
-            return ma_schema.dump(user)
+            user_objs = ma_schema.dump(user)
+            access_token = create_access_token(identity=email)
+            ret_obj = {
+                "result": True,
+                "user": user_objs,
+                "token": access_token,
+            }
+            return ret_obj
     else:
         message = "User email not available or not verified by Google."
         logger.debug(f"{message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
         return return_data_results(False, message, 400)
-##############################################################################################################################
 
 
 @investor_blueprint.route('/login', methods=['GET', 'POST'])
@@ -134,8 +149,14 @@ def login():
                 logger.debug(f"investor logged in: {email}")
 
                 ma_schema = InvestorUserSchema()
-                return ma_schema.dump(user)
-                # generate jwt token
+                user_objs = ma_schema.dump(user)
+                access_token = create_access_token(identity=email)
+                ret_obj = {
+                    "result": True,
+                    "user": user_objs,
+                    "token": access_token,
+                }
+                return ret_obj
             else:
                 logger.debug(f"investor wrong credentials: {email}")
                 message = "wrong credentails"
@@ -199,6 +220,7 @@ def forgot_password():
             link = url_for('investor.reset_link', token=token, _external=True)
             user.password_reset_meta_data = {"is_clicked": False}
             user.save()
+
             thread = threading.Thread(target=password_reset_email, args=(email, link,))
             thread.start()
             logger.debug(f"investor password reset link sent: {email}")
@@ -210,16 +232,6 @@ def forgot_password():
     elif request.method == "GET":
         message = "frontend forgot password template"
         return return_data_results(True, message)
-
-
-@investor_blueprint.route('/logout', methods=['GET'])
-@login_required
-def logout():
-    email = current_user.email
-    logout_user()
-    logger.debug(f"investor logged out: {email}")
-    message = "user logged out successfully"
-    return return_data_results(True, message)
 
 
 @investor_blueprint.route('/register', methods=['GET','POST'])
@@ -286,13 +298,17 @@ def email_confirmed(token):
 
 
 @investor_blueprint.route('/test', methods=["GET"])
-@login_required
+@jwt_required
 def test():
+    current_user_email = get_jwt_identity()
+    print(current_user_email, type(current_user_email))
     return jsonify({
         "result": "logged in view",
         "status_code": 200
     })
-##############################################################################
+
+
+##################################################   *** HELPERS ***   ####################################################
 def return_none_results(name, status_code=200):
     return_obj = {
         "result": False,
