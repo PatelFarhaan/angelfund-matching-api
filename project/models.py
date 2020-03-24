@@ -22,7 +22,7 @@ class Investor(db.Document, UserMixin):
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
-    sectors = db.StringField()
+    sectors = db.ListField()
     deals = db.StringField()
     bio = db.StringField()
     location = db.StringField()

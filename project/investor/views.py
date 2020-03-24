@@ -191,8 +191,8 @@ def update_info():
     if current_user.is_authenticated:
         input_data = request.get_json()
         input_data_fields = [*input_data]
-        available_fields = ["sectors", "deals", "bio", "location",
-                            "accreditation", "syndicate", "angel", "investor"]
+        available_fields = {"sectors", "deals", "bio", "location",
+                            "accreditation", "syndicate", "angel", "investor"}
         # for field in available_fields:
         #     if field in input_data_fields:
         #         setattr(current_user, field, input_data[field])
