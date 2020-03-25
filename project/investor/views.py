@@ -22,6 +22,13 @@ from common_utilities.json_schema_investor_validation import (validate_inv_first
 logger = logging.getLogger(__name__)
 investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
 
+"""
+jwt_required/config.py :=> override default jwt_expiry toekn from 15 mins to 60 mins
+signature verification failed :=> 422   override in jwt_required/default_callbacks.py
+Token expired :=> 401      override in jwt_required/default_callbacks.py
+jwt_required/view_decorators.py :=> Logout
+"""
+
 
 @investor_blueprint.route("/google-login")
 def google_login():

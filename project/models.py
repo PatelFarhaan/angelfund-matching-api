@@ -39,11 +39,9 @@ class Investor(db.Document, UserMixin):
             "role": "investor"
         }
 
-    # def is_authenticated(self):
-    #     return True
-    #
-    # def is_anonymous(self):
-    #     return False
+    def is_jwt_authenticated(self):
+        return self.is_user_authenticated
+
 
 class Startup(db.Document, UserMixin):
     password = db.StringField()
