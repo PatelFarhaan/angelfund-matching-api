@@ -29,11 +29,26 @@ def verify_jwt_in_request():
     no token or if the token is invalid.
     """
     if request.method not in config.exempt_methods:
+        #####################################################################
+        """
+        overriding here:
+        """
+        import sys
+        sys.path.append('../')
+        from project.models import Investor
         jwt_data, jwt_header = _decode_jwt_from_request(request_type='access')
-        ctx_stack.top.jwt = jwt_data
-        ctx_stack.top.jwt_header = jwt_header
-        verify_token_claims(jwt_data)
-        _load_user(jwt_data[config.identity_claim_key])
+        user_email = jwt_data["identity"]
+        user_obj = Investor.objects.get(email=user_email)
+
+        if not user_obj.is_logged_in:
+            return False
+        else:
+        #####################################################################
+            jwt_data, jwt_header = _decode_jwt_from_request(request_type='access')
+            ctx_stack.top.jwt = jwt_data
+            ctx_stack.top.jwt_header = jwt_header
+            verify_token_claims(jwt_data)
+            _load_user(jwt_data[config.identity_claim_key])
 
 
 def verify_jwt_in_request_optional():
@@ -92,6 +107,7 @@ def verify_jwt_refresh_token_in_request():
         _load_user(jwt_data[config.identity_claim_key])
 
 
+
 def jwt_required(fn):
     """
     A decorator to protect a Flask endpoint.
@@ -102,10 +118,18 @@ def jwt_required(fn):
 
     See also: :func:`~flask_jwt_extended.fresh_jwt_required`
     """
-    @wraps(fn)
+    @wraps(fn)                       # overrided this function
     def wrapper(*args, **kwargs):
-        verify_jwt_in_request()
-        return fn(*args, **kwargs)
+        resp = verify_jwt_in_request()
+        #####################################################################
+        if resp is None:
+            return fn(*args, **kwargs)
+        else:
+            return {
+                "result": False,
+                "message": "user logged out"
+            }
+        #####################################################################
     return wrapper
 
 

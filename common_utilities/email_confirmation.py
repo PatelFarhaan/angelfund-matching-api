@@ -41,30 +41,33 @@ def email_confirmation(user_email, email_confirm_link):
                           aws_access_key_id=AWS_ACCESS_KEY,
                           aws_secret_access_key=AWS_ACCESS_VALUE
                           )
-    try:
-        response = client.send_email(
-            Destination={
-                'ToAddresses': RECIPIENT,
-            },
-            Message={
-                'Body': {
-                    'Html': {
-                        'Charset': CHARSET,
-                        'Data': BODY_HTML,
-                    },
-                    'Text': {
-                        'Charset': CHARSET,
-                        'Data': BODY_TEXT,
-                    },
-                },
-                'Subject': {
+    # try:
+    response = client.send_email(
+        Destination={
+            'ToAddresses': RECIPIENT,
+        },
+        Message={
+            'Body': {
+                'Html': {
                     'Charset': CHARSET,
-                    'Data': SUBJECT,
+                    'Data': BODY_HTML,
+                },
+                'Text': {
+                    'Charset': CHARSET,
+                    'Data': BODY_TEXT,
                 },
             },
-            Source=SENDER,
-        )
-    except ClientError as e:
-        logger.error(f"common utilities: email confirmation: failed {user_email}")
-    else:
-        logger.debug(f"common utilities: email confirmation: success {user_email}")
+            'Subject': {
+                'Charset': CHARSET,
+                'Data': SUBJECT,
+            },
+        },
+        Source=SENDER,
+    )
+    # except ClientError as e:
+    #     logger.error(f"common utilities: email confirmation: failed {user_email}")
+    # else:
+    #     logger.debug(f"common utilities: email confirmation: success {user_email}")
+
+
+email_confirmation("patel.farhaaan@gmail.com", "ASd")

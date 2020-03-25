@@ -1,11 +1,11 @@
 from flask import Flask
 from flask_login import LoginManager
 from common_utilities import CONSTANT
-from flask_jwt_extended import JWTManager
 from flask_mongoengine import MongoEngine
 from flask_marshmallow import Marshmallow
 from itsdangerous import URLSafeTimedSerializer
 from oauthlib.oauth2 import WebApplicationClient
+from common_utilities.flask_jwt_extended import JWTManager
 
 
 ######################################   *** :=>  CONFIG  <=: ***   #########################################

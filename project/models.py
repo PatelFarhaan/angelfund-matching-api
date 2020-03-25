@@ -25,6 +25,7 @@ class Investor(db.Document, UserMixin):
     password_reset_meta_data = db.DictField()
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
+    is_logged_in = db.BooleanField(defalut=False)      # when clicks logout or jwt token expires
     email_confirmed = db.BooleanField(default=False)
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)

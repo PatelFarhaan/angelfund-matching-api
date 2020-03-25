@@ -14,20 +14,19 @@ from common_utilities.get_common_mappings import get_common_mapping
 from common_utilities.google_email import google_email_confirmation
 from project.investor.marshmallow_serialize import InvestorUserSchema
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema,
-                                                              validate_inv_login_schema, validate_email_schema,
-                                                              validate_inv_password_reset_schema)
+from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema,
+                                                              validate_inv_login_schema, validate_inv_password_reset_schema)
 
 
 logger = logging.getLogger(__name__)
 investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
 
 """
-jwt_required/config.py :=> override default jwt_expiry toekn from 15 mins to 60 mins
-signature verification failed :=> 422   override in jwt_required/default_callbacks.py
-Token expired :=> 401      override in jwt_required/default_callbacks.py
-jwt_required/view_decorators.py :=> Logout
+jwt_required/config.py           :=> Time    override default jwt_expiry toekn from 15 mins to 60 mins
+signature verification failed    :=> 422     override in jwt_required/default_callbacks.py
+Token expired                    :=> 401     override in jwt_required/default_callbacks.py
+jwt_required/view_decorators.py  :=> Logout  overide functionality written
 """
 
 
@@ -71,6 +70,8 @@ def callback():
         user = Investor.objects.filter(email=email).first()
         if user:
             login_user(user)
+            user.is_logged_in = True
+            user.save()
             logger.debug(f"investor logged in: {email}")
 
             ma_schema = InvestorUserSchema()
@@ -103,7 +104,8 @@ def callback():
 
             user = Investor.objects.filter(email=email).first()
             login_user(user)
-
+            user.is_logged_in = True
+            user.save()
             logger.debug(f"investor logged in: {email}")
 
             ma_schema = InvestorUserSchema()
@@ -154,6 +156,8 @@ def login():
 
             if user and check_password_hash(user.password, password):
                 login_user(user)
+                user.is_logged_in = True
+                user.save()
                 logger.debug(f"investor logged in: {email}")
 
                 ma_schema = InvestorUserSchema()
@@ -305,14 +309,27 @@ def email_confirmed(token):
         return return_data_results(False, message)
 
 
+@investor_blueprint.route('/logout', methods=["GET"])
+@jwt_required
+def logout():
+    current_user_email = get_jwt_identity()
+    user_obj = Investor.objects.filter(email=current_user_email).first()
+    user_obj.is_logged_in = False
+    user_obj.save()
+    return jsonify({
+        "result": True,
+        "status_code": 200,
+        "message": "user logged off"
+    })
+
+
 @investor_blueprint.route('/test', methods=["GET"])
 @jwt_required
 def test():
-    current_user_email = get_jwt_identity()
-    print(current_user_email, type(current_user_email))
     return jsonify({
-        "result": "logged in view",
-        "status_code": 200
+        "result": True,
+        "status_code": 200,
+        "message": "logged in view"
     })
 
 
