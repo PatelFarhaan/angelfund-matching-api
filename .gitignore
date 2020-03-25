@@ -1,3 +1,6 @@
+.idea
+*/.idea
+/.idea
 /test
 __pycache__
 /__pycache__
@@ -156,3 +159,4 @@ angelfund_v1.log
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+angelfund_v1.log

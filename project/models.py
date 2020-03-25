@@ -13,14 +13,24 @@ def user_load(user_obj):
 
 
 class Investor(db.Document, UserMixin):
-    password = db.StringField(required=True)
+    bio = db.StringField()
+    deals = db.StringField()
+    sectors = db.ListField()
+    angel = db.BooleanField()
+    location = db.StringField()
+    syndicate = db.StringField()
+    password = db.StringField()
+    accreditation = db.StringField()
+    profile_pic_link = db.StringField()
     password_reset_meta_data = db.DictField()
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
+    is_logged_in = db.BooleanField(defalut=False)      # when clicks logout or jwt token expires
     email_confirmed = db.BooleanField(default=False)
-    profile_pic_link = db.StringField(max_length=256)
+    is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
+
 
     sectors = db.ListField()
     deals = db.StringField()
@@ -30,7 +40,7 @@ class Investor(db.Document, UserMixin):
     syndicate = db.StringField()
     angel = db.BooleanField()
 
-    meta = dict(indexes=['email', '-created'])
+    meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
         return {
@@ -38,14 +48,18 @@ class Investor(db.Document, UserMixin):
             "role": "investor"
         }
 
+    def is_jwt_authenticated(self):
+        return self.is_user_authenticated
+
 
 class Startup(db.Document, UserMixin):
-    password = db.StringField(required=True)
+    password = db.StringField()
+    profile_pic_link = db.StringField()
     password_reset_meta_data = db.DictField()
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
     email_confirmed = db.BooleanField(default=False)
-    profile_pic_link = db.StringField(max_length=256)
+    is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
