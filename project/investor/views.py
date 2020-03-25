@@ -10,6 +10,7 @@ from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
+from common_utilities.get_common_mappings import get_common_mapping
 from common_utilities.google_email import google_email_confirmation
 from project.investor.marshmallow_serialize import InvestorUserSchema
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -314,6 +315,10 @@ def test():
         "status_code": 200
     })
 
+
+@investor_blueprint.route('/investor-common-mappings', methods=["GET"])
+def investors_common_mapping():
+    return get_common_mapping()
 
 ##################################################   *** HELPERS ***   ####################################################
 def return_none_results(name, status_code=200):

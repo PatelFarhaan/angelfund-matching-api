@@ -20,7 +20,3 @@ def get_common_mapping():
         schema_obj = ma_schema.dump(get_obj[0])
         schema_obj["result"] = True
         return schema_obj
-
-
-resp = get_common_mapping()
-print(resp)
