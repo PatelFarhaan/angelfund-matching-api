@@ -150,7 +150,7 @@ static
 
 angelfund_v1.log
 
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
