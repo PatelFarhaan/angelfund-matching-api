@@ -310,7 +310,7 @@ def email_confirmed(token):
 
 
 @investor_blueprint.route('/update-info', methods=['PATCH'])
-@login_required
+@jwt_required
 def update_info():
     if current_user.is_authenticated:
         input_data = request.get_json()
@@ -322,11 +322,19 @@ def update_info():
             else:
                 message = "invalid user field"
                 return return_data_results(False, message)
-        ma_schema = InvestorSchema()
-        return ma_schema.dump(current_user)
+        # ma_schema = InvestorSchema()
+        # return ma_schema.dump(current_user)
+        ma_schema = InvestorUserSchema()
+        user_objs = ma_schema.dump(current_user)
+        ret_obj = {
+            "result": True,
+            "user": user_objs,
+        }
+        return ret_obj
     else:
         message = "user is not authenticated"
         return return_data_results(False, message)
+        
 @investor_blueprint.route('/logout', methods=["GET"])
 @jwt_required
 def logout():
