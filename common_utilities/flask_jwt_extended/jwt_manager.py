@@ -1,7 +1,7 @@
 import datetime
 from warnings import warn
 
-from jwt import (
+from common_utilities.jwt import (
     ExpiredSignatureError, InvalidTokenError, InvalidAudienceError,
     InvalidIssuerError, DecodeError
 )
@@ -11,13 +11,15 @@ try:
 except ImportError:  # pragma: no cover
     from flask import _request_ctx_stack as ctx_stack
 
-from flask_jwt_extended.config import config
-from flask_jwt_extended.exceptions import (
+import sys
+sys.path.append('../')
+from common_utilities.flask_jwt_extended.config import config
+from common_utilities.flask_jwt_extended.exceptions import (
     JWTDecodeError, NoAuthorizationError, InvalidHeaderError, WrongTokenError,
     RevokedTokenError, FreshTokenRequired, CSRFError, UserLoadError,
     UserClaimsVerificationError
 )
-from flask_jwt_extended.default_callbacks import (
+from common_utilities.flask_jwt_extended.default_callbacks import (
     default_expired_token_callback, default_user_claims_callback,
     default_user_identity_callback, default_invalid_token_callback,
     default_unauthorized_callback, default_needs_fresh_token_callback,
@@ -25,10 +27,10 @@ from flask_jwt_extended.default_callbacks import (
     default_claims_verification_callback, default_verify_claims_failed_callback,
     default_decode_key_callback, default_encode_key_callback,
     default_jwt_headers_callback)
-from flask_jwt_extended.tokens import (
+from common_utilities.flask_jwt_extended.tokens import (
     encode_refresh_token, encode_access_token
 )
-from flask_jwt_extended.utils import get_jwt_identity
+from common_utilities.flask_jwt_extended.utils import get_jwt_identity
 
 
 class JWTManager(object):

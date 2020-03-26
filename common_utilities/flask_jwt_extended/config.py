@@ -1,3 +1,6 @@
+import sys
+sys.path.append('../')
+
 import datetime
 from warnings import warn
 from six import raise_from
@@ -198,7 +201,7 @@ class _Config(object):
 
     @property
     def access_expires(self):
-        delta = current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
+        # delta = current_app.config['JWT_ACCESS_TOKEN_EXPIRES']
         #####
         """
         I am over riding this fucntion. Default time is: 0:15:00 (15 mins).
