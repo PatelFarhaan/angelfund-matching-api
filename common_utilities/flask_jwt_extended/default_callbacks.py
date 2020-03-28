@@ -7,8 +7,9 @@ http://flask-jwt-extended.readthedocs.io/en/latest/changing_default_behavior.htm
 http://flask-jwt-extended.readthedocs.io/en/latest/tokens_from_complex_object.html
 """
 from flask import jsonify
-
-from flask_jwt_extended.config import config
+import sys
+sys.path.append('../')
+from common_utilities.flask_jwt_extended.config import config
 
 
 def default_user_claims_callback(userdata):
@@ -75,7 +76,6 @@ def default_invalid_token_callback(error_string):
          "result": False
          }
     )
-    return jsonify({config.error_msg_key: error_string}), 422
 
 
 def default_unauthorized_callback(error_string):

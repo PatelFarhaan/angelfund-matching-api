@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from functools import wraps
 from datetime import datetime
 from calendar import timegm
@@ -11,12 +13,12 @@ try:
 except ImportError:  # pragma: no cover
     from flask import _request_ctx_stack as ctx_stack
 
-from flask_jwt_extended.config import config
-from flask_jwt_extended.exceptions import (
+from common_utilities.flask_jwt_extended.config import config
+from common_utilities.flask_jwt_extended.exceptions import (
     CSRFError, FreshTokenRequired, InvalidHeaderError, NoAuthorizationError,
     UserLoadError
 )
-from flask_jwt_extended.utils import (
+from common_utilities.flask_jwt_extended.utils import (
     decode_token, has_user_loader, user_loader, verify_token_claims,
     verify_token_not_blacklisted, verify_token_type, get_unverified_jwt_headers
 )

@@ -1,11 +1,12 @@
 import datetime
 import uuid
 from calendar import timegm
-
-import jwt
+import sys
+sys.path.append('../')
+from common_utilities import jwt
 from werkzeug.security import safe_str_cmp
 
-from flask_jwt_extended.exceptions import JWTDecodeError, CSRFError
+from common_utilities.flask_jwt_extended.exceptions import JWTDecodeError, CSRFError
 
 
 def _create_csrf_token():

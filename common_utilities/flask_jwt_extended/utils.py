@@ -1,7 +1,9 @@
+import sys
+sys.path.append('../')
 from warnings import warn
 
 from flask import current_app
-from jwt import ExpiredSignatureError
+from common_utilities.jwt import ExpiredSignatureError
 from werkzeug.local import LocalProxy
 
 try:
@@ -9,12 +11,12 @@ try:
 except ImportError:  # pragma: no cover
     from flask import _request_ctx_stack as ctx_stack
 
-from flask_jwt_extended.config import config
-from flask_jwt_extended.exceptions import (
+from common_utilities.flask_jwt_extended.config import config
+from common_utilities.flask_jwt_extended.exceptions import (
     RevokedTokenError, UserClaimsVerificationError, WrongTokenError
 )
-from flask_jwt_extended.tokens import decode_jwt
-import jwt
+from common_utilities.flask_jwt_extended.tokens import decode_jwt
+from common_utilities import jwt
 
 
 # Proxy to access the current user

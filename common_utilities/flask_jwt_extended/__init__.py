@@ -1,4 +1,4 @@
-from .jwt_manager import JWTManager
+from common_utilities.flask_jwt_extended.jwt_manager import JWTManager
 from .utils import (
     create_access_token, create_refresh_token, current_user, decode_token,
     get_csrf_token, get_current_user, get_jti, get_jwt_claims, get_jwt_identity,
