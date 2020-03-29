@@ -2,7 +2,7 @@ import json
 import logging
 import requests
 import threading
-from flask_login import login_user
+from flask_login import login_user, current_user
 from project.models import Investor
 from common_utilities import CONSTANT
 from project import serial, google_client
