@@ -30,14 +30,12 @@ class Investor(db.Document, UserMixin):
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
-
-
-    sectors = db.ListField()
+    
     deals = db.StringField()
     bio = db.StringField()
     location = db.StringField()
     accreditation = db.StringField()
-    syndicate = db.ListField()
+    syndicate = db.StringField()
     angel = db.BooleanField()
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])

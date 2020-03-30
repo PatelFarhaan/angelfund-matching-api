@@ -322,8 +322,7 @@ def update_info():
             else:
                 message = "invalid user field"
                 return return_data_results(False, message)
-        # ma_schema = InvestorSchema()
-        # return ma_schema.dump(current_user)
+        current_user.save()
         ma_schema = InvestorUserSchema()
         user_objs = ma_schema.dump(current_user)
         ret_obj = {
