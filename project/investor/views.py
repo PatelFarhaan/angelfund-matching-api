@@ -335,7 +335,7 @@ def update_info():
         message = "user is not authenticated"
         return return_data_results(False, message)
         
-@investor_blueprint.route('/logout', methods=["GET"])
+@investor_blueprint.route('/logout', methods=["POST"])
 @jwt_required
 def logout():
     current_user_email = get_jwt_identity()
