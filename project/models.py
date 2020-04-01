@@ -35,7 +35,7 @@ class Investor(db.Document, UserMixin):
     bio = db.StringField()
     location = db.StringField()
     accreditation = db.StringField()
-    syndicate = db.StringField()
+    syndicate = db.ListField()
     angel = db.BooleanField()
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
