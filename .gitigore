@@ -1,0 +1,11 @@
+.idea
+*/.idea
+/.idea
+/test
+__pycache__
+/__pycache__
+angelfund_v1.log
+lambda
+/lambda
+lambda*
+/lambda/*
