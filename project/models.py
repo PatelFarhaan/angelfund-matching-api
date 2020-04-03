@@ -38,6 +38,9 @@ class Investor(db.Document, UserMixin):
     syndicate = db.ListField()
     angel = db.BooleanField()
     approved = db.BooleanField(default=False)
+    
+    # This field is for frontend to decide whether to show a tutorial or not
+    first_dashboard_visit = db.BooleanField(default=True)
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
