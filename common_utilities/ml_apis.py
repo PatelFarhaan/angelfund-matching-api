@@ -77,7 +77,3 @@ def delete_user_ml(url, user_id):
     }
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
     return response.json()
-
-
-resp = get_discover(url, 100400)
-print(resp)

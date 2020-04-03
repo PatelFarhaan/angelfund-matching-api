@@ -1,17 +1,22 @@
+import json
 import logging
+import requests
 import threading
-from project import serial
 from project.models import Startup
 from common_utilities import CONSTANT
+from project import serial, google_client
+from flask_login import login_user, current_user
 from flask import url_for, request, Blueprint, jsonify
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
+from common_utilities.google_email import google_email_confirmation
+from project.startup.marshmallow_serialize import StartupUserSchema
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_login import login_user, logout_user, login_required, current_user
-from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema,
-                                                              validate_inv_login_schema, validate_email_schema,
-                                                              validate_inv_password_reset_schema)
+from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema,
+                                                              validate_str_login_schema, validate_str_password_reset_schema)
+
 
 logger = logging.getLogger(__name__)
 startup_blueprint = Blueprint('startup', __name__, url_prefix='/startup')
@@ -21,7 +26,7 @@ startup_blueprint = Blueprint('startup', __name__, url_prefix='/startup')
 def login():
     if request.method == 'POST':
         input_request = request.get_json()
-        response = validate_inv_login_schema(input_request)
+        response = validate_str_login_schema(input_request)
         if response["result"]:
             email = response["data"]["email"]
             password = response["data"]["password"]
@@ -31,6 +36,14 @@ def login():
                 message = "user does not exist"
                 logger.debug(f"startup does not exixt: {email}")
                 return return_data_results(False, message)
+
+            if user.is_google_signup:
+                return_obj = {
+                    "status_code": 200,
+                    "message": "registered with google account",
+                    "redirect_url": "https://127.0.0.1:5000/startup/login/callback"
+                }
+                return jsonify(return_obj)
 
             if not user.email_confirmed:
                 message = "please confirm your email address"
@@ -42,10 +55,20 @@ def login():
 
             if user and check_password_hash(user.password, password):
                 login_user(user)
-                # generate jwt token
+                user.is_logged_in = True
+                user.save()
                 logger.debug(f"startup logged in: {email}")
-                message = "user logged in successfully"
-                return return_data_results(True, message)
+
+                ma_schema = StartupUserSchema()
+                user_objs = ma_schema.dump(user)
+                jwt_obj = {"email": email, "model": "Startup"}
+                access_token = create_access_token(identity=jwt_obj)
+                ret_obj = {
+                    "result": True,
+                    "user": user_objs,
+                    "token": access_token
+                }
+                return ret_obj
             else:
                 logger.debug(f"startup wrong credentials: {email}")
                 message = "wrong credentails"
@@ -66,7 +89,7 @@ def reset_link(token):  # Both click and time based
         if user:
             if request.method == 'POST':
                 input_request = request.get_json()
-                response = validate_inv_password_reset_schema(input_request)
+                response = validate_str_password_reset_schema(input_request)
                 if response["result"]:
                     password = response["data"]["password"]
                     if not user.password_reset_meta_data["is_clicked"]:
@@ -109,6 +132,7 @@ def forgot_password():
             link = url_for('startup.reset_link', token=token, _external=True)
             user.password_reset_meta_data = {"is_clicked": False}
             user.save()
+
             thread = threading.Thread(target=password_reset_email, args=(email, link,))
             thread.start()
             logger.debug(f"startup password reset link sent: {email}")
@@ -122,28 +146,16 @@ def forgot_password():
         return return_data_results(True, message)
 
 
-@startup_blueprint.route('/logout', methods=['GET'])
-@login_required
-def logout():
-    email = current_user.email
-    logout_user()
-    logger.debug(f"startup logged out: {email}")
-    message = "user logged out successfully"
-    return return_data_results(True, message)
-
-
 @startup_blueprint.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         profile_photo = request.files.get('profile_pic', None)  # This is a form object and not a json
 
         input_request = request.get_json()
-        response = validate_inv_first_page_schema(input_request)
+        response = validate_str_first_page_schema(input_request)
         if response["result"]:
             email = response["data"]["email"]
-            password = response["data"]["password"]
-            last_name = response["data"]["last_name"]
-            first_name = response["data"]["first_name"]
+
             email_exist = Startup.objects.filter(email=email).first()
 
             if email_exist:
@@ -154,20 +166,16 @@ def register():
             if profile_photo:
                 profile_photo_name = profile_photo.filename.strip().replace(' ', '')
                 public_profile_pic_link = file_upload_to_s3(profile_photo, profile_photo_name)
-                # noinspection PyArgumentList
-                new_user = Startup(email=email,
-                                   last_name=last_name,
-                                   first_name=first_name,
-                                   profile_pic_link=public_profile_pic_link,
-                                   password=generate_password_hash(password))
+
+                input_request["profile_pic_link"] = public_profile_pic_link
+                input_request["password"] = generate_password_hash(input_request["password"])
+
+                new_user = Startup(**input_request)
                 new_user.save()
                 logger.debug(f"startup created {email}")
             else:
-                # noinspection PyArgumentList
-                new_user = Startup(email=email,
-                                   last_name=last_name,
-                                   first_name=first_name,
-                                   password=generate_password_hash(password))
+                input_request["password"] = generate_password_hash(input_request["password"])
+                new_user = Startup(**input_request)
                 new_user.save()
                 logger.debug(f"startup created {email}")
 
@@ -202,13 +210,49 @@ def email_confirmed(token):
         return return_data_results(False, message)
 
 
-@startup_blueprint.route('/test', methods=["GET"])
-@login_required
-def test():
+@startup_blueprint.route('/logout', methods=["GET"])
+@jwt_required
+def logout():
+    current_user_email = get_jwt_identity()["email"]
+    user_model = get_jwt_identity()["model"]
+    if user_model != "Startup":
+        return jsonify({
+            "return": False,
+            "message": "invalid token"
+        })
+    user_obj = Startup.objects.filter(email=current_user_email).first()
+    user_obj.is_logged_in = False
+    user_obj.save()
     return jsonify({
-        "result": "logged in view",
-        "status_code": 200
+        "result": True,
+        "status_code": 200,
+        "message": "user logged off"
     })
+
+
+@startup_blueprint.route('/test', methods=["GET"])
+@jwt_required
+def test():
+    current_user_email = get_jwt_identity()["email"]
+    user_model = get_jwt_identity()["model"]
+    if user_model != "Startup":
+        return jsonify({
+            "return": False,
+            "message": "invalid token"
+        })
+    user_obj = Startup.objects.get(email=current_user_email)
+    if not user_obj.is_logged_in:
+        return jsonify({
+            "return": False,
+            "message": "user logged out"
+        })
+
+    return jsonify({
+        "result": True,
+        "status_code": 200,
+        "message": "logged in view"
+    })
+
 
 
 ##############################################################################

@@ -37,20 +37,35 @@ def verify_jwt_in_request():
         """
         import sys
         sys.path.append('../')
-        from project.models import Investor
+        from project.models import Investor, Startup
         jwt_data, jwt_header = _decode_jwt_from_request(request_type='access')
-        user_email = jwt_data["identity"]
-        user_obj = Investor.objects.get(email=user_email)
+        user_identity = jwt_data["identity"]
+        user_email = user_identity["email"]
+        user_model = user_identity["model"]
 
-        if not user_obj.is_logged_in:
-            return False
-        else:
-        #####################################################################
-            jwt_data, jwt_header = _decode_jwt_from_request(request_type='access')
-            ctx_stack.top.jwt = jwt_data
-            ctx_stack.top.jwt_header = jwt_header
-            verify_token_claims(jwt_data)
-            _load_user(jwt_data[config.identity_claim_key])
+        if user_model == "Investor":
+            user_obj = Investor.objects.get(email=user_email)
+            if not user_obj.is_logged_in:
+                return "logged_out"
+            else:
+                jwt_data, jwt_header = _decode_jwt_from_request(request_type='access')
+                ctx_stack.top.jwt = jwt_data
+                ctx_stack.top.jwt_header = jwt_header
+                verify_token_claims(jwt_data)
+                _load_user(jwt_data[config.identity_claim_key])
+
+        elif user_model == "Startup":
+            user_obj = Startup.objects.get(email=user_email)
+            if user_obj.is_logged_in == False:
+                return "logged_out"
+            else:
+                jwt_data, jwt_header = _decode_jwt_from_request(request_type='access')
+                ctx_stack.top.jwt = jwt_data
+                ctx_stack.top.jwt_header = jwt_header
+                verify_token_claims(jwt_data)
+                _load_user(jwt_data[config.identity_claim_key])
+
+
 
 
 def verify_jwt_in_request_optional():
@@ -123,15 +138,12 @@ def jwt_required(fn):
     @wraps(fn)                       # overrided this function
     def wrapper(*args, **kwargs):
         resp = verify_jwt_in_request()
-        #####################################################################
-        if resp is None:
-            return fn(*args, **kwargs)
-        else:
+        if resp == "logged_out":
             return {
                 "result": False,
                 "message": "user logged out"
             }
-        #####################################################################
+        return fn(*args, **kwargs)
     return wrapper
 
 

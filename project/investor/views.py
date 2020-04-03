@@ -2,10 +2,10 @@ import json
 import logging
 import requests
 import threading
-from flask_login import login_user, current_user
 from project.models import Investor
 from common_utilities import CONSTANT
 from project import serial, google_client
+from flask_login import login_user, current_user
 from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
@@ -76,12 +76,13 @@ def callback():
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
-            access_token = create_access_token(identity=email)
+            jwt_obj = {"email": email, "model": "Investor"}
+            access_token = create_access_token(identity=jwt_obj)
             user.is_authenticated = True
             ret_obj = {
                 "result": True,
                 "user": user_objs,
-                "token": access_token,
+                "token": access_token
             }
             return ret_obj
         else:
@@ -110,7 +111,8 @@ def callback():
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
-            access_token = create_access_token(identity=email)
+            jwt_obj = {"email": email, "model": "Investor"}
+            access_token = create_access_token(identity=jwt_obj)
             ret_obj = {
                 "result": True,
                 "user": user_objs,
@@ -162,7 +164,8 @@ def login():
 
                 ma_schema = InvestorUserSchema()
                 user_objs = ma_schema.dump(user)
-                access_token = create_access_token(identity=email)
+                jwt_obj = {"email": email, "model": "Investor"}
+                access_token = create_access_token(identity=jwt_obj)
                 ret_obj = {
                     "result": True,
                     "user": user_objs,
@@ -312,8 +315,8 @@ def email_confirmed(token):
 @investor_blueprint.route('/update-info', methods=['PATCH'])
 @jwt_required
 def update_info():
-    if current_user.is_authenticated:
-        input_data = request.get_json()
+    if current_user.is_logged_in:
+        input_data = request.get_json()    # code will give 500 error if no json if passed
         available_fields = {"sectors", "deals", "bio", "location",
                             "accreditation", "syndicate", "angel", "investor"}
         for field in input_data:
@@ -333,11 +336,18 @@ def update_info():
     else:
         message = "user is not authenticated"
         return return_data_results(False, message)
-        
-@investor_blueprint.route('/logout', methods=["POST"])
+
+
+@investor_blueprint.route('/logout', methods=["GET"])
 @jwt_required
 def logout():
-    current_user_email = get_jwt_identity()
+    current_user_email = get_jwt_identity()["email"]
+    user_model = get_jwt_identity()["model"]
+    if user_model != "Investor":
+        return jsonify({
+            "return": False,
+            "message": "invalid token"
+        })
     user_obj = Investor.objects.filter(email=current_user_email).first()
     user_obj.is_logged_in = False
     user_obj.save()
@@ -351,6 +361,19 @@ def logout():
 @investor_blueprint.route('/test', methods=["GET"])
 @jwt_required
 def test():
+    current_user_email = get_jwt_identity()["email"]
+    user_model = get_jwt_identity()["model"]
+    if user_model != "Investor":
+        return jsonify({
+            "return": False,
+            "message": "invalid token"
+        })
+    user_obj = Investor.objects.get(email=current_user_email)
+    if not user_obj.is_logged_in:
+        return jsonify({
+            "return": False,
+            "message": "user logged out"
+        })
     return jsonify({
         "result": True,
         "status_code": 200,
