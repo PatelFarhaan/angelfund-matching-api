@@ -210,7 +210,7 @@ def email_confirmed(token):
         return return_data_results(False, message)
 
 
-@startup_blueprint.route('/logout', methods=["GET"])
+@startup_blueprint.route('/logout', methods=["POST"])
 @jwt_required
 def logout():
     current_user_email = get_jwt_identity()["email"]
