@@ -315,19 +315,21 @@ def email_confirmed(token):
 @investor_blueprint.route('/update-info', methods=['PATCH'])
 @jwt_required
 def update_info():
-    if current_user.is_logged_in:
+    user_email = get_jwt_identity()["email"]
+    user_obj = Investor.objects.filter(email=user_email).first()
+    if user_obj.is_logged_in:
         input_data = request.get_json()    # code will give 500 error if no json if passed
         available_fields = {"sectors", "deals", "bio", "location",
                             "accreditation", "syndicate", "angel", "investor"}
         for field in input_data:
             if field in available_fields:
-                setattr(current_user, field, input_data[field])
+                setattr(user_obj, field, input_data[field])
             else:
                 message = "invalid user field"
                 return return_data_results(False, message)
-        current_user.save()
+        user_obj.save()
         ma_schema = InvestorUserSchema()
-        user_objs = ma_schema.dump(current_user)
+        user_objs = ma_schema.dump(user_obj)
         ret_obj = {
             "result": True,
             "user": user_objs,
