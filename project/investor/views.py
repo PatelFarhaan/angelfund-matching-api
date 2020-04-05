@@ -1,11 +1,15 @@
+import os
+import uuid
 import json
+import magic     # pip install python-magic-bin==0.4.14
+import shutil
 import logging
 import requests
 import threading
+from flask_login import login_user
 from project.models import Investor
 from common_utilities import CONSTANT
 from project import serial, google_client
-from flask_login import login_user, current_user
 from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.file_upload_to_s3 import file_upload_to_s3
 from common_utilities.password_reset import password_reset_email
@@ -14,6 +18,7 @@ from common_utilities.get_common_mappings import get_common_mapping
 from common_utilities.google_email import google_email_confirmation
 from project.investor.marshmallow_serialize import InvestorUserSchema
 from werkzeug.security import generate_password_hash, check_password_hash
+from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema,
                                                               validate_inv_login_schema, validate_inv_password_reset_schema)
@@ -381,6 +386,70 @@ def test():
         "status_code": 200,
         "message": "logged in view"
     })
+
+
+@investor_blueprint.route('/mime-files', methods=["POST"])
+def mime_files():
+    file_obj = request.files.get('profile_pic')
+    file_obj_name = file_obj.filename.replace(' ', '')
+    file_name = request.form.get("name")
+    file_type = request.form.get("type")
+
+    if not all([file_obj, file_name, file_type]):
+        return jsonify({
+            "result": False,
+            "message": "missing key data"
+        })
+
+    file_location = str(uuid.uuid4())
+    if os._exists(file_location):
+        shutil.rmtree(file_location)
+
+    os.mkdir(file_location)
+    with open(f"{file_location}/{file_obj_name}", 'wb') as f:
+        f.write(file_obj.read())
+
+    mime = magic.Magic(mime=True)
+    mime_type = mime.from_file(f"{file_location}/{file_obj_name}")
+    mime_base = mime_type.split('/',1)[0]        # base mime type :=> application or image
+    mime_extention = mime_type.split('/', 1)[1]  # pdf or jpeg
+
+    if file_type == "application":
+        if mime_extention == "pdf":
+            pdf_url = pdf_upload_to_s3(file_name, mime_extention, file_location, file_obj_name)
+            shutil.rmtree(file_location)
+            return jsonify({
+                "result": True,
+                "url": pdf_url
+            })
+        else:
+            shutil.rmtree(file_location)
+            return jsonify({
+                "result": False,
+                "message": "pdf file required"
+            })
+
+    elif file_type == "image":
+        if mime_base == "image":
+            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_obj_name)
+            shutil.rmtree(file_location)
+            return jsonify({
+                "result": True,
+                "url": image_url
+            })
+        else:
+            shutil.rmtree(file_location)
+            return jsonify({
+                "result": False,
+                "message": "image file required"
+            })
+
+    else:
+        shutil.rmtree(file_location)
+        return jsonify({
+            "result": False,
+            "message": "invalid file type"
+        })
 
 
 @investor_blueprint.route('/investor-common-mappings', methods=["GET"])
