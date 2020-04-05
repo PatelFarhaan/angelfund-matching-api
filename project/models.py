@@ -22,8 +22,8 @@ class Investor(db.Document, UserMixin):
     password = db.StringField()
     accreditation = db.StringField()
     profile_pic_link = db.StringField()
-    approved = db.BooleanField(default=False)
     password_reset_meta_data = db.DictField()
+    approved = db.BooleanField(default=False)
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
     is_logged_in = db.BooleanField(defalut=False)
@@ -31,6 +31,9 @@ class Investor(db.Document, UserMixin):
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
+
+    # This field is for frontend to decide whether to show a tutorial or not
+    first_dashboard_visit = db.BooleanField(default=True)
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
@@ -46,7 +49,18 @@ class Investor(db.Document, UserMixin):
 
 class Startup(db.Document, UserMixin):
     bio = db.StringField()
+    raised = db.IntField()
+    sectors = db.ListField()
+    progress = db.ListField()
+    round_size = db.IntField()
+    position = db.StringField()
     password = db.StringField()
+    location = db.StringField()
+    slide_deck = db.StringField()
+    company_link = db.StringField()
+    company_name = db.StringField()
+    num_team_members = db.IntField()
+    startup_pitch = db.StringField()
     profile_pic_link = db.StringField()
     approved = db.BooleanField(default=False)
     password_reset_meta_data = db.DictField()
@@ -57,6 +71,10 @@ class Startup(db.Document, UserMixin):
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
+
+
+    # This field is for frontend to decide whether to show a tutorial or not
+    first_dashboard_visit = db.BooleanField(default=True)
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
