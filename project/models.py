@@ -61,6 +61,21 @@ class Startup(db.Document, UserMixin):
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
+    location = db.StringField()
+    sectors = db.ListField()
+    company_name = db.StringField()
+    link = db.StringField()
+    startup_pitch = db.StringField()
+    round_size = db.IntField()
+    raised = db.IntField()
+    progress = db.ListField()
+    position = db.StringField()
+    num_team_members = db.IntField()
+    slide_deck = db.StringField()
+    
+    # This field is for frontend to decide whether to show a tutorial or not
+    first_dashboard_visit = db.BooleanField(default=True)
+    
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
