@@ -229,6 +229,33 @@ def logout():
         "message": "user logged off"
     })
 
+@startup_blueprint.route('/update-info', methods=['PATCH'])
+@jwt_required
+def update_info():
+    user_email = get_jwt_identity()["email"]
+    user_obj = Startup.objects.filter(email=user_email).first()
+    if user_obj.is_logged_in:
+        input_data = request.get_json()    # code will give 500 error if no json if passed
+        available_fields = {"location", "sectors", "company_name", "company_link", 
+                            "startup_pitch", "bio", "round_size", "raised", 
+                            "progress", "position", "num_team_members", "slide_deck"}
+        for field in input_data:
+            if field in available_fields:
+                setattr(user_obj, field, input_data[field])
+            else:
+                message = "invalid user field"
+                return return_data_results(False, message)
+        user_obj.save()
+        ma_schema = StartupUserSchema()
+        user_objs = ma_schema.dump(user_obj)
+        ret_obj = {
+            "result": True,
+            "user": user_objs,
+        }
+        return ret_obj
+    else:
+        message = "user is not authenticated"
+        return return_data_results(False, message)
 
 @startup_blueprint.route('/test', methods=["GET"])
 @jwt_required

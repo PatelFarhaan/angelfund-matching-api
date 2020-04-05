@@ -64,7 +64,7 @@ class Startup(db.Document, UserMixin):
     location = db.StringField()
     sectors = db.ListField()
     company_name = db.StringField()
-    link = db.StringField()
+    company_link = db.StringField()
     startup_pitch = db.StringField()
     round_size = db.IntField()
     raised = db.IntField()
@@ -75,7 +75,7 @@ class Startup(db.Document, UserMixin):
     
     # This field is for frontend to decide whether to show a tutorial or not
     first_dashboard_visit = db.BooleanField(default=True)
-    
+
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
