@@ -285,35 +285,35 @@ def email_confirmed(token):
 @startup_blueprint.route('/logout', methods=["POST"])
 @jwt_required
 def logout():
-    current_user_email = get_jwt_identity()["email"]
-    user_model = get_jwt_identity()["model"]
-    if user_model != "Startup":
-        return jsonify({
-            "return": False,
-            "message": "invalid token"
-        })
-    user_obj = Startup.objects.filter(email=current_user_email).first()
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
     user_obj.is_logged_in = False
     user_obj.save()
-    return jsonify({
-        "result": True,
-        "status_code": 200,
-        "message": "user logged off"
-    })
+    return return_data_results(True, "user logged off")
 
 
 
 @startup_blueprint.route('/mime-files', methods=["POST"])
+@jwt_required
 def mime_files():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+
+    file_name = None
     file_type = request.form.get("type")
     file_obj = request.files.get('file_obj')
-    file_name = file_obj.filename.replace(' ', '')
+    if file_obj:
+        file_name = f"{user_obj.id}-" + file_obj.filename.replace(' ', '')
+        file_name = file_name.split('.', 1)[0]
 
-    if not all([file_obj, file_type]):
-        return jsonify({
-            "result": False,
-            "message": "missing key data"
-        })
+    if not all([file_obj, file_name, file_type]):
+        return return_data_results(False, "missing key data")
 
     file_location = str(uuid.uuid4())
     if os._exists(file_location):
@@ -331,46 +331,38 @@ def mime_files():
     if file_type == "application":
         if mime_extention == "pdf":
             pdf_url = pdf_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            user_obj.slide_deck = pdf_url
+            user_obj.save()
             shutil.rmtree(file_location)
-            return jsonify({
-                "result": True,
-                "url": pdf_url
-            })
+            return jsonify({"result": True, "url": pdf_url})
         else:
             shutil.rmtree(file_location)
-            return jsonify({
-                "result": False,
-                "message": "pdf file required"
-            })
+            return return_data_results(False, "pdf file required")
 
     elif file_type == "image":
         if mime_base == "image":
             image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            user_obj.profile_pic_link = image_url
+            user_obj.save()
             shutil.rmtree(file_location)
-            return jsonify({
-                "result": True,
-                "url": image_url
-            })
+            return jsonify({"result": True, "url": image_url})
         else:
             shutil.rmtree(file_location)
-            return jsonify({
-                "result": False,
-                "message": "image file required"
-            })
+            return return_data_results(False, "image file required")
 
     else:
         shutil.rmtree(file_location)
-        return jsonify({
-            "result": False,
-            "message": "invalid file type"
-        })
+        return return_data_results(False, "invalid file type")
 
 
 @startup_blueprint.route('/update-info', methods=['PATCH'])
 @jwt_required
 def update_info():
-    user_email = get_jwt_identity()["email"]
-    user_obj = Startup.objects.filter(email=user_email).first()
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
         input_data = request.get_json()    # code will give 500 error if no json if passed
         available_fields = {"location", "sectors", "company_name", "company_link",
@@ -398,25 +390,15 @@ def update_info():
 @startup_blueprint.route('/test', methods=["GET"])
 @jwt_required
 def test():
-    current_user_email = get_jwt_identity()["email"]
-    user_model = get_jwt_identity()["model"]
-    if user_model != "Startup":
-        return jsonify({
-            "return": False,
-            "message": "invalid token"
-        })
-    user_obj = Startup.objects.get(email=current_user_email)
-    if not user_obj.is_logged_in:
-        return jsonify({
-            "return": False,
-            "message": "user logged out"
-        })
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
 
-    return jsonify({
-        "result": True,
-        "status_code": 200,
-        "message": "logged in view"
-    })
+    user_obj = jwt_decode["user_obj"]
+    if not user_obj.is_logged_in:
+        return return_data_results(False, "user logged out")
+
+    return return_data_results(True, "user logged in")
 
 
 
@@ -437,3 +419,19 @@ def return_data_results(result, message, status_code=200):
         "message": message
     }
     return jsonify(return_obj)
+
+
+def jwt_decoder(encoded_identifier):
+    email = encoded_identifier["email"]
+    model = encoded_identifier["model"]
+    if model != "Startup":
+        return {"result": False,
+                "message": "invalid token"}
+    user_obj = Startup.objects.filter(email=email).first()
+    if not user_obj:
+        return {"result": False,
+                "message": "user not found"}
+    return {
+        "result": True,
+        "user_obj": user_obj
+    }
