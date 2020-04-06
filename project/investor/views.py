@@ -1,27 +1,26 @@
 import os
 import uuid
-import json
 import magic     # pip install python-magic-bin==0.4.14
 import shutil
 import logging
 import requests
 import threading
+from project import serial
 from flask_login import login_user
 from project.models import Investor
 from common_utilities import CONSTANT
-from project import serial, google_client
-from flask import url_for, request, Blueprint, jsonify, redirect
-from common_utilities.file_upload_to_s3 import file_upload_to_s3
+from flask import url_for, request, Blueprint, jsonify
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.get_common_mappings import get_common_mapping
 from common_utilities.google_email import google_email_confirmation
 from project.investor.marshmallow_serialize import InvestorUserSchema
+from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
-from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema,
-                                                              validate_inv_login_schema, validate_inv_password_reset_schema)
+                                                              validate_google_schema, validate_inv_login_schema,
+                                                              validate_inv_password_reset_schema)
 
 
 logger = logging.getLogger(__name__)
@@ -35,99 +34,83 @@ jwt_required/view_decorators.py  :=> Logout  overide functionality written
 """
 
 
-@investor_blueprint.route("/google-login")
-def google_login():
-    google_provider_cfg = requests.get(CONSTANT.GOOGLE_DISCOVERY_URL.value).json()
-    authorization_endpoint = google_provider_cfg["authorization_endpoint"]
-    request_uri = google_client.prepare_request_uri(
-        authorization_endpoint,
-        redirect_uri="https://127.0.0.1:5000/investor/login/callback",
-        scope=["openid", "email", "profile"],
-    )
-    return redirect(request_uri)
+@investor_blueprint.route("/google-token", methods=["POST"])
+def google_token():
+    input_request = request.get_json()
+    response = validate_google_schema(input_request)
 
-@investor_blueprint.route("/login/callback")
-def callback():
-    code = request.args.get("code")
-    google_provider_cfg = requests.get(CONSTANT.GOOGLE_DISCOVERY_URL.value).json()
-    token_endpoint = google_provider_cfg["token_endpoint"]
+    if response["result"]:
+        token = response["data"]["token"]
 
-    token_url, headers, body = google_client.prepare_token_request(
-        token_endpoint,
-        code=code,
-        redirect_url=request.base_url,
-        authorization_response=request.url)
+        url = f"https://oauth2.googleapis.com/tokeninfo?id_token={token}"
+        try:
+            userinfo_response = requests.request("GET", url, headers={}, data={})
+            if userinfo_response.status_code == 200:
+                if userinfo_response.json().get("email_verified"):
+                    email = userinfo_response.json().get("email")
 
-    token_response = requests.post(
-        token_url,
-        data=body,
-        headers=headers,
-        auth=(CONSTANT.GOOGLE_CLIENT_ID.value, CONSTANT.GOOGLE_CLIENT_SECRET.value))
+                    user = Investor.objects.filter(email=email).first()
+                    if user:
+                        login_user(user)
+                        user.is_logged_in = True
+                        user.save()
+                        logger.debug(f"investor logged in: {email}")
 
-    google_client.parse_request_body_response(json.dumps(token_response.json()))
-    userinfo_endpoint = google_provider_cfg["userinfo_endpoint"]
-    uri, headers, body = google_client.add_token(userinfo_endpoint)
-    userinfo_response = requests.get(uri, headers=headers, data=body)
+                        ma_schema = InvestorUserSchema()
+                        user_objs = ma_schema.dump(user)
+                        jwt_obj = {"email": email, "model": "Investor"}
+                        access_token = create_access_token(identity=jwt_obj)
+                        user.is_authenticated = True
+                        ret_obj = {
+                            "result": True,
+                            "user": user_objs,
+                            "token": access_token
+                        }
+                        return ret_obj
+                    else:
+                        picture = userinfo_response.json().get("picture", None)
+                        first_name = userinfo_response.json().get("given_name", None)
+                        last_name = userinfo_response.json().get("family_name", None)
 
-    if userinfo_response.json().get("email_verified"):
-        email = userinfo_response.json().get("email", None)
+                        # noinspection PyArgumentList
+                        new_user = Investor(email=email,
+                                            last_name=last_name,
+                                            email_confirmed=True,
+                                            first_name=first_name,
+                                            is_google_signup=True,
+                                            profile_pic_link=picture)
+                        new_user.save()
+                        logger.debug(f"investor created {email} via Google OAuth")
 
-        user = Investor.objects.filter(email=email).first()
-        if user:
-            login_user(user)
-            user.is_logged_in = True
-            user.save()
-            logger.debug(f"investor logged in: {email}")
+                        thread = threading.Thread(target=google_email_confirmation, args=(email,))
+                        thread.start()
 
-            ma_schema = InvestorUserSchema()
-            user_objs = ma_schema.dump(user)
-            jwt_obj = {"email": email, "model": "Investor"}
-            access_token = create_access_token(identity=jwt_obj)
-            user.is_authenticated = True
-            ret_obj = {
-                "result": True,
-                "user": user_objs,
-                "token": access_token
-            }
-            return ret_obj
-        else:
-            picture = userinfo_response.json().get("picture", None)
-            first_name = userinfo_response.json().get("given_name", None)
-            last_name = userinfo_response.json().get("family_name", None)
+                        user = Investor.objects.filter(email=email).first()
+                        login_user(user)
+                        user.is_logged_in = True
+                        user.save()
+                        logger.debug(f"investor logged in: {email}")
 
-            # noinspection PyArgumentList
-            new_user = Investor(email=email,
-                                last_name=last_name,
-                                email_confirmed=True,
-                                first_name=first_name,
-                                is_google_signup=True,
-                                profile_pic_link=picture)
-            new_user.save()
-            logger.debug(f"investor created {email} via Google OAuth")
-
-            thread = threading.Thread(target=google_email_confirmation, args=(email,))
-            thread.start()
-
-            user = Investor.objects.filter(email=email).first()
-            login_user(user)
-            user.is_logged_in = True
-            user.save()
-            logger.debug(f"investor logged in: {email}")
-
-            ma_schema = InvestorUserSchema()
-            user_objs = ma_schema.dump(user)
-            jwt_obj = {"email": email, "model": "Investor"}
-            access_token = create_access_token(identity=jwt_obj)
-            ret_obj = {
-                "result": True,
-                "user": user_objs,
-                "token": access_token,
-            }
-            return ret_obj
+                        ma_schema = InvestorUserSchema()
+                        user_objs = ma_schema.dump(user)
+                        jwt_obj = {"email": email, "model": "Investor"}
+                        access_token = create_access_token(identity=jwt_obj)
+                        ret_obj = {
+                            "result": True,
+                            "user": user_objs,
+                            "token": access_token,
+                        }
+                        return ret_obj
+                else:
+                    message = "User email not available or not verified by Google."
+                    logger.debug(f"{message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
+                    return return_data_results(False, message, 400)
+            else:
+                return return_data_results(False, "invalid token", 400)
+        except:
+            return return_data_results(False, "token not validated", 400)
     else:
-        message = "User email not available or not verified by Google."
-        logger.debug(f"{message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
-        return return_data_results(False, message, 400)
+        return jsonify(response)
 
 
 @investor_blueprint.route('/login', methods=['GET', 'POST'])
@@ -190,7 +173,7 @@ def login():
 
 
 @investor_blueprint.route('/reset-link/<token>', methods=['GET','POST'])
-def reset_link(token):  # Both click and time based
+def reset_link(token):
     try:
         email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
         user = Investor.objects.filter(email=email).first()
@@ -257,10 +240,10 @@ def forgot_password():
 @investor_blueprint.route('/register', methods=['GET','POST'])
 def register():
     if request.method == 'POST':
-        profile_photo = request.files.get('profile_pic', None)     # This is a form object and not a json
 
         input_request = request.get_json()
         response = validate_inv_first_page_schema(input_request)
+
         if response["result"]:
             email = response["data"]["email"]
 
@@ -271,21 +254,10 @@ def register():
                 message = "email exists"
                 return return_data_results(False, message)
 
-            if profile_photo:
-                profile_photo_name = profile_photo.filename.strip().replace(' ', '')
-                public_profile_pic_link = file_upload_to_s3(profile_photo, profile_photo_name)
-
-                input_request["profile_pic_link"] = public_profile_pic_link
-                input_request["password"] = generate_password_hash(input_request["password"])
-
-                new_user = Investor(**input_request)
-                new_user.save()
-                logger.debug(f"investor created {email}")
-            else:
-                input_request["password"] = generate_password_hash(input_request["password"])
-                new_user = Investor(**input_request)
-                new_user.save()
-                logger.debug(f"investor created {email}")
+            input_request["password"] = generate_password_hash(input_request["password"])
+            new_user = Investor(**input_request)
+            new_user.save()
+            logger.debug(f"investor created {email}")
 
             token = serial.dumps(email, salt='email_confirm')
             link = url_for('investor.email_confirmed', token=token, _external=True)
@@ -320,8 +292,11 @@ def email_confirmed(token):
 @investor_blueprint.route('/update-info', methods=['PATCH'])
 @jwt_required
 def update_info():
-    user_email = get_jwt_identity()["email"]
-    user_obj = Investor.objects.filter(email=user_email).first()
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
         input_data = request.get_json()    # code will give 500 error if no json if passed
         available_fields = {"sectors", "deals", "bio", "location",
@@ -348,108 +323,77 @@ def update_info():
 @investor_blueprint.route('/logout', methods=["POST"])
 @jwt_required
 def logout():
-    current_user_email = get_jwt_identity()["email"]
-    user_model = get_jwt_identity()["model"]
-    if user_model != "Investor":
-        return jsonify({
-            "return": False,
-            "message": "invalid token"
-        })
-    user_obj = Investor.objects.filter(email=current_user_email).first()
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
     user_obj.is_logged_in = False
     user_obj.save()
-    return jsonify({
-        "result": True,
-        "status_code": 200,
-        "message": "user logged off"
-    })
+    return return_data_results(True, "user logged off")
 
 
 @investor_blueprint.route('/test', methods=["GET"])
 @jwt_required
 def test():
-    current_user_email = get_jwt_identity()["email"]
-    user_model = get_jwt_identity()["model"]
-    if user_model != "Investor":
-        return jsonify({
-            "return": False,
-            "message": "invalid token"
-        })
-    user_obj = Investor.objects.get(email=current_user_email)
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
     if not user_obj.is_logged_in:
-        return jsonify({
-            "return": False,
-            "message": "user logged out"
-        })
-    return jsonify({
-        "result": True,
-        "status_code": 200,
-        "message": "logged in view"
-    })
+        return return_data_results(False, "user logged out")
+
+    return return_data_results(True, "user logged in")
 
 
 @investor_blueprint.route('/mime-files', methods=["POST"])
+@jwt_required
 def mime_files():
-    file_obj = request.files.get('profile_pic')
-    file_obj_name = file_obj.filename.replace(' ', '')
-    file_name = request.form.get("name")
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+
+    file_name = None
     file_type = request.form.get("type")
+    file_obj = request.files.get('file_obj')
+    if file_obj:
+        file_name = f"{user_obj.id}-" + file_obj.filename.replace(' ', '')
+        file_name = file_name.split('.', 1)[0]
 
     if not all([file_obj, file_name, file_type]):
-        return jsonify({
-            "result": False,
-            "message": "missing key data"
-        })
+        return return_data_results(False, "missing key data")
 
     file_location = str(uuid.uuid4())
     if os._exists(file_location):
         shutil.rmtree(file_location)
 
     os.mkdir(file_location)
-    with open(f"{file_location}/{file_obj_name}", 'wb') as f:
+    with open(f"{file_location}/{file_name}", 'wb') as f:
         f.write(file_obj.read())
 
     mime = magic.Magic(mime=True)
-    mime_type = mime.from_file(f"{file_location}/{file_obj_name}")
-    mime_base = mime_type.split('/',1)[0]        # base mime type :=> application or image
+    mime_type = mime.from_file(f"{file_location}/{file_name}")
+    mime_base = mime_type.split('/',1)[0]        # base mime type :=> application (for pdf) or image (for image)
     mime_extention = mime_type.split('/', 1)[1]  # pdf or jpeg
 
-    if file_type == "application":
-        if mime_extention == "pdf":
-            pdf_url = pdf_upload_to_s3(file_name, mime_extention, file_location, file_obj_name)
-            shutil.rmtree(file_location)
-            return jsonify({
-                "result": True,
-                "url": pdf_url
-            })
-        else:
-            shutil.rmtree(file_location)
-            return jsonify({
-                "result": False,
-                "message": "pdf file required"
-            })
 
-    elif file_type == "image":
+    if file_type == "image":
         if mime_base == "image":
-            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_obj_name)
+            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            user_obj.profile_pic_link = image_url
+            user_obj.save()
             shutil.rmtree(file_location)
-            return jsonify({
-                "result": True,
-                "url": image_url
-            })
+            return jsonify({"result": True, "url": image_url})
         else:
             shutil.rmtree(file_location)
-            return jsonify({
-                "result": False,
-                "message": "image file required"
-            })
+            return return_data_results(False, "image file required")
 
     else:
         shutil.rmtree(file_location)
-        return jsonify({
-            "result": False,
-            "message": "invalid file type"
-        })
+        return return_data_results(False, "invalid file type")
 
 
 @investor_blueprint.route('/investor-common-mappings', methods=["GET"])
@@ -473,3 +417,19 @@ def return_data_results(result, message, status_code=200):
         "message": message
     }
     return jsonify(return_obj)
+
+
+def jwt_decoder(encoded_identifier):
+    email = encoded_identifier["email"]
+    model = encoded_identifier["model"]
+    if model != "Investor":
+        return {"result": False,
+                "message": "invalid token"}
+    user_obj = Investor.objects.filter(email=email).first()
+    if not user_obj:
+        return {"result": False,
+                "message": "user not found"}
+    return {
+        "result": True,
+        "user_obj": user_obj
+    }

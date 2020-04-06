@@ -111,3 +111,25 @@ def validate_email_schema(data):
 
 #############################################################################################################################################
 
+inv_google_schema = {
+    "type": "object",
+    "properties": {
+        "token": {
+            "type": "string"
+        }
+    },
+    "required": ["token"],
+    "additionalProperties": False
+}
+
+
+def validate_google_schema(data):
+    try:
+        validate(instance=data, schema= inv_google_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+
+#############################################################################################################################################

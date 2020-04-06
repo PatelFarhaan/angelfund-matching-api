@@ -4,7 +4,6 @@ from common_utilities import CONSTANT
 from flask_mongoengine import MongoEngine
 from flask_marshmallow import Marshmallow
 from itsdangerous import URLSafeTimedSerializer
-from oauthlib.oauth2 import WebApplicationClient
 from common_utilities.flask_jwt_extended import JWTManager
 
 
@@ -15,7 +14,6 @@ app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
 app.config['JWT_SECRET_KEY'] = CONSTANT.JWT_SECRET_KEY.value
 
 serial = URLSafeTimedSerializer(CONSTANT.SECRET_KEY.value)
-google_client = WebApplicationClient(CONSTANT.GOOGLE_CLIENT_ID.value)
 app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
 db = MongoEngine(app)
 ma = Marshmallow(app)
