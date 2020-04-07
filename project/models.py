@@ -71,8 +71,8 @@ class Startup(db.Document, UserMixin):
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
-    round_size = db.IntField(default=None)
-    raised = db.IntField(default=None)
+    round_size = db.StringField()
+    raised = db.StringField()
     progress = db.ListField()
 
     # This field is for frontend to decide whether to show a tutorial or not
