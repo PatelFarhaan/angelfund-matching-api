@@ -6,7 +6,6 @@ from flask_marshmallow import Marshmallow
 from itsdangerous import URLSafeTimedSerializer
 from common_utilities.flask_jwt_extended import JWTManager
 
-
 ######################################   *** :=>  CONFIG  <=: ***   #########################################
 
 app = Flask(__name__)

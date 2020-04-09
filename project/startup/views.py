@@ -7,9 +7,10 @@ import requests
 import threading
 from project import serial
 from flask_login import login_user
-from project.models import Startup
 from common_utilities import CONSTANT
+from project.models import Startup, ReferralLinks
 from flask import url_for, request, Blueprint, jsonify
+from common_utilities.internal_hash import create_internal_hash
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
@@ -353,6 +354,45 @@ def mime_files():
     else:
         shutil.rmtree(file_location)
         return return_data_results(False, "invalid file type")
+
+
+@startup_blueprint.route('/referral-link', methods=["POST"])
+@jwt_required
+def referral_link():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+    reff_obj = ReferralLinks.objects.filter(email=user_obj.email, model="Startup").first()
+
+    if reff_obj:
+        referral_link = f"http://127.0.0.1:5000/investor/referral-link-verify/{reff_obj.hash_value}"
+        return return_data_results(True, referral_link, 200)
+
+    user_hash = create_internal_hash(user_obj.id, user_obj.email)
+    ref_obj = ReferralLinks(model="Startup",
+                            email=user_obj.email,
+                            hash_value=user_hash)
+    ref_obj.save()
+    referral_link = f"http://127.0.0.1:5000/investor/referral-link-verify/{user_hash}"
+    return return_data_results(True, referral_link, 200)
+
+
+@startup_blueprint.route('/referral-link-verify/<token>', methods=["GET"])
+def verify_referral_link(token):
+    if token and len(token) == 10:
+        hash_obj = ReferralLinks.objects.filter(hash_value=token).first()
+        if hash_obj:
+            referral_email = hash_obj.email
+            return jsonify({
+                "result": True,
+                "message": "valid token",
+                "referrer": referral_email
+            })
+        else:
+            return return_data_results(False, "invalid token", 200)
+    return return_data_results(False, "invalid token")
 
 
 @startup_blueprint.route('/update-info', methods=['PATCH'])

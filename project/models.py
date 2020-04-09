@@ -20,6 +20,8 @@ class Investor(db.Document, UserMixin):
     syndicate = db.ListField()
     location = db.StringField()
     password = db.StringField()
+    referred_to = db.ListField()
+    referred_by = db.EmailField()
     accreditation = db.StringField()
     profile_pic_link = db.StringField()
     password_reset_meta_data = db.DictField()
@@ -30,18 +32,15 @@ class Investor(db.Document, UserMixin):
     email_confirmed = db.BooleanField(default=False)
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
-    created = db.DateTimeField(default=datetime.datetime.utcnow())
-
-    # This field is for frontend to decide whether to show a tutorial or not
     first_dashboard_visit = db.BooleanField(default=True)
+    created = db.DateTimeField(default=datetime.datetime.utcnow())
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
         return {
             "user_id": str(self.id),
-            "role": "investor"
-        }
+            "role": "investor"}
 
     def is_jwt_authenticated(self):
         return self.is_user_authenticated
@@ -56,33 +55,31 @@ class Startup(db.Document, UserMixin):
     position = db.StringField()
     password = db.StringField()
     location = db.StringField()
+    referred_to = db.ListField()
     slide_deck = db.StringField()
+    referred_by = db.EmailField()
     company_link = db.StringField()
     company_name = db.StringField()
     num_team_members = db.IntField()
     startup_pitch = db.StringField()
     profile_pic_link = db.StringField()
-    approved = db.BooleanField(default=False)
     password_reset_meta_data = db.DictField()
+    approved = db.BooleanField(default=False)
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
     is_logged_in = db.BooleanField(defalut=False)
     email_confirmed = db.BooleanField(default=False)
     is_google_signup = db.BooleanField(default=False)
     email = db.EmailField(required=True, unique=True)
-    created = db.DateTimeField(default=datetime.datetime.utcnow())
-
-
-    # This field is for frontend to decide whether to show a tutorial or not
     first_dashboard_visit = db.BooleanField(default=True)
+    created = db.DateTimeField(default=datetime.datetime.utcnow())
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
         return {
             "user_id": str(self.id),
-            "role": "startup"
-        }
+            "role": "startup"}
 
     def is_jwt_authenticated(self):
         return self.is_user_authenticated
@@ -92,3 +89,11 @@ class SignUpMappings(db.Document):
     deals_data = db.DictField()
     sector_data = db.DictField()
     accreditation_data = db.DictField()
+
+
+class ReferralLinks(db.Document):
+    email = db.EmailField(required=True)
+    model = db.StringField(required=True)
+    hash_value = db.StringField(required=True)
+
+    meta = dict(indexes=['hash_value', 'email', 'model'])
