@@ -27,13 +27,6 @@ from common_utilities.json_schema_investor_validation import (validate_inv_first
 logger = logging.getLogger(__name__)
 investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
 
-"""
-jwt_required/config.py           :=> Time    override default jwt_expiry toekn from 15 mins to 60 mins
-signature verification failed    :=> 422     override in jwt_required/default_callbacks.py
-Token expired                    :=> 401     override in jwt_required/default_callbacks.py
-jwt_required/view_decorators.py  :=> Logout  overide functionality written
-"""
-
 
 @investor_blueprint.route("/google-token", methods=["POST"])
 def google_token():
@@ -61,7 +54,7 @@ def google_token():
                         user_objs = ma_schema.dump(user)
                         jwt_obj = {"email": email, "model": "Investor"}
                         access_token = create_access_token(identity=jwt_obj)
-                        user.is_authenticated = True
+
                         ret_obj = {
                             "result": True,
                             "user": user_objs,
@@ -228,13 +221,13 @@ def forgot_password():
             thread = threading.Thread(target=password_reset_email, args=(email, link,))
             thread.start()
             logger.debug(f"investor password reset link sent: {email}")
-            message = "frontend password reset link sent template"
+            message = "password reset link sent"
             return return_data_results(True, message)
         else:
             return jsonify(response)
 
     elif request.method == "GET":
-        message = "frontend forgot password template"
+        message = "forgot password template"
         return return_data_results(True, message)
 
 
@@ -334,19 +327,6 @@ def logout():
     return return_data_results(True, "user logged off")
 
 
-@investor_blueprint.route('/test', methods=["GET"])
-@jwt_required
-def test():
-    jwt_decode = jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
-
-    user_obj = jwt_decode["user_obj"]
-    if not user_obj.is_logged_in:
-        return return_data_results(False, "user logged out")
-    return return_data_results(True, "user logged in")
-
-
 @investor_blueprint.route('/referral-link', methods=["POST"])
 @jwt_required
 def referral_link():
@@ -358,7 +338,7 @@ def referral_link():
     reff_obj = ReferralLinks.objects.filter(email=user_obj.email, model="Investor").first()
 
     if reff_obj:
-        referral_link = f"http://127.0.0.1:5000/investor/referral-link-verify/{reff_obj.hash_value}"
+        referral_link = f"http://127.0.0.1:5000/investor/ref/share/{reff_obj.hash_value}"
         return return_data_results(True, referral_link, 200)
 
     user_hash = create_internal_hash(user_obj.id, user_obj.email)
@@ -366,11 +346,11 @@ def referral_link():
                             email=user_obj.email,
                             hash_value=user_hash)
     ref_obj.save()
-    referral_link = f"http://127.0.0.1:5000/investor/referral-link-verify/{user_hash}"
+    referral_link = f"http://127.0.0.1:5000/investor/ref/share/{user_hash}"
     return return_data_results(True, referral_link, 200)
 
 
-@investor_blueprint.route('/referral-link-verify/<token>', methods=["GET"])
+@investor_blueprint.route('/ref/share/<token>', methods=["GET"])
 def verify_referral_link(token):
     if token and len(token) == 10:
         hash_obj = ReferralLinks.objects.filter(hash_value=token).first()
@@ -405,7 +385,7 @@ def mime_files():
     if not all([file_obj, file_name, file_type]):
         return return_data_results(False, "missing key data")
 
-    file_location = str(uuid.uuid4())
+    file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
     if os._exists(file_location):
         shutil.rmtree(file_location)
 

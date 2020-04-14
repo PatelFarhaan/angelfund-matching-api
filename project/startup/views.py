@@ -53,7 +53,7 @@ def google_token():
                         user_objs = ma_schema.dump(user)
                         jwt_obj = {"email": email, "model": "Startup"}
                         access_token = create_access_token(identity=jwt_obj)
-                        user.is_authenticated = True
+
                         ret_obj = {
                             "result": True,
                             "user": user_objs,
@@ -316,7 +316,7 @@ def mime_files():
     if not all([file_obj, file_name, file_type]):
         return return_data_results(False, "missing key data")
 
-    file_location = str(uuid.uuid4())
+    file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
     if os._exists(file_location):
         shutil.rmtree(file_location)
 
@@ -367,7 +367,7 @@ def referral_link():
     reff_obj = ReferralLinks.objects.filter(email=user_obj.email, model="Startup").first()
 
     if reff_obj:
-        referral_link = f"http://127.0.0.1:5000/investor/referral-link-verify/{reff_obj.hash_value}"
+        referral_link = f"http://127.0.0.1:5000/investor/ref/share/{reff_obj.hash_value}"
         return return_data_results(True, referral_link, 200)
 
     user_hash = create_internal_hash(user_obj.id, user_obj.email)
@@ -375,11 +375,11 @@ def referral_link():
                             email=user_obj.email,
                             hash_value=user_hash)
     ref_obj.save()
-    referral_link = f"http://127.0.0.1:5000/investor/referral-link-verify/{user_hash}"
+    referral_link = f"http://127.0.0.1:5000/investor/ref/share{user_hash}"
     return return_data_results(True, referral_link, 200)
 
 
-@startup_blueprint.route('/referral-link-verify/<token>', methods=["GET"])
+@startup_blueprint.route('/ref/share/<token>', methods=["GET"])
 def verify_referral_link(token):
     if token and len(token) == 10:
         hash_obj = ReferralLinks.objects.filter(hash_value=token).first()
@@ -425,23 +425,6 @@ def update_info():
     else:
         message = "user is not authenticated"
         return return_data_results(False, message)
-
-
-@startup_blueprint.route('/test', methods=["GET"])
-@jwt_required
-def test():
-    jwt_decode = jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
-
-    user_obj = jwt_decode["user_obj"]
-    if not user_obj.is_logged_in:
-        return return_data_results(False, "user logged out")
-
-    return return_data_results(True, "user logged in")
-
-
-
 ##############################################################################
 def return_none_results(name, status_code=200):
     return_obj = {
