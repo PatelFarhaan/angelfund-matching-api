@@ -9,6 +9,11 @@ lambda
 /lambda
 lambda*
 /lambda/*
-angelfund_v1.log
 /angelfund_v1.log*
+<<<<<<< HEAD
 README-Template.md*
+=======
+venv/
+.vscode/
+.DS_Store
+>>>>>>> 49ef59b8ea0086cbf94678189054df5578d3b818

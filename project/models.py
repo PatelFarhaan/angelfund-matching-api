@@ -35,6 +35,7 @@ class Investor(db.Document, UserMixin):
     first_dashboard_visit = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
+
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
@@ -48,16 +49,16 @@ class Investor(db.Document, UserMixin):
 
 class Startup(db.Document, UserMixin):
     bio = db.StringField()
-    raised = db.IntField()
     sectors = db.ListField()
+    raised = db.StringField()
     progress = db.ListField()
-    round_size = db.IntField()
     position = db.StringField()
     password = db.StringField()
     location = db.StringField()
     referred_to = db.ListField()
     slide_deck = db.StringField()
     referred_by = db.EmailField()
+    round_size = db.StringField()
     company_link = db.StringField()
     company_name = db.StringField()
     num_team_members = db.IntField()
