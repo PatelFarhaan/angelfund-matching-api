@@ -13,6 +13,7 @@ from flask import url_for, request, Blueprint, jsonify
 from common_utilities.internal_hash import create_internal_hash
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
+from common_utilities.get_str_common_mappings import get_str_users
 from common_utilities.google_email import google_email_confirmation
 from project.startup.marshmallow_serialize import StartupUserSchema
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -425,6 +426,15 @@ def update_info():
     else:
         message = "user is not authenticated"
         return return_data_results(False, message)
+
+
+@startup_blueprint.route('/get-users/<offset>', methods=["GET"])
+@jwt_required
+def startup_users_mapping(offset):
+    if not offset.isdigit():
+        return return_data_results(False, "query parameter should be an integer")
+    return get_str_users(offset=int(offset))
+
 ##############################################################################
 def return_none_results(name, status_code=200):
     return_obj = {

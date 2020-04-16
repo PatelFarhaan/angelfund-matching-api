@@ -13,7 +13,7 @@ from flask import url_for, request, Blueprint, jsonify
 from common_utilities.internal_hash import create_internal_hash
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
-from common_utilities.get_common_mappings import get_common_mapping
+from common_utilities.get_inv_common_mappings import get_common_mapping
 from common_utilities.google_email import google_email_confirmation
 from project.investor.marshmallow_serialize import InvestorUserSchema
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3

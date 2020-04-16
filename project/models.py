@@ -64,6 +64,7 @@ class Startup(db.Document, UserMixin):
     num_team_members = db.IntField()
     startup_pitch = db.StringField()
     profile_pic_link = db.StringField()
+    raised_capital_desc = db.StringField()
     password_reset_meta_data = db.DictField()
     approved = db.BooleanField(default=False)
     last_name = db.StringField(max_length=70)
@@ -74,6 +75,7 @@ class Startup(db.Document, UserMixin):
     email = db.EmailField(required=True, unique=True)
     first_dashboard_visit = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
+
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
