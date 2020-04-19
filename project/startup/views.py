@@ -433,7 +433,7 @@ def update_info():
 def startup_users_mapping(offset):
     if not offset.isdigit():
         return return_data_results(False, "query parameter should be an integer")
-    return get_str_users(offset=int(offset))
+    return jsonify(get_str_users(offset=int(offset)*10))
 
 ##############################################################################
 def return_none_results(name, status_code=200):
