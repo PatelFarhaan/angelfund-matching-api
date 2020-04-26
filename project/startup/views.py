@@ -297,7 +297,6 @@ def logout():
     return return_data_results(True, "user logged off")
 
 
-
 @startup_blueprint.route('/mime-files', methods=["POST"])
 @jwt_required
 def mime_files():

@@ -35,6 +35,22 @@ class Investor(db.Document, UserMixin):
     first_dashboard_visit = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
+    #########
+    investor = db.BooleanField(default=True)
+    show_profile = db.BooleanField(default=True)
+    monday_notifications = db.BooleanField(default=True)
+    show_limit = db.IntField(default=0)
+    matched_week = db.IntField()
+    prior_invsetment = db.ListField()
+    connected = db.ListField()
+    passed = db.ListField()
+    pending = db.ListField()
+    monday_notification = db.BooleanField(default=True)
+    delete_account = db.BooleanField(default=False)
+    count_invited = db.IntField()
+    count_passed = db.IntField()
+    #########
+
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
@@ -58,7 +74,7 @@ class Startup(db.Document, UserMixin):
     referred_to = db.ListField()
     slide_deck = db.StringField()
     referred_by = db.EmailField()
-    round_size = db.StringField()
+    round_size = db.StringField()  # seeking
     company_link = db.StringField()
     company_name = db.StringField()
     num_team_members = db.IntField()
@@ -76,8 +92,23 @@ class Startup(db.Document, UserMixin):
     first_dashboard_visit = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
+    #####
+    investor = db.BooleanField(default=False)
+    feedback = db.ListField()
+    connected = db.ListField()
+    passed = db.ListField()
+    pending = db.ListField()
+    co_founders = db.ListField()                       # upto five users
+    show_slide_deck = db.BooleanField(default=True)
+    delete_account = db.BooleanField(default=False)
+    show_profile = db.BooleanField(default=True)
+    monday_notification = db.BooleanField(default=True)
+    count_invited = db.IntField()
+    count_passed = db.IntField()
+    ####
 
-    meta = dict(indexes=['email', '-created', 'is_google_signup'])
+
+    meta = dict(indexes=['email', '-created', 'is_google_signup'], strict=False)
 
     def get_id(self):
         return {

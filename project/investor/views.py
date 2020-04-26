@@ -6,6 +6,8 @@ import logging
 import requests
 import threading
 from project import serial
+from common_utilities.matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
+from common_utilities.ml_apis import get_discover
 from flask_login import login_user
 from common_utilities import CONSTANT
 from project.models import Investor, ReferralLinks
@@ -13,15 +15,14 @@ from flask import url_for, request, Blueprint, jsonify
 from common_utilities.internal_hash import create_internal_hash
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
-from common_utilities.get_inv_common_mappings import get_common_mapping
 from common_utilities.google_email import google_email_confirmation
-from project.investor.marshmallow_serialize import InvestorUserSchema
+from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
+from common_utilities.get_inv_common_mappings import get_common_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema,
-                                                              validate_google_schema, validate_inv_login_schema,
-                                                              validate_inv_password_reset_schema)
+                                                              validate_google_schema, validate_inv_login_schema, validate_inv_password_reset_schema)
 
 
 logger = logging.getLogger(__name__)
@@ -66,14 +67,25 @@ def google_token():
                         first_name = userinfo_response.json().get("given_name", None)
                         last_name = userinfo_response.json().get("family_name", None)
 
+                        user_dict = dict(email = email,
+                                         last_name = last_name,
+                                         email_confirmed = True,
+                                         first_name = first_name,
+                                         is_google_signup = True,
+                                         profile_pic_link = picture)
+
                         # noinspection PyArgumentList
-                        new_user = Investor(email=email,
-                                            last_name=last_name,
-                                            email_confirmed=True,
-                                            first_name=first_name,
-                                            is_google_signup=True,
-                                            profile_pic_link=picture)
+                        new_user = Investor(**user)
                         new_user.save()
+
+                        user_dict["investor"] = True
+                        ml_schema = InvestorMLSchema()
+                        user = Investor.objects.filter(email=email).first()
+                        ml_schema_resp = ml_schema.dump(user)
+                        if not insert_into_matching(email, ml_schema_resp):
+                            pass
+                            # todo: shoot out a mail to angelfund team to get the data from investor db and dump it to matching db
+
                         logger.debug(f"investor created {email} via Google OAuth")
 
                         thread = threading.Thread(target=google_email_confirmation, args=(email,))
@@ -251,6 +263,15 @@ def register():
             input_request["password"] = generate_password_hash(input_request["password"])
             new_user = Investor(**input_request)
             new_user.save()
+
+            input_request["investor"] = True
+            ml_schema = InvestorMLSchema()
+            user = Investor.objects.filter(email=email).first()
+            ml_schema_resp = ml_schema.dump(user)
+            if not insert_into_matching(email, ml_schema_resp):
+                pass
+            # todo: shoot out a mail to angelfund team to get the data from investor db and dump it to matching db
+
             logger.debug(f"investor created {email}")
 
             token = serial.dumps(email, salt='email_confirm')
@@ -261,7 +282,7 @@ def register():
             return return_data_results(True, message)
         else:
             return jsonify(response)
-    
+
     elif request.method == "GET":
         message = "frontend register template"
         return return_data_results(True, message)
@@ -292,9 +313,9 @@ def update_info():
 
     user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
-        input_data = request.get_json()    # code will give 500 error if no json if passed
+        input_data = request.get_json()
         available_fields = {"sectors", "deals", "bio", "location",
-                            "accreditation", "syndicate", "angel", "investor"}
+                            "accreditation", "syndicate", "angel"}
         for field in input_data:
             if field in available_fields:
                 setattr(user_obj, field, input_data[field])
@@ -302,6 +323,9 @@ def update_info():
                 message = "invalid user field"
                 return return_data_results(False, message)
         user_obj.save()
+        if update_into_matching(user_obj.email, input_data):
+            pass
+            #todo: shoot out an email to the team
         ma_schema = InvestorUserSchema()
         user_objs = ma_schema.dump(user_obj)
         ret_obj = {
@@ -348,6 +372,46 @@ def referral_link():
     ref_obj.save()
     referral_link = f"http://127.0.0.1:5000/investor/ref/share/{user_hash}"
     return return_data_results(True, referral_link, 200)
+
+
+@investor_blueprint.route('/dashboard', methods=["GET", "POST"])
+@jwt_required
+def investors_dashboard():
+    if request.method == "GET":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        user_obj = jwt_decode["user_obj"]
+        matching_obj = get_matching_data(user_obj.email)
+        if matching_obj == {}:
+            return {} # no matching data as of now
+
+        _id = matching_obj.get("_id")
+        if not _id:
+            #todo: shoot out a mail to the team to fix id in matching db
+            return {} # temp display no matching startup
+
+        discover = get_discover(_id)
+        if not discover["result"]:
+            # todo: shoot out a mail to the team to fix id in matching db
+            return {}  # temp display no matching startup
+
+        elif discover["result"] and discover["data"] == []:
+            # todo: shoot out a mail to the team to fix id in matching db
+            return {}  # temp display no matching startup
+
+        elif discover["result"] and not discover["data"] == []:
+            str_data = process_all_str_data(discover["data"])
+            return jsonify({"result": True, "data": str_data})
+
+        else:
+            # todo: shoot out a mail to the team to fix id in matching db
+            return {}  # temp display no matching startup
+
+    elif request.method == "POST":
+        return {}
+
 
 
 @investor_blueprint.route('/ref/share/<token>', methods=["GET"])
@@ -416,6 +480,7 @@ def mime_files():
 @investor_blueprint.route('/investor-common-mappings', methods=["GET"])
 def investors_common_mapping():
     return get_common_mapping()
+
 
 ##################################################   *** HELPERS ***   ####################################################
 def return_none_results(name, status_code=200):

@@ -5,13 +5,13 @@ sys.path.append('../')
 from common_utilities import CONSTANT
 
 
-url = CONSTANT.ML_SERVER_EIP.value
 content_type = "application/json"
 x_auth_key = CONSTANT.ML_SERVER_X_AUTH_KEY.value
 
 
-def get_discover(url, user_id):
-    url = f"{url}get_discover"
+
+def get_discover(user_id):
+    url = f"{CONSTANT.ML_SERVER_EIP.value}get_discover"
     payload = {"user_id": user_id}
     headers = {
       'x-auth-key': x_auth_key,
@@ -21,8 +21,8 @@ def get_discover(url, user_id):
     return response.json()
 
 
-def set_response(url, user_id: int, user_id_to: int, response: bool):
-    url = f"{url}set_response"
+def set_response(user_id: int, user_id_to: int, response: bool):
+    url = f"{CONSTANT.ML_SERVER_EIP.value}set_response"
     payload = {
         "user_id": user_id,
         "user_id_to": user_id_to,
@@ -36,8 +36,8 @@ def set_response(url, user_id: int, user_id_to: int, response: bool):
     return response.json()
 
 
-def clean_discover(url):
-    url = f"{url}clean_discover"
+def clean_discover():
+    url = f"{CONSTANT.ML_SERVER_EIP.value}clean_discover"
     payload = {}
     headers = {
         'x-auth-key': x_auth_key,
@@ -46,8 +46,8 @@ def clean_discover(url):
     return response.json()
 
 
-def reset_settings(url, user_id):
-    url = f"{url}reset_settings"
+def reset_settings(user_id):
+    url = f"{CONSTANT.ML_SERVER_EIP.value}reset_settings"
     payload = {"user_id": user_id}
     headers = {
         'x-auth-key': x_auth_key,
@@ -57,8 +57,8 @@ def reset_settings(url, user_id):
     return response.json()
 
 
-def hide_profile_from_discover(url, user_id):
-    url = f"{url}hide_profile_from_discover"
+def hide_profile_from_discover(user_id):
+    url = f"{CONSTANT.ML_SERVER_EIP.value}hide_profile_from_discover"
     payload = {"user_id": user_id}
     headers = {
         'x-auth-key': x_auth_key,
@@ -68,8 +68,8 @@ def hide_profile_from_discover(url, user_id):
     return response.json()
 
 
-def delete_user_ml(url, user_id):
-    url = f"{url}delete_user"
+def delete_user_ml(user_id):
+    url = f"{CONSTANT.ML_SERVER_EIP.value}delete_user"
     payload = {"user_id": user_id}
     headers = {
         'x-auth-key': x_auth_key,

@@ -28,4 +28,3 @@ def pdf_upload_to_s3(object_name, extention, file_location, file_obj_name):
                           ExtraArgs={'ACL': 'public-read'})
     public_url = f'https://{bucket}.s3-us-west-1.amazonaws.com/{object_name}'
     return public_url
-
