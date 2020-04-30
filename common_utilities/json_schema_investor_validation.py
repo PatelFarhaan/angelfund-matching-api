@@ -133,3 +133,75 @@ def validate_google_schema(data):
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
+inv_dashboard_schema = {
+    "type": "object",
+    "properties": {
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+        "invite": {
+            "type": "boolean"
+        },
+    },
+    "required": ["email", "invite"],
+    "additionalProperties": False
+}
+
+
+def validate_dashboard_schema(data):
+    try:
+        validate(instance=data, schema= inv_dashboard_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+
+#############################################################################################################################################
+
+inv_referrer_schema = {
+    "type": "object",
+    "properties": {
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+    },
+    "required": ["email"],
+    "additionalProperties": False
+}
+
+
+def validate_referrer_schema(data):
+    try:
+        validate(instance=data, schema= inv_referrer_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+
+#############################################################################################################################################
+
+inv_company_schema = {
+    "type": "object",
+    "properties": {
+        "company_name": {
+            "type": "string"
+        },
+    },
+    "required": ["company_name"]
+}
+
+
+def validate_company_schema(data):
+    try:
+        validate(instance=data, schema= inv_company_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+
+#############################################################################################################################################

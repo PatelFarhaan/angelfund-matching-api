@@ -10,9 +10,9 @@ from common_utilities.matching_db import insert_into_matching, update_into_match
 from common_utilities.ml_apis import get_discover
 from flask_login import login_user
 from common_utilities import CONSTANT
-from project.models import Investor, ReferralLinks
+from project.models import Investor, ReferralLinks, Startup
 from flask import url_for, request, Blueprint, jsonify
-from common_utilities.internal_hash import create_internal_hash
+from common_utilities.company_images import company_images_api
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
@@ -21,7 +21,8 @@ from common_utilities.get_inv_common_mappings import get_common_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema,
+from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
+                                                              validate_referrer_schema, validate_company_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_inv_password_reset_schema)
 
 
@@ -314,8 +315,8 @@ def update_info():
     user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
         input_data = request.get_json()
-        available_fields = {"sectors", "deals", "bio", "location",
-                            "accreditation", "syndicate", "angel"}
+        available_fields = {"sectors", "deals", "bio", "location", "prior_investment",
+                            "accreditation", "syndicate", "angel", "profile_pic_link"}
         for field in input_data:
             if field in available_fields:
                 setattr(user_obj, field, input_data[field])
@@ -354,24 +355,26 @@ def logout():
 @investor_blueprint.route('/referral-link', methods=["POST"])
 @jwt_required
 def referral_link():
-    jwt_decode = jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
+    if request.method == "POST":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
 
-    user_obj = jwt_decode["user_obj"]
-    reff_obj = ReferralLinks.objects.filter(email=user_obj.email, model="Investor").first()
+        user_obj = jwt_decode["user_obj"]
+        inp_req = request.get_json()
+        response = validate_referrer_schema(inp_req)
 
-    if reff_obj:
-        referral_link = f"http://127.0.0.1:5000/investor/ref/share/{reff_obj.hash_value}"
-        return return_data_results(True, referral_link, 200)
+        if not response["result"]:
+            return jsonify(response)
 
-    user_hash = create_internal_hash(user_obj.id, user_obj.email)
-    ref_obj = ReferralLinks(model="Investor",
-                            email=user_obj.email,
-                            hash_value=user_hash)
-    ref_obj.save()
-    referral_link = f"http://127.0.0.1:5000/investor/ref/share/{user_hash}"
-    return return_data_results(True, referral_link, 200)
+        ref_email = response["data"]["email"]
+        refferred_to = list(user_obj.referred_to)
+        refferred_to.append(ref_email)
+        user_obj.referred_to = refferred_to
+        user_obj.save()
+
+        # shoutout mail to the respective person
+        return jsonify({"result": True, "message": "mail sent"})
 
 
 @investor_blueprint.route('/dashboard', methods=["GET", "POST"])
@@ -384,6 +387,7 @@ def investors_dashboard():
 
         user_obj = jwt_decode["user_obj"]
         matching_obj = get_matching_data(user_obj.email)
+
         if matching_obj == {}:
             return {} # no matching data as of now
 
@@ -393,6 +397,7 @@ def investors_dashboard():
             return {} # temp display no matching startup
 
         discover = get_discover(_id)
+
         if not discover["result"]:
             # todo: shoot out a mail to the team to fix id in matching db
             return {}  # temp display no matching startup
@@ -401,16 +406,64 @@ def investors_dashboard():
             # todo: shoot out a mail to the team to fix id in matching db
             return {}  # temp display no matching startup
 
-        elif discover["result"] and not discover["data"] == []:
+        else:
             str_data = process_all_str_data(discover["data"])
             return jsonify({"result": True, "data": str_data})
 
-        else:
-            # todo: shoot out a mail to the team to fix id in matching db
-            return {}  # temp display no matching startup
-
     elif request.method == "POST":
-        return {}
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        inv_obj = jwt_decode["user_obj"]
+        inv_email = inv_obj.email
+
+        response = validate_dashboard_schema(request.get_json())
+        if not response["result"]:
+            return jsonify(response)
+
+        str_email = response["data"]["email"]
+        str_invite = response["data"]["invite"]
+
+        if not str_invite:
+            str_obj = Startup.objects.filter(email=str_email).first()
+            str_feedback = response["data"]["feedback"]
+            inv_passed_requests = dict(inv_obj.passed)
+            str_feedback_requests = list(str_obj.feedback)
+            inv_passed_requests[str_email] = True
+            str_feedback["from_email"] = inv_email
+            str_feedback_requests.append(str_feedback)
+            inv_obj.passed = inv_passed_requests
+            str_obj.feedback = str_feedback_requests
+            inv_obj.save()
+            str_obj.save()
+            return jsonify({"result": True, "message": "passed"})
+
+        if str_invite:
+            str_obj = Startup.objects.filter(email=str_email).first()
+            str_pending_requests = dict(str_obj.pending)
+            str_connected_requests = dict(str_obj.connected)
+
+            if str_pending_requests.get(inv_email):
+                inv_connected_requests = dict(inv_obj.connected)
+                str_pending_requests.pop(inv_email)
+                str_connected_requests[inv_email] = True
+                inv_connected_requests[str_email] = True
+                inv_obj.connected = inv_connected_requests
+                str_obj.connected = str_connected_requests
+                str_obj.pending = str_pending_requests
+                inv_obj.save()
+                str_obj.save()
+                return jsonify({"result": True, "message": "connected"})
+                # todo: send email that they connected
+            elif str_connected_requests.get(inv_email):
+                return jsonify({"result": True, "message": "connected"})
+            else:
+                inv_pending_req = dict(inv_obj.pending)
+                inv_pending_req[str_email] = True
+                inv_obj.pending = inv_pending_req
+                inv_obj.save()
+                return jsonify({"result": True, "message": "invitation"})
 
 
 
@@ -480,6 +533,26 @@ def mime_files():
 @investor_blueprint.route('/investor-common-mappings', methods=["GET"])
 def investors_common_mapping():
     return get_common_mapping()
+
+
+@investor_blueprint.route('/company-image-api', methods=["POST"])
+@jwt_required
+def general_company_images():
+    if request.method == "POST":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        inp_req = request.get_json()
+        response = validate_company_schema(inp_req)
+
+        if not response["result"]:
+            return jsonify(response)
+
+        company_name = response["data"]["company_name"]
+        return company_images_api(company_name)
+
+
 
 
 ##################################################   *** HELPERS ***   ####################################################

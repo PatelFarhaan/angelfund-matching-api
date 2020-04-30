@@ -39,20 +39,20 @@ class Investor(db.Document, UserMixin):
     investor = db.BooleanField(default=True)
     show_profile = db.BooleanField(default=True)
     monday_notifications = db.BooleanField(default=True)
-    show_limit = db.IntField(default=0)
-    matched_week = db.IntField()
-    prior_invsetment = db.ListField()
-    connected = db.ListField()
-    passed = db.ListField()
-    pending = db.ListField()
+    show_limit = db.IntField(default=100)
+    matched_week = db.IntField(default=0)
+    prior_investment = db.ListField()
+    connected = db.DictField()
+    passed = db.DictField()
+    pending = db.DictField()
     monday_notification = db.BooleanField(default=True)
     delete_account = db.BooleanField(default=False)
-    count_invited = db.IntField()
-    count_passed = db.IntField()
+    count_invited = db.IntField(default=0)
+    count_passed = db.IntField(default=0)
     #########
 
 
-    meta = dict(indexes=['email', '-created', 'is_google_signup'])
+    meta = dict(indexes=['email', '-created', 'is_google_signup'], strict=False)
 
     def get_id(self):
         return {
@@ -95,9 +95,10 @@ class Startup(db.Document, UserMixin):
     #####
     investor = db.BooleanField(default=False)
     feedback = db.ListField()
-    connected = db.ListField()
-    passed = db.ListField()
-    pending = db.ListField()
+    connected = db.DictField()
+    passed = db.DictField()
+    matched_week = db.IntField(default=0)
+    pending = db.DictField()
     co_founders = db.ListField()                       # upto five users
     show_slide_deck = db.BooleanField(default=True)
     delete_account = db.BooleanField(default=False)
@@ -105,6 +106,7 @@ class Startup(db.Document, UserMixin):
     monday_notification = db.BooleanField(default=True)
     count_invited = db.IntField()
     count_passed = db.IntField()
+    show_limit = db.IntField(default=3)
     ####
 
 

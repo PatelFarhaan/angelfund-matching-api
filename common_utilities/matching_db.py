@@ -17,19 +17,8 @@ def db_details():
 def insert_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
     my_query = {"email": email}
-    allowed_columns = {"sectors", "deals", "bio", "location",
-                       "accreditation", "syndicate", "angel"}
 
-    for i in allowed_columns:
-        if not i in user_obj:
-            if i in ("sectors", "syndicate"):
-                user_obj[i] = []
-            elif i == "angel":
-                user_obj[i] = False
-            else:
-                user_obj[i] = ''
-
-    _id = (((collection.estimated_document_count() - 1) * 100) + 100)
+    _id = (((collection.estimated_document_count()) * 100) + 100)
     doc = list(collection.find(my_query))
     user_obj["_id"] = _id
     if not doc:
@@ -89,7 +78,6 @@ def process_all_str_data(data: list) -> list:
     for str in data:
         _id = str["_id"]
         str_data = get_str_details(_id)
-        print(str_data)
         if str_data["result"]:
             str_details = processing_helper(str_data["email"])
             if str_details["result"]:
@@ -98,9 +86,3 @@ def process_all_str_data(data: list) -> list:
         if len(res) == 3:
             return res
     return res
-
-
-def available_col() -> set:
-    fields = {"sectors", "deals", "bio", "location",
-              "accreditation", "syndicate", "angel"}
-    return fields

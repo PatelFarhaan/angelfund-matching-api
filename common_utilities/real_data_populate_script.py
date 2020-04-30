@@ -32,7 +32,7 @@ def startup_data(startup_path):
     for i in input:
         obj = {}
         for k, v in i.items():
-            if k in ("sectors", "startup_progress"):
+            if k in ("sectors", "progress"):
                 if v:
                     obj[k] = v.split(',')
                 else:
@@ -40,6 +40,19 @@ def startup_data(startup_path):
             else:
                 obj[k] = v.strip()
         try:
+            obj["passed"] = {}
+            obj["pending"] = {}
+            obj["feedback"] = []
+            obj["connected"] = {}
+            obj["investor"] = False
+            obj["approved"] = True
+            obj["co_founders"] = []
+            obj["count_passed"] = True
+            obj["count_invited"] = True
+            obj["num_team_members"] = 0
+            obj["show_slide_deck"] = True
+            obj["email_confirmed"] = True
+            obj["monday_notification"] = True
             collection.insert_one(obj)
         except:
             continue
@@ -50,9 +63,13 @@ if __name__ == '__main__':
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.admin
 
+    import pandas
+    startup_path = "angelfund_startup.xlsx"
 
-    startup_path = "/Users/farhaan/Downloads/Data/startup.csv"     # Make sure to change this to location of startup csv
-    investor_path = "/Users/farhaan/Downloads/Data/investor.csv"   # Make sure to change this to location of investor csv
+    excel_file = pandas.read_excel(startup_path)
+    excel_file.to_csv('test_farhaan.csv')
 
-    investor_data(investor_path)
-    startup_data(startup_path)
+    # investor_path = "/Users/farhaan/Downloads/Data/investor.csv"   # Make sure to change this to location of investor csv
+
+    # investor_data(investor_path)
+    startup_data("test_farhaan.csv")

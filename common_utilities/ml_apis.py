@@ -9,7 +9,6 @@ content_type = "application/json"
 x_auth_key = CONSTANT.ML_SERVER_X_AUTH_KEY.value
 
 
-
 def get_discover(user_id):
     url = f"{CONSTANT.ML_SERVER_EIP.value}get_discover"
     payload = {"user_id": user_id}
