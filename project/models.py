@@ -66,7 +66,7 @@ class Investor(db.Document, UserMixin):
 class Startup(db.Document, UserMixin):
     bio = db.StringField()
     sectors = db.ListField()
-    raised = db.StringField()
+    raised = db.StringField()   # chcek this, if it causes error change it to IntField
     progress = db.ListField()
     position = db.StringField()
     password = db.StringField()

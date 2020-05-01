@@ -3,6 +3,7 @@ sys.path.append("../")
 from pymongo import MongoClient
 from project.models import Startup
 from common_utilities import CONSTANT
+from common_utilities.company_images import company_images_api
 from project.startup.marshmallow_serialize import StartupDashboardSchema
 
 
@@ -70,6 +71,18 @@ def processing_helper(email: str) -> dict:
 
     ma_schema = StartupDashboardSchema()
     res = ma_schema.dump(str_obj)
+    if res["profile_pic_link"] == None and res["company_link"]:
+        try:
+            temp = company_images_api(res["company_link"])
+            if temp["result"]:
+                res["profile_pic_link"] = temp["data"]
+
+            setattr(str_obj, "profile_pic_link", str(temp["data"]))
+            str_obj.save()
+        except:
+            print("kabjsd")
+            res["profile_pic_link"] = None
+
     return {"result": True, "data":res}
 
 

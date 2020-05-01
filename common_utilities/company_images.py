@@ -1,12 +1,17 @@
-import json
+import os
+import sys
 import boto3
+import shutil
 import requests
 from pymongo import MongoClient
+
+sys.path.append("../")
+from common_utilities import CONSTANT
 
 
 
 def search_in_database(company_name):
-    remote_mongo_uri = 'mongodb://***REMOVED***:***REMOVED***@***REMOVED***/admin'
+    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.images
     collection = db.companies
@@ -14,7 +19,7 @@ def search_in_database(company_name):
 
 
 def insert_in_mongo(company_url, company_name):
-    remote_mongo_uri = 'mongodb://***REMOVED***:***REMOVED***@***REMOVED***/admin'
+    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.images
     collection = db.companies
@@ -25,24 +30,29 @@ def insert_in_mongo(company_url, company_name):
 
 def file_upload_to_s3(file, object_name):
     object_name = object_name.split('.')[0]
-    file_location = f"/tmp/{object_name}.jpg"
+    base_location = f"/{os.getcwd()}/company_images/"
+    os.mkdir(base_location)
+    file_location = f"{base_location}{object_name}.jpg"
+
     with open(file_location, 'wb') as f:
         f.write(file.content)
 
     bucket = 'angelfund-company-images'
     s3_client = boto3.client('s3',
-                             aws_access_key_id='***REMOVED***',
-                             aws_secret_access_key='***REMOVED***'
+                             aws_access_key_id=CONSTANT.ACCESS_KEY.value,
+                             aws_secret_access_key=CONSTANT.ACCESS_VALUE.value
                              )
     object_name = object_name + ".jpg"
     s3_client.upload_file(file_location, bucket, object_name,
                           ExtraArgs={'ACL': 'public-read'})
     public_url = f'https://{bucket}.s3-us-west-1.amazonaws.com/{object_name}'
+
+    shutil.rmtree(base_location)
     return public_url
 
 
 def get_company_images(company_name):
-    client_id = "810bdfc31d4d73fb97192859a82ee166818cca6e7812"
+    client_id = CONSTANT.RITEKIT_KEY.value
     url = "https://api.ritekit.com/v1/images/logo?domain={0}&client_id={1}".format(company_name, client_id)
 
     response = requests.request("GET", url)
@@ -59,6 +69,10 @@ def get_company_images(company_name):
 
 
 def company_images_api(company_name):
+    company_name = company_name.replace("https://www.", "")
+    company_name = company_name.replace("www.", "")
+    company_name = company_name.replace("http://www.", "")
+    company_name = company_name.replace("http://", "")
     response = search_in_database(company_name)
     if response:
         return_obj = {"result": True, "data": response['logo_url']}

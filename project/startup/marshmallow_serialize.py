@@ -21,7 +21,7 @@ class StartupMLSchema(ma.Schema):
 class StartupDashboardSchema(ma.Schema):
     class Meta:
         fields = ("bio", "raised", "sectors", "location", "name", "email", "progress", "round_size",
-                  "slide_deck", "company_link", "co_founders", "profile_pic_link", "company_name")
+                  "slide_deck", "co_founders", "company_link", "profile_pic_link", "company_name")
 
 
 class StartupConnectedSchema(ma.Schema):
