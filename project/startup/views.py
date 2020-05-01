@@ -10,7 +10,7 @@ from flask_login import login_user
 from common_utilities import CONSTANT
 from project.models import Startup, ReferralLinks
 from flask import url_for, request, Blueprint, jsonify
-from common_utilities.internal_hash import create_internal_hash
+# from common_utilities.internal_hash import create_internal_hash
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.get_str_common_mappings import get_str_users
@@ -370,13 +370,13 @@ def referral_link():
         referral_link = f"http://127.0.0.1:5000/investor/ref/share/{reff_obj.hash_value}"
         return return_data_results(True, referral_link, 200)
 
-    user_hash = create_internal_hash(user_obj.id, user_obj.email)
-    ref_obj = ReferralLinks(model="Startup",
-                            email=user_obj.email,
-                            hash_value=user_hash)
-    ref_obj.save()
-    referral_link = f"http://127.0.0.1:5000/investor/ref/share{user_hash}"
-    return return_data_results(True, referral_link, 200)
+    # user_hash = create_internal_hash(user_obj.id, user_obj.email)
+    # ref_obj = ReferralLinks(model="Startup",
+    #                         email=user_obj.email,
+    #                         hash_value=user_hash)
+    # ref_obj.save()
+    # referral_link = f"http://127.0.0.1:5000/investor/ref/share{user_hash}"
+    return return_data_results(True, {}, 200)
 
 
 @startup_blueprint.route('/ref/share/<token>', methods=["GET"])

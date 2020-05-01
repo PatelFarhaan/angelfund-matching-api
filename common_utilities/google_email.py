@@ -16,22 +16,50 @@ def google_email_confirmation(user_email):
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Thank you for signing up for ANGELFUND!!!"
-    BODY_TEXT = ("You have successfully signed up for ANGELFUND with your Google account."
-                 "By Team,"
-                 "ANGELFUND AI."
-                 )
-    BODY_HTML = """<html>
-    <head></head>
-    <body>
-      <p>You have successfully signed up for ANGELFUND with your Google account.
-        <br>
-        <br>
-        By Team,
-        <br>
-        ANGELFUND AI.
+    BODY_HTML = """<HTML>
+
+<head>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<div style="margin-left: 5%;margin-right: 5%;">
+    <div style="text-align: center;">
+        <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/angelfund.png" style="height: 110px;" />
+    </div>
+    <div style="border-bottom: 3px solid lightgray;">
+        <p style="font-weight:500;font-size: 30px; color: #7d7676;">Account Created</p>
+    </div>
+    <div style="padding-top: 3%;
+        padding-bottom: 3%;border-bottom: 3px solid lightgray;margin-bottom: 5%;">
+        <strong style="font-weight: 400;font-size: 20px;">
+            You have successfully signed up for ANGELFUND with your Google account.
+        </strong>
+        <p style="margin-bottom: 6%;">
+            Please login here to get started:
         </p>
-    </body>
-    </html>
+        <div style="text-align: center;">
+            <button style="height: 40px;
+            background-color: #5a61eb;
+            color: white;
+            font-size: 16px;
+            border-radius: 8px;"><a style="color:white; text-decoration: none;" target="_blank"
+                    href="https://www.angelfund.ai">Login</a></button>
+        </div>
+    </div>
+    <div style="text-align: center;background-color: lightgrey;opacity: 0.3;padding-top: 2%;padding-bottom: 2%;">
+        <div>
+            <a href="#" class="fa fa-twitter"
+                style="font-size: 25px;text-decoration: none;margin-right: 10px;color: gray;"></a>
+            <a href="#" class="fa fa-linkedin" style="font-size: 25px;text-decoration: none;color: gray;"></a>
+        </div>
+        <p>
+            2375 Zanker Road #250, San Jose, CA 95131
+        </p>
+        <footer>Copyright &copy;2020 Global Angel Fund, Inc. <a style="text-decoration: underline;">Unsubscribe</a>
+        </footer>
+    </div>
+</div>
+
+</HTML>
                 """
     CHARSET = "UTF-8"
     client = boto3.client('ses',
@@ -49,10 +77,6 @@ def google_email_confirmation(user_email):
                     'Html': {
                         'Charset': CHARSET,
                         'Data': BODY_HTML,
-                    },
-                    'Text': {
-                        'Charset': CHARSET,
-                        'Data': BODY_TEXT,
                     },
                 },
                 'Subject': {

@@ -1,4 +1,5 @@
 from project import ma
+from flask_marshmallow import fields as fd
 
 
 class StartupUserSchema(ma.Schema):
@@ -21,3 +22,18 @@ class StartupDashboardSchema(ma.Schema):
     class Meta:
         fields = ("bio", "raised", "sectors", "location", "name", "email", "progress", "round_size",
                   "slide_deck", "company_link", "co_founders", "profile_pic_link", "company_name")
+
+
+class StartupConnectedSchema(ma.Schema):
+    action = fd.fields.String(default="Invite Sent")
+    status = fd.fields.String(default="Connected")
+
+    class Meta:
+        fields = ("location", "round_size", "company_name", "profile_pic_link", "action")
+
+
+class StartupPassedSchema(ma.Schema):
+    action = fd.fields.String(default="Passed")
+
+    class Meta:
+        fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "email")

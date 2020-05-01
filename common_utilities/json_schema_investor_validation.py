@@ -191,7 +191,8 @@ inv_company_schema = {
             "type": "string"
         },
     },
-    "required": ["company_name"]
+    "required": ["company_name"],
+    "additionalProperties": False
 }
 
 
@@ -203,5 +204,27 @@ def validate_company_schema(data):
     except SchemaError as e:
         return {'result': False, 'message': e.message}
     return {'result': True, 'data': data}
+#############################################################################################################################################
 
+inv_passed_recvisit_schema = {
+    "type": "object",
+    "properties": {
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+    },
+    "required": ["email"],
+    "additionalProperties": False
+}
+
+
+def validate_inv_passed_recvisit_schema(data):
+    try:
+        validate(instance=data, schema= inv_passed_recvisit_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
 #############################################################################################################################################

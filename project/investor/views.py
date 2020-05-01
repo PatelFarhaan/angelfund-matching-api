@@ -6,28 +6,29 @@ import logging
 import requests
 import threading
 from project import serial
-from common_utilities.matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
-from common_utilities.ml_apis import get_discover
 from flask_login import login_user
 from common_utilities import CONSTANT
-from project.models import Investor, ReferralLinks, Startup
+from project.models import Investor, Startup
+from common_utilities.ml_apis import get_discover
 from flask import url_for, request, Blueprint, jsonify
 from common_utilities.company_images import company_images_api
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
-from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from common_utilities.get_inv_common_mappings import get_common_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
+from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
+from common_utilities.matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
-                                                              validate_referrer_schema, validate_company_schema,
+                                                              validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_inv_password_reset_schema)
 
 
 logger = logging.getLogger(__name__)
-investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor')
+investor_blueprint = Blueprint('investor', __name__, url_prefix='/investor',  template_folder="templates")
 
 
 @investor_blueprint.route("/google-token", methods=["POST"])
@@ -324,9 +325,11 @@ def update_info():
                 message = "invalid user field"
                 return return_data_results(False, message)
         user_obj.save()
+
         if update_into_matching(user_obj.email, input_data):
             pass
             #todo: shoot out an email to the team
+
         ma_schema = InvestorUserSchema()
         user_objs = ma_schema.dump(user_obj)
         ret_obj = {
@@ -373,7 +376,7 @@ def referral_link():
         user_obj.referred_to = refferred_to
         user_obj.save()
 
-        # shoutout mail to the respective person
+        # todo: shoutout mail to the respective person
         return jsonify({"result": True, "message": "mail sent"})
 
 
@@ -389,22 +392,20 @@ def investors_dashboard():
         matching_obj = get_matching_data(user_obj.email)
 
         if matching_obj == {}:
-            return {} # no matching data as of now
+            return {"result": False, "message": "no match found"}
+
 
         _id = matching_obj.get("_id")
         if not _id:
-            #todo: shoot out a mail to the team to fix id in matching db
-            return {} # temp display no matching startup
+            return {"result": False, "message": "no id found"}
 
         discover = get_discover(_id)
 
         if not discover["result"]:
-            # todo: shoot out a mail to the team to fix id in matching db
-            return {}  # temp display no matching startup
+            return {"result": False, "message": "no match found"}
 
         elif discover["result"] and discover["data"] == []:
-            # todo: shoot out a mail to the team to fix id in matching db
-            return {}  # temp display no matching startup
+            return {"result": False, "message": "no match found"}
 
         else:
             str_data = process_all_str_data(discover["data"])
@@ -466,21 +467,85 @@ def investors_dashboard():
                 return jsonify({"result": True, "message": "invitation"})
 
 
+@investor_blueprint.route('/history-all', methods=["GET", "POST"])
+@jwt_required
+def history():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
 
-@investor_blueprint.route('/ref/share/<token>', methods=["GET"])
-def verify_referral_link(token):
-    if token and len(token) == 10:
-        hash_obj = ReferralLinks.objects.filter(hash_value=token).first()
-        if hash_obj:
-            referral_email = hash_obj.email
-            return jsonify({
-                "result": True,
-                "message": "valid token",
-                "referrer": referral_email
-            })
+    inv_obj = jwt_decode["user_obj"]
+    data = []
+
+    # passed
+    passed = getattr(inv_obj, "passed")
+    ma_schema = StartupPassedSchema()
+    for k, v in passed.items():
+        str_obj = Startup.objects.filter(email=k).first()
+        data.append(ma_schema.dump(str_obj))
+
+    # connected
+    connected = getattr(inv_obj, "connected")
+    ma_schema = StartupConnectedSchema()
+    for k, v in connected.items():
+        str_obj = Startup.objects.filter(email=k).first()
+        data.append(ma_schema.dump(str_obj))
+
+    return jsonify({"result": True, "data": data})
+
+
+@investor_blueprint.route('/history-connected', methods=["GET"])
+@jwt_required
+def connected():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+    connected = getattr(inv_obj, "connected")
+    ma_schema = StartupConnectedSchema()
+    data = []
+    for k,v in connected.items():
+        str_obj = Startup.objects.filter(email=k).first()
+        data.append(ma_schema.dump(str_obj))
+    return jsonify({"result": True, "data": data})
+
+
+@investor_blueprint.route('/history-passed', methods=["GET"])
+@jwt_required
+def passed():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+    passed = getattr(inv_obj, "passed")
+    ma_schema = StartupPassedSchema()
+    data = []
+    for k, v in passed.items():
+        str_obj = Startup.objects.filter(email=k).first()
+        data.append(ma_schema.dump(str_obj))
+    return jsonify({"result": True, "data": data})
+
+
+@investor_blueprint.route('/history-passed-revisit', methods=["POST"])
+@jwt_required
+def passed_revisit():
+    if request.method == "POST":
+        input_req = request.get_json()
+        response = validate_inv_passed_recvisit_schema(input_req)
+
+        if response["result"]:
+            email = response["data"]["email"]
+            str_obj = Startup.objects.filter(email=email).first()
+            if not str_obj:
+                return jsonify({"result": False, "data": None})
+
+            ma_schema = StartupDashboardSchema()
+            data = ma_schema.dump(str_obj)
+            return jsonify({"result": True, "data": data})
         else:
-            return return_data_results(False, "invalid token", 200)
-    return return_data_results(False, "invalid token")
+            return jsonify(response)
 
 
 @investor_blueprint.route('/mime-files', methods=["POST"])
