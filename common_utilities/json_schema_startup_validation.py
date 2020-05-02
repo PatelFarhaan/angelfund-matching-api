@@ -133,3 +133,77 @@ def validate_google_schema(data):
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
+
+inv_dashboard_schema = {
+    "type": "object",
+    "properties": {
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+        "invite": {
+            "type": "boolean"
+        },
+    },
+    "required": ["email", "invite"],
+    "additionalProperties": False
+}
+
+
+def validate_dashboard_schema(data):
+    try:
+        validate(instance=data, schema= inv_dashboard_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+
+#############################################################################################################################################
+
+inv_referrer_schema = {
+    "type": "object",
+    "properties": {
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+    },
+    "required": ["email"],
+    "additionalProperties": False
+}
+
+
+def validate_referrer_schema(data):
+    try:
+        validate(instance=data, schema= inv_referrer_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+
+#############################################################################################################################################
+
+inv_passed_recvisit_schema = {
+    "type": "object",
+    "properties": {
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+    },
+    "required": ["email"],
+    "additionalProperties": False
+}
+
+
+def validate_inv_passed_recvisit_schema(data):
+    try:
+        validate(instance=data, schema= inv_passed_recvisit_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+#############################################################################################################################################

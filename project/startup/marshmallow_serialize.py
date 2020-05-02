@@ -11,13 +11,6 @@ class StartupUserSchema(ma.Schema):
                   "first_dashboard_visit")
 
 
-class StartupMLSchema(ma.Schema):
-    class Meta:
-        fields = ("email", "sectors", "deals", "investor", "show_profile", "show_limit",
-                  "matched_week", "count_invited", "count_passed", "bio", "accreditation",
-                  "syndicate")
-
-
 class StartupDashboardSchema(ma.Schema):
     class Meta:
         fields = ("bio", "raised", "sectors", "location", "name", "email", "progress", "round_size",
@@ -37,3 +30,14 @@ class StartupPassedSchema(ma.Schema):
 
     class Meta:
         fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "email")
+
+
+class StartupMLSchema(ma.Schema):
+    class Meta:
+        fields = ("bio", "sectors", "raised", "progress", "position", "password", "location", "referred_to",
+                  "slide_deck", "referred_by", "round_size", "company_link", "company_name", "num_team_members",
+                  "startup_pitch", "profile_pic_link", "raised_capital_desc", "password_reset_meta_data", "approved",
+                  "last_name", "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email",
+                  "first_dashboard_visit", "created", "investor", "feedback", "connected", "passed", "matched_week",
+                  "pending", "co_founders", "show_slide_deck", "delete_account", "show_profile", "monday_notification",
+                  "count_invited", "count_passed", "show_limit")

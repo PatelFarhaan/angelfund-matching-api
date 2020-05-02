@@ -4,22 +4,26 @@ import magic
 import shutil
 import logging
 import requests
+from common_utilities.json_schema_investor_validation import validate_referrer_schema
+from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
 import threading
+from common_utilities.ml_apis import get_discover
+
 from project import serial
 from flask_login import login_user
 from common_utilities import CONSTANT
-from project.models import Startup, ReferralLinks
+from project.models import Startup
 from flask import url_for, request, Blueprint, jsonify
-# from common_utilities.internal_hash import create_internal_hash
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.get_str_common_mappings import get_str_users
 from common_utilities.google_email import google_email_confirmation
-from project.startup.marshmallow_serialize import StartupUserSchema
+from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema,
+from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema, validate_dashboard_schema,
+validate_referrer_schema, validate_inv_passed_recvisit_schema,
                                                              validate_google_schema, validate_str_login_schema,
                                                              validate_str_password_reset_schema)
 
@@ -66,14 +70,25 @@ def google_token():
                         first_name = userinfo_response.json().get("given_name", None)
                         last_name = userinfo_response.json().get("family_name", None)
 
-                        # noinspection PyArgumentList
-                        new_user = Startup(email=email,
+                        user_dict = dict(email=email,
                                             last_name=last_name,
                                             email_confirmed=True,
                                             first_name=first_name,
                                             is_google_signup=True,
                                             profile_pic_link=picture)
+
+                        # noinspection PyArgumentList
+                        new_user = Startup(**user_dict)
                         new_user.save()
+
+                        user_dict["investor"] = False
+                        ml_schema = StartupMLSchema()
+                        user = Startup.objects.filter(email=email).first()
+                        ml_schema_resp = ml_schema.dump(user)
+                        if not insert_into_matching(email, ml_schema_resp):
+                            pass
+                            # todo: shoot out a mail to angelfund team to get the data from investor db and dump it to matching db
+
                         logger.debug(f"startup created {email} via Google OAuth")
 
                         thread = threading.Thread(target=google_email_confirmation, args=(email,))
@@ -221,13 +236,13 @@ def forgot_password():
             thread = threading.Thread(target=password_reset_email, args=(email, link,))
             thread.start()
             logger.debug(f"startup password reset link sent: {email}")
-            message = "frontend password reset link sent template"
+            message = "password reset link sent"
             return return_data_results(True, message)
         else:
             return jsonify(response)
 
     elif request.method == "GET":
-        message = "frontend forgot password template"
+        message = "forgot password template"
         return return_data_results(True, message)
 
 
@@ -249,8 +264,19 @@ def register():
                 return return_data_results(False, message)
 
             input_request["password"] = generate_password_hash(input_request["password"])
+
+            # noinspection PyArgumentList
             new_user = Startup(**input_request)
             new_user.save()
+
+            input_request["investor"] = True
+            ml_schema = StartupMLSchema()
+            user = Startup.objects.filter(email=email).first()
+            ml_schema_resp = ml_schema.dump(user)
+            if not insert_into_matching(email, ml_schema_resp):
+                pass
+            # todo: shoot out a mail to angelfund team to get the data from investor db and dump it to matching db
+
             logger.debug(f"startup created {email}")
 
             token = serial.dumps(email, salt='email_confirm')
@@ -359,40 +385,26 @@ def mime_files():
 @startup_blueprint.route('/referral-link', methods=["POST"])
 @jwt_required
 def referral_link():
-    jwt_decode = jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
+    if request.method == "POST":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
 
-    user_obj = jwt_decode["user_obj"]
-    reff_obj = ReferralLinks.objects.filter(email=user_obj.email, model="Startup").first()
+        user_obj = jwt_decode["user_obj"]
+        inp_req = request.get_json()
+        response = validate_referrer_schema(inp_req)
 
-    if reff_obj:
-        referral_link = f"http://127.0.0.1:5000/investor/ref/share/{reff_obj.hash_value}"
-        return return_data_results(True, referral_link, 200)
+        if not response["result"]:
+            return jsonify(response)
 
-    # user_hash = create_internal_hash(user_obj.id, user_obj.email)
-    # ref_obj = ReferralLinks(model="Startup",
-    #                         email=user_obj.email,
-    #                         hash_value=user_hash)
-    # ref_obj.save()
-    # referral_link = f"http://127.0.0.1:5000/investor/ref/share{user_hash}"
-    return return_data_results(True, {}, 200)
+        ref_email = response["data"]["email"]
+        refferred_to = list(user_obj.referred_to)
+        refferred_to.append(ref_email)
+        user_obj.referred_to = refferred_to
+        user_obj.save()
 
-
-@startup_blueprint.route('/ref/share/<token>', methods=["GET"])
-def verify_referral_link(token):
-    if token and len(token) == 10:
-        hash_obj = ReferralLinks.objects.filter(hash_value=token).first()
-        if hash_obj:
-            referral_email = hash_obj.email
-            return jsonify({
-                "result": True,
-                "message": "valid token",
-                "referrer": referral_email
-            })
-        else:
-            return return_data_results(False, "invalid token", 200)
-    return return_data_results(False, "invalid token")
+        # todo: shoutout mail to the respective person
+        return jsonify({"result": True, "message": "mail sent"})
 
 
 @startup_blueprint.route('/update-info', methods=['PATCH'])
@@ -404,9 +416,9 @@ def update_info():
 
     user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
-        input_data = request.get_json()    # code will give 500 error if no json if passed
+        input_data = request.get_json()
         available_fields = {"location", "sectors", "company_name", "company_link",
-                            "startup_pitch", "bio", "round_size", "raised",
+                            "startup_pitch", "bio", "round_size", "raised", "profile_pic_link",
                             "progress", "position", "num_team_members", "slide_deck"}
         for field in input_data:
             if field in available_fields:
@@ -415,6 +427,11 @@ def update_info():
                 message = "invalid user field"
                 return return_data_results(False, message)
         user_obj.save()
+
+        if update_into_matching(user_obj.email, input_data):
+            pass
+            #todo: shoot out an email to the team
+
         ma_schema = StartupUserSchema()
         user_objs = ma_schema.dump(user_obj)
         ret_obj = {
@@ -425,6 +442,175 @@ def update_info():
     else:
         message = "user is not authenticated"
         return return_data_results(False, message)
+
+
+
+@startup_blueprint.route('/dashboard', methods=["GET", "POST"])
+@jwt_required
+def investors_dashboard():
+    if request.method == "GET":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        user_obj = jwt_decode["user_obj"]
+        matching_obj = get_matching_data(user_obj.email)
+
+        if matching_obj == {}:
+            return {"result": False, "message": "no match found"}
+
+
+        _id = matching_obj.get("_id")
+        if not _id:
+            return {"result": False, "message": "no id found"}
+
+        discover = get_discover(_id)
+
+        if not discover["result"]:
+            return {"result": False, "message": "no match found"}
+
+        elif discover["result"] and discover["data"] == []:
+            return {"result": False, "message": "no match found"}
+
+        else:
+            str_data = process_all_str_data(discover["data"])
+            return jsonify({"result": True, "data": str_data})
+
+    # elif request.method == "POST":
+    #     jwt_decode = jwt_decoder(get_jwt_identity())
+    #     if not jwt_decode["result"]:
+    #         return jsonify(jwt_decode)
+    #
+    #     inv_obj = jwt_decode["user_obj"]
+    #     inv_email = inv_obj.email
+    #
+    #     response = validate_dashboard_schema(request.get_json())
+    #     if not response["result"]:
+    #         return jsonify(response)
+    #
+    #     str_email = response["data"]["email"]
+    #     str_invite = response["data"]["invite"]
+    #
+    #     if not str_invite:
+    #         str_obj = Startup.objects.filter(email=str_email).first()
+    #         str_feedback = response["data"]["feedback"]
+    #         inv_passed_requests = dict(inv_obj.passed)
+    #         str_feedback_requests = list(str_obj.feedback)
+    #         inv_passed_requests[str_email] = True
+    #         str_feedback["from_email"] = inv_email
+    #         str_feedback_requests.append(str_feedback)
+    #         inv_obj.passed = inv_passed_requests
+    #         str_obj.feedback = str_feedback_requests
+    #         inv_obj.save()
+    #         str_obj.save()
+    #         return jsonify({"result": True, "message": "passed"})
+    #
+    #     if str_invite:
+    #         str_obj = Startup.objects.filter(email=str_email).first()
+    #         str_pending_requests = dict(str_obj.pending)
+    #         str_connected_requests = dict(str_obj.connected)
+    #
+    #         if str_pending_requests.get(inv_email):
+    #             inv_connected_requests = dict(inv_obj.connected)
+    #             str_pending_requests.pop(inv_email)
+    #             str_connected_requests[inv_email] = True
+    #             inv_connected_requests[str_email] = True
+    #             inv_obj.connected = inv_connected_requests
+    #             str_obj.connected = str_connected_requests
+    #             str_obj.pending = str_pending_requests
+    #             inv_obj.save()
+    #             str_obj.save()
+    #             return jsonify({"result": True, "message": "connected"})
+    #             # todo: send email that they connected
+    #         elif str_connected_requests.get(inv_email):
+    #             return jsonify({"result": True, "message": "connected"})
+    #         else:
+    #             inv_pending_req = dict(inv_obj.pending)
+    #             inv_pending_req[str_email] = True
+    #             inv_obj.pending = inv_pending_req
+    #             inv_obj.save()
+    #             return jsonify({"result": True, "message": "invitation"})
+
+
+# @startup_blueprint.route('/history-all', methods=["GET", "POST"])
+# @jwt_required
+# def history():
+#     jwt_decode = jwt_decoder(get_jwt_identity())
+#     if not jwt_decode["result"]:
+#         return jsonify(jwt_decode)
+#
+#     inv_obj = jwt_decode["user_obj"]
+#     data = []
+#
+#     # passed
+#     passed = getattr(inv_obj, "passed")
+#     ma_schema = StartupPassedSchema()
+#     for k, v in passed.items():
+#         str_obj = Startup.objects.filter(email=k).first()
+#         data.append(ma_schema.dump(str_obj))
+#
+#     # connected
+#     connected = getattr(inv_obj, "connected")
+#     ma_schema = StartupConnectedSchema()
+#     for k, v in connected.items():
+#         str_obj = Startup.objects.filter(email=k).first()
+#         data.append(ma_schema.dump(str_obj))
+#
+#     return jsonify({"result": True, "data": data})
+#
+#
+# @investor_blueprint.route('/history-connected', methods=["GET"])
+# @jwt_required
+# def connected():
+#     jwt_decode = jwt_decoder(get_jwt_identity())
+#     if not jwt_decode["result"]:
+#         return jsonify(jwt_decode)
+#
+#     inv_obj = jwt_decode["user_obj"]
+#     connected = getattr(inv_obj, "connected")
+#     ma_schema = StartupConnectedSchema()
+#     data = []
+#     for k,v in connected.items():
+#         str_obj = Startup.objects.filter(email=k).first()
+#         data.append(ma_schema.dump(str_obj))
+#     return jsonify({"result": True, "data": data})
+#
+#
+# @investor_blueprint.route('/history-passed', methods=["GET"])
+# @jwt_required
+# def passed():
+#     jwt_decode = jwt_decoder(get_jwt_identity())
+#     if not jwt_decode["result"]:
+#         return jsonify(jwt_decode)
+#
+#     inv_obj = jwt_decode["user_obj"]
+#     passed = getattr(inv_obj, "passed")
+#     ma_schema = StartupPassedSchema()
+#     data = []
+#     for k, v in passed.items():
+#         str_obj = Startup.objects.filter(email=k).first()
+#         data.append(ma_schema.dump(str_obj))
+#     return jsonify({"result": True, "data": data})
+#
+#
+# @investor_blueprint.route('/history-passed-revisit', methods=["POST"])
+# @jwt_required
+# def passed_revisit():
+#     if request.method == "POST":
+#         input_req = request.get_json()
+#         response = validate_inv_passed_recvisit_schema(input_req)
+#
+#         if response["result"]:
+#             email = response["data"]["email"]
+#             str_obj = Startup.objects.filter(email=email).first()
+#             if not str_obj:
+#                 return jsonify({"result": False, "data": None})
+#
+#             ma_schema = StartupDashboardSchema()
+#             data = ma_schema.dump(str_obj)
+#             return jsonify({"result": True, "data": data})
+#         else:
+#             return jsonify(response)
 
 
 @startup_blueprint.route('/get-users/<offset>', methods=["GET"])

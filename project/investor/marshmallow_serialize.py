@@ -1,4 +1,5 @@
 from project import ma
+from flask_marshmallow import fields as fd
 
 
 class InvestorUserSchema(ma.Schema):
@@ -6,7 +7,6 @@ class InvestorUserSchema(ma.Schema):
         fields = ("first_name", "last_name", "email", "sectors", "deals", "profile_pic_link",
                   "bio", "location", "accreditation", "syndicate", "angel", "prior_investment",
                   "email_confirmed", "approved", "first_dashboard_visit")
-
 
 
 class InvestorMLSchema(ma.Schema):
@@ -19,3 +19,11 @@ class InvestorMLSchema(ma.Schema):
                   "show_limit", "matched_week", "deals", "accreditation", "syndicate", "prior_investment",
                   "investor", "feedback", "connected", "passed", "pending", "co_founders", "show_slide_deck",
                   "delete_account", "show_profile", "monday_notification", "count_invited", "count_passed")
+
+
+
+# class InvestorPassedSchema(ma.Schema):
+#     action = fd.fields.String(default="Passed")
+#
+#     class Meta:
+#         fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "email")

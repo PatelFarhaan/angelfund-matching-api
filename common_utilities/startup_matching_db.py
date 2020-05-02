@@ -4,7 +4,7 @@ from pymongo import MongoClient
 from project.models import Startup
 from common_utilities import CONSTANT
 from common_utilities.company_images import company_images_api
-from project.startup.marshmallow_serialize import StartupDashboardSchema
+from project.startup.marshmallow_serialize import StartupDashboardSchema  # change to investors
 
 
 def db_details():
@@ -17,7 +17,7 @@ def db_details():
 
 def insert_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
-    my_query = {"email": email}
+    my_query = {"email": email, "investor": False}
 
     _id = (((collection.estimated_document_count()) * 100) + 100)
     doc = list(collection.find(my_query))
@@ -34,7 +34,7 @@ def insert_into_matching(email: str, user_obj: dict) -> bool:
 
 def update_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
-    my_query = {"email": email}
+    my_query = {"email": email, "investor": False}
     newvalues = {"$set": user_obj}
     try:
         collection.update_one(my_query, newvalues)
@@ -45,9 +45,10 @@ def update_into_matching(email: str, user_obj: dict) -> bool:
 
 def get_matching_data(email: str) -> object:
     collection = db_details()
-    my_query = {"email": email}
+    my_query = {"email": email, "investor": False}
 
     doc = collection.find_one(my_query)
+    print(doc)
     if not doc:
         return {}
     else:
@@ -80,9 +81,7 @@ def processing_helper(email: str) -> dict:
             setattr(str_obj, "profile_pic_link", str(temp["data"]))
             str_obj.save()
         except:
-            print("kabjsd")
             res["profile_pic_link"] = None
-
     return {"result": True, "data":res}
 
 
@@ -96,6 +95,6 @@ def process_all_str_data(data: list) -> list:
             if str_details["result"]:
                 res.append(str_details["data"])
 
-        if len(res) == 3:
+        if len(res) == 100:
             return res
     return res

@@ -109,7 +109,6 @@ class Startup(db.Document, UserMixin):
     show_limit = db.IntField(default=3)
     ####
 
-
     meta = dict(indexes=['email', '-created', 'is_google_signup'], strict=False)
 
     def get_id(self):
@@ -125,11 +124,3 @@ class SignUpMappings(db.Document):
     deals_data = db.DictField()
     sector_data = db.DictField()
     accreditation_data = db.DictField()
-
-
-class ReferralLinks(db.Document):
-    email = db.EmailField(required=True)
-    model = db.StringField(required=True)
-    hash_value = db.StringField(required=True)
-
-    meta = dict(indexes=['hash_value', 'email', 'model'])

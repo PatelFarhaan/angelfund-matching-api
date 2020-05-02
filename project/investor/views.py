@@ -21,7 +21,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
-from common_utilities.matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
+from common_utilities.investor_matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_inv_password_reset_schema)
@@ -306,6 +306,91 @@ def email_confirmed(token):
         return return_data_results(False, message)
 
 
+@investor_blueprint.route('/logout', methods=["POST"])
+@jwt_required
+def logout():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+    user_obj.is_logged_in = False
+    user_obj.save()
+    return return_data_results(True, "user logged off")
+
+
+@investor_blueprint.route('/mime-files', methods=["POST"])
+@jwt_required
+def mime_files():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+
+    file_name = None
+    file_type = request.form.get("type")
+    file_obj = request.files.get('file_obj')
+    if file_obj:
+        file_name = f"{user_obj.id}-" + file_obj.filename.replace(' ', '')
+        file_name = file_name.split('.', 1)[0]
+
+    if not all([file_obj, file_name, file_type]):
+        return return_data_results(False, "missing key data")
+
+    file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
+    if os._exists(file_location):
+        shutil.rmtree(file_location)
+
+    os.mkdir(file_location)
+    with open(f"{file_location}/{file_name}", 'wb') as f:
+        f.write(file_obj.read())
+
+    mime = magic.Magic(mime=True)
+    mime_type = mime.from_file(f"{file_location}/{file_name}")
+    mime_base = mime_type.split('/',1)[0]        # base mime type :=> application (for pdf) or image (for image)
+    mime_extention = mime_type.split('/', 1)[1]  # pdf or jpeg
+
+    if file_type == "image":
+        if mime_base == "image":
+            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            user_obj.profile_pic_link = image_url
+            user_obj.save()
+            shutil.rmtree(file_location)
+            return jsonify({"result": True, "url": image_url})
+        else:
+            shutil.rmtree(file_location)
+            return return_data_results(False, "image file required")
+    else:
+        shutil.rmtree(file_location)
+        return return_data_results(False, "invalid file type")
+
+
+@investor_blueprint.route('/referral-link', methods=["POST"])
+@jwt_required
+def referral_link():
+    if request.method == "POST":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        user_obj = jwt_decode["user_obj"]
+        inp_req = request.get_json()
+        response = validate_referrer_schema(inp_req)
+
+        if not response["result"]:
+            return jsonify(response)
+
+        ref_email = response["data"]["email"]
+        refferred_to = list(user_obj.referred_to)
+        refferred_to.append(ref_email)
+        user_obj.referred_to = refferred_to
+        user_obj.save()
+
+        # todo: shoutout mail to the respective person
+        return jsonify({"result": True, "message": "mail sent"})
+
+
 @investor_blueprint.route('/update-info', methods=['PATCH'])
 @jwt_required
 def update_info():
@@ -341,43 +426,6 @@ def update_info():
         message = "user is not authenticated"
         return return_data_results(False, message)
 
-
-@investor_blueprint.route('/logout', methods=["POST"])
-@jwt_required
-def logout():
-    jwt_decode = jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
-
-    user_obj = jwt_decode["user_obj"]
-    user_obj.is_logged_in = False
-    user_obj.save()
-    return return_data_results(True, "user logged off")
-
-
-@investor_blueprint.route('/referral-link', methods=["POST"])
-@jwt_required
-def referral_link():
-    if request.method == "POST":
-        jwt_decode = jwt_decoder(get_jwt_identity())
-        if not jwt_decode["result"]:
-            return jsonify(jwt_decode)
-
-        user_obj = jwt_decode["user_obj"]
-        inp_req = request.get_json()
-        response = validate_referrer_schema(inp_req)
-
-        if not response["result"]:
-            return jsonify(response)
-
-        ref_email = response["data"]["email"]
-        refferred_to = list(user_obj.referred_to)
-        refferred_to.append(ref_email)
-        user_obj.referred_to = refferred_to
-        user_obj.save()
-
-        # todo: shoutout mail to the respective person
-        return jsonify({"result": True, "message": "mail sent"})
 
 
 @investor_blueprint.route('/dashboard', methods=["GET", "POST"])
@@ -548,53 +596,6 @@ def passed_revisit():
             return jsonify(response)
 
 
-@investor_blueprint.route('/mime-files', methods=["POST"])
-@jwt_required
-def mime_files():
-    jwt_decode = jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
-
-    user_obj = jwt_decode["user_obj"]
-
-    file_name = None
-    file_type = request.form.get("type")
-    file_obj = request.files.get('file_obj')
-    if file_obj:
-        file_name = f"{user_obj.id}-" + file_obj.filename.replace(' ', '')
-        file_name = file_name.split('.', 1)[0]
-
-    if not all([file_obj, file_name, file_type]):
-        return return_data_results(False, "missing key data")
-
-    file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
-    if os._exists(file_location):
-        shutil.rmtree(file_location)
-
-    os.mkdir(file_location)
-    with open(f"{file_location}/{file_name}", 'wb') as f:
-        f.write(file_obj.read())
-
-    mime = magic.Magic(mime=True)
-    mime_type = mime.from_file(f"{file_location}/{file_name}")
-    mime_base = mime_type.split('/',1)[0]        # base mime type :=> application (for pdf) or image (for image)
-    mime_extention = mime_type.split('/', 1)[1]  # pdf or jpeg
-
-    if file_type == "image":
-        if mime_base == "image":
-            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
-            user_obj.profile_pic_link = image_url
-            user_obj.save()
-            shutil.rmtree(file_location)
-            return jsonify({"result": True, "url": image_url})
-        else:
-            shutil.rmtree(file_location)
-            return return_data_results(False, "image file required")
-    else:
-        shutil.rmtree(file_location)
-        return return_data_results(False, "invalid file type")
-
-
 @investor_blueprint.route('/investor-common-mappings', methods=["GET"])
 def investors_common_mapping():
     return get_common_mapping()
@@ -616,10 +617,6 @@ def general_company_images():
 
         company_name = response["data"]["company_name"]
         return company_images_api(company_name)
-
-
-
-
 ##################################################   *** HELPERS ***   ####################################################
 def return_none_results(name, status_code=200):
     return_obj = {
