@@ -146,7 +146,6 @@ inv_dashboard_schema = {
         },
     },
     "required": ["email", "invite"],
-    "additionalProperties": False
 }
 
 
@@ -185,22 +184,64 @@ def validate_referrer_schema(data):
 
 #############################################################################################################################################
 
-inv_passed_recvisit_schema = {
+inv_monday_notification_schema = {
     "type": "object",
     "properties": {
-        "email": {
-            "type": "string",
-            "format": "email"
+        "monday_notification": {
+            "type": "boolean",
         },
     },
-    "required": ["email"],
+    "required": ["monday_notification"],
     "additionalProperties": False
 }
 
 
-def validate_inv_passed_recvisit_schema(data):
+def validate_inv_monday_notification_schema(data):
     try:
-        validate(instance=data, schema= inv_passed_recvisit_schema)
+        validate(instance=data, schema= inv_monday_notification_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+#############################################################################################################################################
+inv_delete_acc_schema = {
+    "type": "object",
+    "properties": {
+        "password": {
+            "type": "string",
+        },
+    },
+    "required": ["password"],
+    "additionalProperties": False
+}
+
+
+def validate_delete_acc_schema(data):
+    try:
+        validate(instance=data, schema= inv_delete_acc_schema)
+    except ValidationError as e:
+        return {'result': False, 'message': e.message}
+    except SchemaError as e:
+        return {'result': False, 'message': e.message}
+    return {'result': True, 'data': data}
+#############################################################################################################################################
+
+inv_invite_accepted_notification_schema = {
+    "type": "object",
+    "properties": {
+        "invite_notification": {
+            "type": "boolean",
+        },
+    },
+    "required": ["invite_notification"],
+    "additionalProperties": False
+}
+
+
+def validate_invite_acc_notify_schema(data):
+    try:
+        validate(instance=data, schema= inv_invite_accepted_notification_schema)
     except ValidationError as e:
         return {'result': False, 'message': e.message}
     except SchemaError as e:

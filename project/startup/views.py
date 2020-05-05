@@ -4,28 +4,28 @@ import magic
 import shutil
 import logging
 import requests
-from common_utilities.json_schema_investor_validation import validate_referrer_schema
-from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
 import threading
-from common_utilities.ml_apis import get_discover
-
 from project import serial
 from flask_login import login_user
 from common_utilities import CONSTANT
-from project.models import Startup
+from project.models import Startup, Investor
+from common_utilities.ml_apis import get_discover
 from flask import url_for, request, Blueprint, jsonify
+from common_utilities.connected_emails import email_connected
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.get_str_common_mappings import get_str_users
 from common_utilities.google_email import google_email_confirmation
-from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from werkzeug.security import generate_password_hash, check_password_hash
+from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
+from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
+from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema, validate_dashboard_schema,
-validate_referrer_schema, validate_inv_passed_recvisit_schema,
-                                                             validate_google_schema, validate_str_login_schema,
-                                                             validate_str_password_reset_schema)
+validate_referrer_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
+validate_str_password_reset_schema)
 
 
 logger = logging.getLogger(__name__)
@@ -444,10 +444,9 @@ def update_info():
         return return_data_results(False, message)
 
 
-
 @startup_blueprint.route('/dashboard', methods=["GET", "POST"])
 @jwt_required
-def investors_dashboard():
+def startup_dashboard():
     if request.method == "GET":
         jwt_decode = jwt_decoder(get_jwt_identity())
         if not jwt_decode["result"]:
@@ -458,7 +457,6 @@ def investors_dashboard():
 
         if matching_obj == {}:
             return {"result": False, "message": "no match found"}
-
 
         _id = matching_obj.get("_id")
         if not _id:
@@ -476,141 +474,314 @@ def investors_dashboard():
             str_data = process_all_str_data(discover["data"])
             return jsonify({"result": True, "data": str_data})
 
-    # elif request.method == "POST":
-    #     jwt_decode = jwt_decoder(get_jwt_identity())
-    #     if not jwt_decode["result"]:
-    #         return jsonify(jwt_decode)
-    #
-    #     inv_obj = jwt_decode["user_obj"]
-    #     inv_email = inv_obj.email
-    #
-    #     response = validate_dashboard_schema(request.get_json())
-    #     if not response["result"]:
-    #         return jsonify(response)
-    #
-    #     str_email = response["data"]["email"]
-    #     str_invite = response["data"]["invite"]
-    #
-    #     if not str_invite:
-    #         str_obj = Startup.objects.filter(email=str_email).first()
-    #         str_feedback = response["data"]["feedback"]
-    #         inv_passed_requests = dict(inv_obj.passed)
-    #         str_feedback_requests = list(str_obj.feedback)
-    #         inv_passed_requests[str_email] = True
-    #         str_feedback["from_email"] = inv_email
-    #         str_feedback_requests.append(str_feedback)
-    #         inv_obj.passed = inv_passed_requests
-    #         str_obj.feedback = str_feedback_requests
-    #         inv_obj.save()
-    #         str_obj.save()
-    #         return jsonify({"result": True, "message": "passed"})
-    #
-    #     if str_invite:
-    #         str_obj = Startup.objects.filter(email=str_email).first()
-    #         str_pending_requests = dict(str_obj.pending)
-    #         str_connected_requests = dict(str_obj.connected)
-    #
-    #         if str_pending_requests.get(inv_email):
-    #             inv_connected_requests = dict(inv_obj.connected)
-    #             str_pending_requests.pop(inv_email)
-    #             str_connected_requests[inv_email] = True
-    #             inv_connected_requests[str_email] = True
-    #             inv_obj.connected = inv_connected_requests
-    #             str_obj.connected = str_connected_requests
-    #             str_obj.pending = str_pending_requests
-    #             inv_obj.save()
-    #             str_obj.save()
-    #             return jsonify({"result": True, "message": "connected"})
-    #             # todo: send email that they connected
-    #         elif str_connected_requests.get(inv_email):
-    #             return jsonify({"result": True, "message": "connected"})
-    #         else:
-    #             inv_pending_req = dict(inv_obj.pending)
-    #             inv_pending_req[str_email] = True
-    #             inv_obj.pending = inv_pending_req
-    #             inv_obj.save()
-    #             return jsonify({"result": True, "message": "invitation"})
+    elif request.method == "POST":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        str_obj = jwt_decode["user_obj"]
+        str_email =  str_obj.email
+
+        response = validate_dashboard_schema(request.get_json())
+        if not response["result"]:
+            return jsonify(response)
+
+        inv_email = response["data"]["email"]
+        inv_invite = response["data"]["invite"]
+
+        if str_obj.connected.get(inv_email):
+            return jsonify({"result": False, "message": "already connected"})
+
+        if str_obj.passed.get(inv_email):
+            return jsonify({"result": False, "messgae": "already passed"})
+
+        if not inv_invite:
+            str_passed_requests = dict(str_obj.passed)
+            str_passed_requests[inv_email] = True
+            str_obj.passed = str_passed_requests
+
+            str_obj.save()
+            return jsonify({"result": True, "message": "passed"})
+
+        if inv_invite:
+            inv_obj = Investor.objects.filter(email=inv_email).first()
+            inv_pending_requests = dict(inv_obj.pending)
+            inv_connected_requests = dict(inv_obj.connected)
+
+            if inv_pending_requests.get(str_email):
+
+                str_pending_requests = dict(str_obj.pending)
+                if str_pending_requests.get(inv_email):
+                    str_pending_requests.pop(inv_email)
+                str_obj.pending = str_pending_requests
+
+                str_passed_requests = dict(str_obj.passed)
+                if str_passed_requests.get(inv_email):
+                    str_passed_requests.pop(inv_email)
+                str_obj.passed = str_passed_requests
+
+                inv_pending_requests = dict(inv_obj.pending)
+                if inv_pending_requests.get(str_email):
+                    inv_pending_requests.pop(str_email)
+                inv_obj.pending = inv_pending_requests
+
+                inv_passed_requests = dict(inv_obj.passed)
+                if inv_passed_requests.get(str_email):
+                    inv_passed_requests.pop(str_email)
+                inv_obj.passed = inv_passed_requests
+
+                inv_connected_requests = dict(inv_obj.connected)
+                inv_connected_requests[str_email] = True
+                inv_obj.connected = inv_connected_requests
+
+                str_connected_requests = dict(str_obj.connected)
+                str_connected_requests[inv_email] = True
+                str_obj.connected = str_connected_requests
+
+                inv_obj.save()
+                str_obj.save()
+
+                deals = {
+                    "0": "$25,000 to $50,000",
+                    "1": "$50,000 to $100,000",
+                    "2": "$100,000 to $250,000",
+                    "3": "$250,000 to $500,000"
+                }
+                temp_dict = {}
+                temp_dict["inv_bio"] = inv_obj.bio
+                temp_dict["inv_deals"] = deals.get(inv_obj.deals)
+                temp_dict["inv_fn"] = inv_obj.first_name
+                if inv_obj.profile_pic_link:
+                    temp_dict["inv_img"] = inv_obj.profile_pic_link
+                else:
+                    temp_dict["inv_img"] = CONSTANT.ANONYMOUS_PP.value
+
+                temp_dict["str_bio"] = str_obj.bio
+                temp_dict["str_fn"] = str_obj.first_name
+                if str_obj.co_founders != []:
+                    temp_dict["str_founders"] = str_obj.co_founders[0].get("name")
+                    if str_obj.co_founders[0].get("position") != []:
+                        temp_dict["str_position"] = str_obj.co_founders[0].get("position")[0]
+                    else:
+                        temp_dict["str_founders"] = None
+                else:
+                    temp_dict["str_founders"] = None
+                    temp_dict["str_position"] = None
+
+                temp_dict["str_seeking"] = str_obj.round_size
+                temp_dict["str_raised"] = str_obj.raised
+                if str_obj.profile_pic_link:
+                    temp_dict["str_img"] = str_obj.profile_pic_link
+                else:
+                    temp_dict["str_img"] = CONSTANT.ANONYMOUS_PP.value
+
+                email_connected(inv_email, str_email, temp_dict)
+
+                return jsonify({"result": True, "message": "connected"})
+
+            elif inv_connected_requests.get(inv_email):
+                str_pending_requests = dict(str_obj.pending)
+                if str_pending_requests.get(inv_email):
+                    str_pending_requests.pop(inv_email)
+                str_obj.pending = str_pending_requests
+
+                inv_pending_requests = dict(inv_obj.pending)
+                if inv_pending_requests.get(str_email):
+                    inv_pending_requests.pop(str_email)
+                inv_obj.pending = inv_pending_requests
+
+                str_connected_requests = dict(str_obj.connected)
+                str_connected_requests[inv_email] = True
+                str_obj.connected = str_connected_requests
+
+                inv_obj.save()
+                str_obj.save()
+
+                deals = {
+                    "0": "$25,000 to $50,000",
+                    "1": "$50,000 to $100,000",
+                    "2": "$100,000 to $250,000",
+                    "3": "$250,000 to $500,000"
+                }
+                temp_dict = {}
+                temp_dict["inv_bio"] = inv_obj.bio
+                temp_dict["inv_deals"] = deals.get(inv_obj.deals)
+                temp_dict["inv_fn"] = inv_obj.first_name
+                if inv_obj.profile_pic_link:
+                    temp_dict["inv_img"] = inv_obj.profile_pic_link
+                else:
+                    temp_dict["inv_img"] = CONSTANT.ANONYMOUS_PP.value
+
+                temp_dict["str_bio"] = str_obj.bio
+                temp_dict["str_fn"] = str_obj.first_name
+                if str_obj.co_founders != []:
+                    temp_dict["str_founders"] = str_obj.co_founders[0].get("name")
+                    if str_obj.co_founders[0].get("position") != []:
+                        temp_dict["str_position"] = str_obj.co_founders[0].get("position")[0]
+                    else:
+                        temp_dict["str_founders"] = None
+                else:
+                    temp_dict["str_founders"] = None
+                    temp_dict["str_position"] = None
+
+                temp_dict["str_seeking"] = str_obj.round_size
+                temp_dict["str_raised"] = str_obj.raised
+                if str_obj.profile_pic_link:
+                    temp_dict["str_img"] = str_obj.profile_pic_link
+                else:
+                    temp_dict["str_img"] = CONSTANT.ANONYMOUS_PP.value
+
+                email_connected(inv_email, str_email, temp_dict)
+
+                return jsonify({"result": True, "message": "connected"})
+            else:
+                str_passed_requests = dict(str_obj.passed)
+                if str_passed_requests.get(inv_email):
+                    str_passed_requests.pop(inv_email)
+                str_obj.passed = str_passed_requests
+
+                str_connected_requests = dict(str_obj.connected)
+                if str_connected_requests.get(inv_email):
+                    str_connected_requests.pop(inv_email)
+                str_obj.connected = str_connected_requests
+
+                str_pending_req = dict(str_obj.pending)
+                str_pending_req[inv_email] = True
+                str_obj.pending = str_pending_req
+
+                str_obj.save()
+                return jsonify({"result": True, "message": "invitation"})
 
 
-# @startup_blueprint.route('/history-all', methods=["GET", "POST"])
-# @jwt_required
-# def history():
-#     jwt_decode = jwt_decoder(get_jwt_identity())
-#     if not jwt_decode["result"]:
-#         return jsonify(jwt_decode)
-#
-#     inv_obj = jwt_decode["user_obj"]
-#     data = []
-#
-#     # passed
-#     passed = getattr(inv_obj, "passed")
-#     ma_schema = StartupPassedSchema()
-#     for k, v in passed.items():
-#         str_obj = Startup.objects.filter(email=k).first()
-#         data.append(ma_schema.dump(str_obj))
-#
-#     # connected
-#     connected = getattr(inv_obj, "connected")
-#     ma_schema = StartupConnectedSchema()
-#     for k, v in connected.items():
-#         str_obj = Startup.objects.filter(email=k).first()
-#         data.append(ma_schema.dump(str_obj))
-#
-#     return jsonify({"result": True, "data": data})
-#
-#
-# @investor_blueprint.route('/history-connected', methods=["GET"])
-# @jwt_required
-# def connected():
-#     jwt_decode = jwt_decoder(get_jwt_identity())
-#     if not jwt_decode["result"]:
-#         return jsonify(jwt_decode)
-#
-#     inv_obj = jwt_decode["user_obj"]
-#     connected = getattr(inv_obj, "connected")
-#     ma_schema = StartupConnectedSchema()
-#     data = []
-#     for k,v in connected.items():
-#         str_obj = Startup.objects.filter(email=k).first()
-#         data.append(ma_schema.dump(str_obj))
-#     return jsonify({"result": True, "data": data})
-#
-#
-# @investor_blueprint.route('/history-passed', methods=["GET"])
-# @jwt_required
-# def passed():
-#     jwt_decode = jwt_decoder(get_jwt_identity())
-#     if not jwt_decode["result"]:
-#         return jsonify(jwt_decode)
-#
-#     inv_obj = jwt_decode["user_obj"]
-#     passed = getattr(inv_obj, "passed")
-#     ma_schema = StartupPassedSchema()
-#     data = []
-#     for k, v in passed.items():
-#         str_obj = Startup.objects.filter(email=k).first()
-#         data.append(ma_schema.dump(str_obj))
-#     return jsonify({"result": True, "data": data})
-#
-#
-# @investor_blueprint.route('/history-passed-revisit', methods=["POST"])
-# @jwt_required
-# def passed_revisit():
-#     if request.method == "POST":
-#         input_req = request.get_json()
-#         response = validate_inv_passed_recvisit_schema(input_req)
-#
-#         if response["result"]:
-#             email = response["data"]["email"]
-#             str_obj = Startup.objects.filter(email=email).first()
-#             if not str_obj:
-#                 return jsonify({"result": False, "data": None})
-#
-#             ma_schema = StartupDashboardSchema()
-#             data = ma_schema.dump(str_obj)
-#             return jsonify({"result": True, "data": data})
-#         else:
-#             return jsonify(response)
+@startup_blueprint.route('/history-all', methods=["GET", "POST"])
+@jwt_required
+def history():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+    data = []
+
+    # # passed
+    feedback = getattr(str_obj, "feedback")
+    feedback_schema = InvestorFeedbackSchema()
+    for k, v in feedback.items():
+        if not v["is_anonymous"]:
+            inv_obj = Investor.objects.filter(email=k).first()
+            resp = feedback_schema.dump(inv_obj)
+            resp["comment"] = v["comment"]
+            resp["fields"] = v["fields"]
+            data.append(resp)
+        else:
+            resp = {}
+            resp["deals"] = None
+            resp["location"] = None
+            resp["last_name"] = None
+            resp["first_name"] = None
+            resp["first_name"] = None
+            resp["fields"] = v["fields"]
+            resp["comment"] = v["comment"]
+            resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
+            data.append(resp)
+
+    # connected
+    connected = getattr(str_obj, "connected")
+    ma_schema = InvestorConnectedSchema()
+    for k, v in connected.items():
+        inv_obj = Investor.objects.filter(email=k).first()
+        data.append(ma_schema.dump(inv_obj))
+
+    return jsonify({"result": True, "data": data})
+
+
+@startup_blueprint.route('/history-connected', methods=["GET"])
+@jwt_required
+def connected():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+    connected = getattr(inv_obj, "connected")
+    ma_schema = InvestorConnectedSchema()
+    data = []
+    for k,v in connected.items():
+        inv_obj = Investor.objects.filter(email=k).first()
+        data.append(ma_schema.dump(inv_obj))
+    return jsonify({"result": True, "data": data})
+
+
+@startup_blueprint.route('/history-passed', methods=["GET"])
+@jwt_required
+def passed():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    res = []
+    str_obj = jwt_decode["user_obj"]
+    feedback = getattr(str_obj, "feedback")
+    feedback_schema = InvestorFeedbackSchema()
+    for k,v in feedback.items():
+        if not v["is_anonymous"]:
+            inv_obj = Investor.objects.filter(email=k).first()
+            resp = feedback_schema.dump(inv_obj)
+            resp["comment"] = v["comment"]
+            resp["fields"] = v["fields"]
+            res.append(resp)
+        else:
+            resp = {}
+            resp["deals"] = None
+            resp["location"] = None
+            resp["last_name"] = None
+            resp["first_name"] = None
+            resp["first_name"] = None
+            resp["fields"] = v["fields"]
+            resp["comment"] = v["comment"]
+            resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
+            res.append(resp)
+
+    return {"result": True, "data": res}
+
+
+@startup_blueprint.route('/monday-notifications', methods=["POST"])
+@jwt_required
+def monday_notifications():
+    jwt_decode = jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+
+    if request.method == "POST":
+        response = validate_inv_monday_notification_schema(request.get_json())
+        if response["result"]:
+            setattr(str_obj,"monday_notification", response["data"]["monday_notification"])
+            str_obj.save()
+            return jsonify({"result": True, "message": "value updated"})
+        else:
+            return jsonify(response)
+
+
+@startup_blueprint.route('/delete-account', methods=["POST"])
+@jwt_required
+def delete_account():
+    if request.method == "POST":
+        jwt_decode = jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        str_obj = jwt_decode["user_obj"]
+        response = validate_delete_acc_schema(request.get_json())
+        if response["result"]:
+            password = response["data"]["password"]
+            if check_password_hash(str_obj.password, password):
+                setattr(str_obj, "delete_account", True)
+                str_obj.save()
+                return jsonify({"result": True, "message": "account deleted"})
+            return jsonify({"result": False, "message": "wrong credentials"})
+        return jsonify(response)
 
 
 @startup_blueprint.route('/get-users/<offset>', methods=["GET"])

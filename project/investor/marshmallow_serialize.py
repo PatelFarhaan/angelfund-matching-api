@@ -11,19 +11,29 @@ class InvestorUserSchema(ma.Schema):
 
 class InvestorMLSchema(ma.Schema):
     class Meta:
-        fields = ("bio", "sectors", "raised", "progress", "position", "location", "referred_to",
-                  "slide_deck", "referred_by", "round_size", "company_link", "company_name",
-                  "num_team_members", "startup_pitch", "profile_pic_link", "raised_capital_desc",
-                  "password_reset_meta_data", "approved", "last_name", "first_name", "is_logged_in",
-                  "email_confirmed", "is_google_signup", "email", "first_dashboard_visit", "created",
-                  "show_limit", "matched_week", "deals", "accreditation", "syndicate", "prior_investment",
-                  "investor", "feedback", "connected", "passed", "pending", "co_founders", "show_slide_deck",
-                  "delete_account", "show_profile", "monday_notification", "count_invited", "count_passed")
+        fields = ("bio", "deals", "sectors", "angel", "syndicate", "location", "password", "referred_to",
+                  "referred_by", "accreditation", "profile_pic_link", "password_reset_meta_data", "approved",
+                  "last_name", "first_name", "is_logged_in", "email_confirmation", "is_google_signup", "email",
+                  "first_dashboard_visit", "created", "investor", "show_profile", "monday_notifications", "show_limit",
+                  "matched_week", "prior_investment", "connected", "passed", "pending", "delete_account", "count_invited",
+                  "count_passed", "invite_accepted_notify", "all_transaction_fields")
 
 
+class InvestorDashboardSchema(ma.Schema):
+    class Meta:
+        fields = ("profile_pic_link", "first_name", "last_name", "bio", "prior_investment", "sectors", "location", "deals", "syndicate")
 
-# class InvestorPassedSchema(ma.Schema):
-#     action = fd.fields.String(default="Passed")
-#
-#     class Meta:
-#         fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "email")
+
+class InvestorConnectedSchema(ma.Schema):
+    action = fd.fields.String(default="Invite Sent")
+    status = fd.fields.String(default="Connected")
+
+    class Meta:
+        fields = ("location", "deals", "first_name", "last_name", "profile_pic_link")
+
+
+class InvestorFeedbackSchema(ma.Schema):
+    action = fd.fields.String(default="Passed")
+
+    class Meta:
+        fields = ("location", "deals", "first_name", "last_name", "profile_pic_link")
