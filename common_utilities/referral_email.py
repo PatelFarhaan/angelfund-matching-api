@@ -17,7 +17,7 @@ def email_referral(user_email, full_name, first_name):
     SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Please confirm your email address for ANGELFUND"
+    SUBJECT = "Welcome to AngelFund"
     BODY_HTML = """
 <HTML>
 

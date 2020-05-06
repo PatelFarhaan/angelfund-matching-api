@@ -11,6 +11,7 @@ from common_utilities import CONSTANT
 from project.models import Startup, Investor
 from common_utilities.ml_apis import get_discover
 from flask import url_for, request, Blueprint, jsonify
+from common_utilities.referral_email import email_referral
 from common_utilities.connected_emails import email_connected
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
@@ -403,6 +404,10 @@ def referral_link():
         user_obj.referred_to = refferred_to
         user_obj.save()
 
+        full_name = user_obj.first_name + " " + user_obj.last_name
+        first_name = user_obj.first_name
+
+        email_referral(ref_email, full_name, first_name)
         # todo: shoutout mail to the respective person
         return jsonify({"result": True, "message": "mail sent"})
 
@@ -493,6 +498,11 @@ def startup_dashboard():
             return jsonify({"result": False, "message": "already connected"})
 
         if str_obj.passed.get(inv_email):
+            if inv_email in getattr(str_obj, "pending"):
+                pending_obj = dict(str_obj.pending)
+                pending_obj.pop(inv_email)
+                str_obj.pending = pending_obj
+                str_obj.save()
             return jsonify({"result": False, "messgae": "already passed"})
 
         if not inv_invite:
@@ -653,7 +663,7 @@ def startup_dashboard():
                 return jsonify({"result": True, "message": "invitation"})
 
 
-@startup_blueprint.route('/history-all', methods=["GET", "POST"])
+@startup_blueprint.route('/history-all', methods=["GET"])
 @jwt_required
 def history():
     jwt_decode = jwt_decoder(get_jwt_identity())
@@ -686,11 +696,19 @@ def history():
             data.append(resp)
 
     # connected
+    deals = {
+        "0": "$25,000 to $50,000",
+        "1": "$50,000 to $100,000",
+        "2": "$100,000 to $250,000",
+        "3": "$250,000 to $500,000"
+    }
     connected = getattr(str_obj, "connected")
     ma_schema = InvestorConnectedSchema()
     for k, v in connected.items():
         inv_obj = Investor.objects.filter(email=k).first()
-        data.append(ma_schema.dump(inv_obj))
+        temp_resp = ma_schema.dump(inv_obj)
+        temp_resp["deals"] = deals[temp_resp["deals"]]
+        data.append(temp_resp)
 
     return jsonify({"result": True, "data": data})
 
@@ -702,13 +720,22 @@ def connected():
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
 
+    deals = {
+        "0": "$25,000 to $50,000",
+        "1": "$50,000 to $100,000",
+        "2": "$100,000 to $250,000",
+        "3": "$250,000 to $500,000"
+    }
+
     inv_obj = jwt_decode["user_obj"]
     connected = getattr(inv_obj, "connected")
     ma_schema = InvestorConnectedSchema()
     data = []
     for k,v in connected.items():
         inv_obj = Investor.objects.filter(email=k).first()
-        data.append(ma_schema.dump(inv_obj))
+        temp_obj = ma_schema.dump(inv_obj)
+        temp_obj["deals"] = deals[temp_obj["deals"]]
+        data.append(temp_obj)
     return jsonify({"result": True, "data": data})
 
 

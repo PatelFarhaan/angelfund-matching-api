@@ -1,6 +1,6 @@
 import os
 import uuid
-import magic     # pip install python-magic-bin==0.4.14
+import magic
 import shutil
 import logging
 import requests
@@ -605,7 +605,7 @@ def investors_dashboard():
                 return jsonify({"result": True, "message": "invitation"})
 
 
-@investor_blueprint.route('/history-all', methods=["GET", "POST"])
+@investor_blueprint.route('/history-all', methods=["GET"])
 @jwt_required
 def history():
     jwt_decode = jwt_decoder(get_jwt_identity())

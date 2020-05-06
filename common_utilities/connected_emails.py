@@ -15,7 +15,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
     SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Please confirm your email address for ANGELFUND"
+    SUBJECT = "A New Connection"
     BODY_HTML = """
    <HTML>
 <head>
@@ -185,6 +185,3 @@ def email_connected(inv_email: str, str_email: str, all_info):
         logger.error(f"common utilities: email confirmation: failed {inv_email, str_email}")
     else:
         logger.debug(f"common utilities: email confirmation: success {inv_email, str_email}")
-
-
-email_connected("patel.farhaaan@gmail.com", "mohammedfarhaan.patel@sjsu.edu", {'inv_bio': 'I am an investor', 'inv_deals': '1', 'inv_fn': 'farhaan', 'inv_img': 'https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/5eacfa8b8d8c43b484810511-1*L7aHTx9ml-fqvtG4hKlsyw.jpeg', 'str_bio': 'short bio for a user', 'str_fn': None, 'str_founders': 'Limburger Phantonym', 'str_position': 'ceo', 'str_seeking': None, 'str_raised': '16000', 'str_img': 'https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/anonymous.png'})
