@@ -50,7 +50,9 @@ def password_reset_email(user_email, password_reset_link):
                 text-align: center;">
             <span>Resetting your password is simple—we'll have you up and running in no time.</span>
             <br>
+            <span style="font-weight: 400;">
             If you requested a password reset, click here to choose a new one:
+                </span>
         </p>
         <div style="text-align: center;">
             <a style="color:white; text-decoration: none;" target="_blank"
@@ -80,7 +82,7 @@ def password_reset_email(user_email, password_reset_link):
             <br>
             Just click on the link below or paste it into your browser.
             <br>
-            <a href="{password_reset_link}" style="color: #707070;">{password_reset_link}</a>
+            <a style="color: #707070;">{password_reset_link}</a>
             <br>
             <br>
             You received this email because you signed up for an Angelfund.ai account with this
@@ -93,6 +95,7 @@ def password_reset_email(user_email, password_reset_link):
     <div style="font-family: Roboto;
              font-size: 14px;
              text-align: center;
+             color: #919191;
              background-color: #F8F8F8;
              border-radius: 4px;
              padding-top: 2%;

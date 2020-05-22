@@ -95,6 +95,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
              background-color: #F8F8F8;
              border-radius: 4px;
              padding-top: 2%;
+             color: #919191;
              padding-bottom: 2%;">
         <div>
             <a href="https://mobile.twitter.com/AngelFundAI" class="fa fa-twitter"

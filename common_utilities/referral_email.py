@@ -53,10 +53,12 @@ def email_referral(user_email, full_name, first_name):
             <span>{first_name} is inviting you to join <a style="text-decoration: none;" target="_blank" href="https://www.angelfund.ai"><span style="color: #5a51f4">Angelfund.ai!</span></a></span>
             <br>
             <br>
+            <span style="font-weight: 400">
             Sign up using their link to get early access to the most relevant startups & investors:
             <br>
             <br>
         <a href="http://www.angelfund.ai">https://www.angelfund.ai</a>
+                </span>
 
         </p>
 
@@ -68,6 +70,7 @@ def email_referral(user_email, full_name, first_name):
     <br>
     <div style="font-family: Roboto;
              font-size: 14px;
+             color: #919191;
              text-align: center;
              background-color: #F8F8F8;
              border-radius: 4px;
