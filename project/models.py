@@ -16,7 +16,7 @@ class Investor(db.Document, UserMixin):
     bio = db.StringField()
     passed = db.DictField()
     pending = db.DictField()
-    deals = db.StringField()
+    deals = db.ListField()
     sectors = db.ListField()
     angel = db.BooleanField()
     syndicate = db.ListField()
@@ -26,7 +26,7 @@ class Investor(db.Document, UserMixin):
     referred_to = db.ListField()
     referred_by = db.EmailField()
     accreditation = db.StringField()
-    prior_investment = db.ListField()
+    prior_investments = db.ListField()
     profile_pic_link = db.StringField()
     matched_week = db.IntField(default=0)
     count_passed = db.IntField(default=0)
@@ -49,7 +49,10 @@ class Investor(db.Document, UserMixin):
     invite_accepted_notify = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
-    meta = dict(indexes=['email', '-created', 'is_google_signup'], strict=False)
+    link = db.StringField()
+    image = db.StringField()
+
+    meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
         return {
@@ -65,7 +68,7 @@ class Startup(db.Document, UserMixin):
     passed = db.DictField()
     pending = db.DictField()
     sectors = db.ListField()
-    raised = db.StringField()
+    raised = db.IntField()
     progress = db.ListField()
     feedback = db.DictField()
     connected = db.DictField()
@@ -105,7 +108,11 @@ class Startup(db.Document, UserMixin):
     invite_accepted_notify = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
-    meta = dict(indexes=['email', '-created', 'is_google_signup'], strict=False)
+
+    link = db.StringField()
+    image = db.StringField()
+
+    meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
         return {
@@ -120,3 +127,15 @@ class SignUpMappings(db.Document):
     deals_data = db.DictField()
     sector_data = db.DictField()
     accreditation_data = db.DictField()
+
+
+class InvestorSubscriptionEmails(db.Document):
+    email = db.EmailField()
+
+    meta = dict(indexes=['email'])
+
+
+class StartupSubscriptionEmails(db.Document):
+    email = db.EmailField()
+
+    meta = dict(indexes=['email'])

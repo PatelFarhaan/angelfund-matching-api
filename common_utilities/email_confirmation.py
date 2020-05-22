@@ -9,59 +9,110 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
-def email_confirmation(user_email, email_confirm_link):
+def email_confirmation(user_email, email_confirm_link, first_name):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
     SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Please confirm your email address for ANGELFUND"
+    SUBJECT = "Please verify your email address for ANGELFUND"
     BODY_HTML = """
-    <HTML>
-
+<html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
 </head>
-<div style="margin-left: 5%;margin-right: 5%;">
+<body style="margin-left: 5%; margin-right: 5%;">
+<div>
     <div style="text-align: center;">
-        <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/angelfund.png" style="height: 110px;" />
+        <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/new_header2.png" style="height: 34px; width: 180px;" />
     </div>
-    <div style="border-bottom: 3px solid lightgray;">
-        <p style="font-weight:500;font-size: 30px; color: #7d7676;">Confirm Your Email Address</p>
+    <br><br>
+    <div style="border-bottom: 2px solid #E6E6E6E6;">
+        <p style="font-family: Lato; font-weight:700; font-size: 30px; color: #707070;">Verify Email</p>
     </div>
-    <div style="padding-top: 3%;
-        padding-bottom: 3%;border-bottom: 3px solid lightgray;margin-bottom: 5%;">
-        <strong style="font-weight: 400;font-size: 20px;">
-            Confirming your email address is simple-we'll have you up and running in no time.
-        </strong>
-        <p style="margin-bottom: 6%;">
-            Please click here to get started:
+
+
+    <div style="padding-top: 3%; text-align: center;
+             padding-bottom: 3%;border-bottom: 2px solid  #E6E6E6;margin-bottom: 5%;">
+        <p style="margin-bottom: 6%;
+                padding: 1%;
+                margin: 1%;
+                font-weight: 400;
+                font-family: Roboto;
+                font-size: 20px;
+                text-align: center;">
+            <span style="padding: 2%;">Hey {first_name}! Thanks for signing up for <a style="text-decoration: none;" target="_blank" href="https://www.angelfund.ai"><span style="color: #5a51f4">Angelfund.ai!</span></a></span>
+            <br>
+            Click here to verify your email address and get started:
         </p>
         <div style="text-align: center;">
-            <button style="height: 40px;
-            background-color: #5a61eb;
-            color: white;
-            font-size: 16px;
-            border-radius: 8px;"><a style="color:white; text-decoration: none;" target="_blank"
-                    href="{email_confirm_link}">Confirm my Email</a></button>
+            <a style="color:white; text-decoration: none;" target="_blank"
+               href="{email_confirm_link}">
+                <button style="
+                   background-color: #5a51f4;
+                   color: white;
+                   min-height: 6%;
+                   height: auto;
+                   width: 15%;
+                   border: none;
+                   font-weight: 700;
+                   font-size: 18px;
+                   border-radius: 4px;">Verify my email</button></a>
         </div>
     </div>
-    <div style="text-align: center;background-color: lightgrey;opacity: 0.3;padding-top: 2%;padding-bottom: 2%;">
+    <div>
+        <p style="margin-bottom: 6%;
+                padding: 1%;
+                margin: 1%;
+                color: #707070;
+                font-weight: 400;
+                font-family: Roboto;
+                font-size: 18px;
+                text-align: left;">
+            <strong>Button not working?</strong>
+            <br>
+            Just click on the link below or paste it into your browser.
+            <br>
+            <a href="{email_confirm_link}"  style="color: #707070;">{email_confirm_link}</a>
+            <br>
+            <br>
+            You received this email because you signed up for an Angelfund.ai account with this
+            <br>
+            email address. If this was a mistake, please ignore this message.
+        </p>
+    </div>
+    <br>
+    <br>
+    <div style="font-family: Roboto;
+             font-size: 14px;
+             text-align: center;
+             background-color: #F8F8F8;
+             border-radius: 4px;
+             padding-top: 2%;
+             padding-bottom: 2%;">
         <div>
-            <a href="#" class="fa fa-twitter"
-                style="font-size: 25px;text-decoration: none;margin-right: 10px;color: gray;"></a>
-            <a href="#" class="fa fa-linkedin" style="font-size: 25px;text-decoration: none;color: gray;"></a>
+            <a href="https://mobile.twitter.com/AngelFundAI" class="fa fa-twitter"
+               style="font-size: 25px;text-decoration: none;margin-right: 20px;color: gray;"></a>
+            <a href="https://www.linkedin.com/company/angelfundai/" class="fa fa-linkedin"
+               style="font-size: 25px; margin-left: 20px; text-decoration: none;color: gray;"></a>
         </div>
         <p>
             2375 Zanker Road #250, San Jose, CA 95131
         </p>
-        <footer>Copyright &copy;2020 Global Angel Fund, Inc. <a style="text-decoration: underline;">Unsubscribe</a>
+        <footer>Copyright &copy;2020 Global Angel Fund, Inc.
         </footer>
     </div>
 </div>
 
-</HTML>
-                """.format(email_confirm_link=email_confirm_link)
+</body>
+</html>
+                """.format(email_confirm_link=email_confirm_link, first_name=first_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

@@ -30,9 +30,9 @@ def validate_inv_first_page_schema(data):
     try:
         validate(instance=data, schema=inv_first_page_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
@@ -57,9 +57,9 @@ def validate_inv_login_schema(data):
     try:
         validate(instance=data, schema=inv_login_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
@@ -80,9 +80,9 @@ def validate_inv_password_reset_schema(data):
     try:
         validate(instance=data, schema= inv_password_reset_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
@@ -104,9 +104,9 @@ def validate_email_schema(data):
     try:
         validate(instance=data, schema= inv_email_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
@@ -127,9 +127,9 @@ def validate_google_schema(data):
     try:
         validate(instance=data, schema= inv_google_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
@@ -152,9 +152,9 @@ def validate_dashboard_schema(data):
     try:
         validate(instance=data, schema= inv_dashboard_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
@@ -176,9 +176,9 @@ def validate_referrer_schema(data):
     try:
         validate(instance=data, schema= inv_referrer_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
 #############################################################################################################################################
@@ -199,9 +199,9 @@ def validate_company_schema(data):
     try:
         validate(instance=data, schema= inv_company_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 #############################################################################################################################################
 
@@ -222,9 +222,9 @@ def validate_inv_passed_recvisit_schema(data):
     try:
         validate(instance=data, schema= inv_passed_recvisit_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 #############################################################################################################################################
 inv_monday_notification_schema = {
@@ -243,9 +243,9 @@ def validate_inv_monday_notification_schema(data):
     try:
         validate(instance=data, schema= inv_monday_notification_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 #############################################################################################################################################
 inv_delete_acc_schema = {
@@ -264,9 +264,9 @@ def validate_delete_acc_schema(data):
     try:
         validate(instance=data, schema= inv_delete_acc_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 #############################################################################################################################################
 
@@ -286,8 +286,29 @@ def validate_invite_acc_notify_schema(data):
     try:
         validate(instance=data, schema= inv_invite_accepted_notification_schema)
     except ValidationError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
     except SchemaError as e:
-        return {'result': False, 'message': e.message}
+        return {'result': False, 'error': e.message}
+    return {'result': True, 'data': data}
+#############################################################################################################################################
+inv_profile_vis_schema = {
+    "type": "object",
+    "properties": {
+        "visible": {
+            "type": "boolean",
+        },
+    },
+    "required": ["visible"],
+    "additionalProperties": False
+}
+
+
+def validate_profile_vis_schema(data):
+    try:
+        validate(instance=data, schema= inv_profile_vis_schema)
+    except ValidationError as e:
+        return {'result': False, 'error': e.message}
+    except SchemaError as e:
+        return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 #############################################################################################################################################

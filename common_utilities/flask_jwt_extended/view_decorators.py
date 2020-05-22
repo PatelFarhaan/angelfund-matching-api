@@ -141,7 +141,7 @@ def jwt_required(fn):
         if resp == "logged_out":
             return {
                 "result": False,
-                "message": "user logged out"
+                "error": "user logged out"
             }
         return fn(*args, **kwargs)
     return wrapper

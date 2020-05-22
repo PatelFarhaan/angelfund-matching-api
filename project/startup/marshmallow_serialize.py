@@ -13,7 +13,7 @@ class StartupUserSchema(ma.Schema):
 
 class StartupDashboardSchema(ma.Schema):
     class Meta:
-        fields = ("bio", "raised", "sectors", "location", "name", "email", "progress", "round_size",
+        fields = ("bio", "raised", "sectors", "location", "email", "progress", "round_size",
                   "slide_deck", "co_founders", "company_link", "profile_pic_link", "company_name")
 
 
@@ -22,7 +22,7 @@ class StartupConnectedSchema(ma.Schema):
     status = fd.fields.String(default="Connected")
 
     class Meta:
-        fields = ("location", "round_size", "company_name", "profile_pic_link", "action")
+        fields = ("location", "round_size", "company_name", "profile_pic_link")
 
 
 class StartupPassedSchema(ma.Schema):
@@ -40,4 +40,5 @@ class StartupMLSchema(ma.Schema):
                   "last_name", "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email",
                   "first_dashboard_visit", "created", "investor", "feedback", "connected", "passed", "matched_week",
                   "pending", "co_founders", "show_slide_deck", "delete_account", "show_profile", "monday_notification",
-                  "count_invited", "count_passed", "show_limit", "invite_accepted_notify", "all_transaction_fields")
+                  "count_invited", "count_passed", "show_limit", "invite_accepted_notify", "all_transaction_fields",
+                  "link", "image")
