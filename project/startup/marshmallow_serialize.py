@@ -40,5 +40,4 @@ class StartupMLSchema(ma.Schema):
                   "last_name", "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email",
                   "first_dashboard_visit", "created", "investor", "feedback", "connected", "passed", "matched_week",
                   "pending", "co_founders", "show_slide_deck", "delete_account", "show_profile", "monday_notification",
-                  "count_invited", "count_passed", "show_limit", "invite_accepted_notify", "all_transaction_fields",
-                  "link", "image")
+                  "count_invited", "count_passed", "show_limit", "invite_accepted_notify", "all_transaction_fields")

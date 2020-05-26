@@ -16,7 +16,7 @@ class InvestorMLSchema(ma.Schema):
                   "last_name", "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email",
                   "first_dashboard_visit", "created", "investor", "show_profile", "monday_notifications", "show_limit",
                   "matched_week", "prior_investments", "connected", "passed", "pending", "delete_account", "count_invited",
-                  "count_passed", "invite_accepted_notify", "all_transaction_fields", "link", "image")
+                  "count_passed", "invite_accepted_notify", "all_transaction_fields")
 
 
 class InvestorDashboardSchema(ma.Schema):

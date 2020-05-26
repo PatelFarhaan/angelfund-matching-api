@@ -19,6 +19,7 @@ from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
 from project.models import Startup, Investor, StartupSubscriptionEmails
 from werkzeug.security import generate_password_hash, check_password_hash
+from common_utilities.common_mappings import sector_data, progress_mapping
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
@@ -34,7 +35,7 @@ from common_utilities.json_schema_startup_validation import (validate_str_first_
 #                                         LOGGER + BLUEPRINT
 #<==================================================================================================>
 logger = logging.getLogger(__name__)
-startup_blueprint = Blueprint('startup', __name__, url_prefix='/startup')
+startup_blueprint = Blueprint('startup', __name__, url_prefix='/api/v1/startup')
 
 
 #<==================================================================================================>
@@ -309,6 +310,11 @@ def email_confirmed(token):
     if user:
         user.email_confirmed = True
         user.save()
+
+        if update_into_matching(email, {"email_confirmed": True}):
+            pass
+            # todo: shoot out an email to the team with the user email as the subject header
+
         logger.debug(f"startup email confirmed {email}")
         return redirect("https://www.angelfund.ai", code=302)
     else:
@@ -362,6 +368,68 @@ def referral_link():
         email_referral(ref_email, full_name, first_name)
         return jsonify({"result": True, "message": "mail sent"})
 
+
+#<==================================================================================================>
+#                                        UPDATE INFORMATION
+#<==================================================================================================>
+@startup_blueprint.route('/update-info', methods=['PATCH'])
+@jwt_required
+def update_info():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+    if user_obj.is_logged_in:
+        input_data = request.get_json()
+        available_fields = {"location", "sectors", "company_name", "company_link",
+                            "startup_pitch", "bio", "round_size", "raised", "profile_pic_link",
+                            "progress", "position", "num_team_members", "slide_deck"}
+
+        for field in input_data:
+            if field in available_fields:
+
+                if field == "sectors":
+                    sectors_map = sector_data()
+                    res = [ sectors_map.get(i) for i in input_data[field] if sectors_map.get(i) != None ]
+                    setattr(user_obj, field, res)
+
+                    if update_into_matching(user_obj.email, {field: res}):
+                        pass
+                    # todo: shoot out an email to the team
+
+                elif field == "progress":
+                    progress_map = progress_mapping()
+                    res = [ progress_map.get(i) for i in input_data[field] if progress_map.get(i) != None ]
+                    setattr(user_obj, field, res)
+
+                    if update_into_matching(user_obj.email, {field: res}):
+                        pass
+                    # todo: shoot out an email to the team
+
+                else:
+                    setattr(user_obj, field, input_data[field])
+                    if update_into_matching(user_obj.email, {field: input_data[field]}):
+                        pass
+                    # todo: shoot out an email to the team
+
+                user_obj.save()
+
+            else:
+                message = "invalid user field"
+                return return_data_results(False, message)
+
+
+        ma_schema = StartupUserSchema()
+        user_objs = ma_schema.dump(user_obj)
+        ret_obj = {
+            "result": True,
+            "user": user_objs,
+        }
+        return ret_obj
+    else:
+        message = "user is not authenticated"
+        return return_data_results(False, message)
 
 
 #########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
@@ -452,44 +520,7 @@ def mime_files():
 
 
 
-#<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
-#<==================================================================================================>
-@startup_blueprint.route('/update-info', methods=['PATCH'])
-@jwt_required
-def update_info():
-    jwt_decode = startup_jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
 
-    user_obj = jwt_decode["user_obj"]
-    if user_obj.is_logged_in:
-        input_data = request.get_json()
-        available_fields = {"location", "sectors", "company_name", "company_link",
-                            "startup_pitch", "bio", "round_size", "raised", "profile_pic_link",
-                            "progress", "position", "num_team_members", "slide_deck"}
-        for field in input_data:
-            if field in available_fields:
-                setattr(user_obj, field, input_data[field])
-            else:
-                message = "invalid user field"
-                return return_data_results(False, message)
-        user_obj.save()
-
-        if update_into_matching(user_obj.email, input_data):
-            pass
-            #todo: shoot out an email to the team
-
-        ma_schema = StartupUserSchema()
-        user_objs = ma_schema.dump(user_obj)
-        ret_obj = {
-            "result": True,
-            "user": user_objs,
-        }
-        return ret_obj
-    else:
-        message = "user is not authenticated"
-        return return_data_results(False, message)
 
 
 #<==================================================================================================>

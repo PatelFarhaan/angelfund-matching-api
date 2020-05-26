@@ -49,9 +49,6 @@ class Investor(db.Document, UserMixin):
     invite_accepted_notify = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
-    link = db.StringField()
-    image = db.StringField()
-
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 
     def get_id(self):
@@ -107,10 +104,6 @@ class Startup(db.Document, UserMixin):
     first_dashboard_visit = db.BooleanField(default=True)
     invite_accepted_notify = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
-
-
-    link = db.StringField()
-    image = db.StringField()
 
     meta = dict(indexes=['email', '-created', 'is_google_signup'])
 

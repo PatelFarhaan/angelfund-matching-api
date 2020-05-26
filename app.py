@@ -4,13 +4,15 @@ from project import app
 from common_utilities import CONSTANT
 
 
+#<==================================================================================================>
+#                                      EXECUTION FILE
+#<==================================================================================================>
 if __name__ == "__main__":
     logging.basicConfig(filemode='a',
                         level=logging.DEBUG,
                         datefmt='%m-%d %H:%M',
                         format=CONSTANT.LOG_FORMAT.value,
                         filename=CONSTANT.LOG_FILE.value)
-
     logging.getLogger("sys").setLevel(logging.CRITICAL)
     logging.getLogger("boto3").setLevel(logging.CRITICAL)
     logging.getLogger("urllib3").setLevel(logging.CRITICAL)

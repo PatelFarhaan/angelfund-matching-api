@@ -113,10 +113,10 @@ def db_connection_details():
 
 def progress_mapping():
     return  {
-        "Mockups / Renderings": "mockups",
-        "Prototype/ Pre-Launch": "prototype",
+        "Mockups/Renderings": "mockups",
+        "Prototype/Pre-Launch": "prototype",
         "Launched": "product",
-        "Idea/sketches": "mockups",
+        "Idea/Sketches": "mockups",
         "Beta Launched": "beta" ,
         "Taking Preorders": "preorders",
         "Product Launched": "product",
@@ -141,6 +141,7 @@ def round_def(number):
         return "250"
     elif number > 500000:
         return "500"
+
 
 def convert_excel_to_csv(file_path, is_investor):
     if is_investor:
@@ -188,17 +189,3 @@ def sectors_data():
 if __name__ == '__main__':
     startup_data("/Users/farhaan/Downloads/AngelFund/new_data/startup.xlsx")
     investor_data("/Users/farhaan/Downloads/AngelFund/new_data/investor.xlsx")
-    # collection = db_connection_details()
-    # resp = list(collection.find())
-    #
-    # for i in resp:
-    #     try:
-    #         deals = i["deals"][0]
-    #     except:
-    #         deals = "100"
-    #
-    #     myquery = {"email": i["email"]}
-    #     newvalues = {"$set": {"deals": deals}}
-    #
-    #     collection.update_one(myquery, newvalues)
-    #     print(True)
