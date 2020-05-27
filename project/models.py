@@ -61,14 +61,15 @@ class Investor(db.Document, UserMixin):
 
 
 class Startup(db.Document, UserMixin):
+    raised = db.IntField()
     bio = db.StringField()
     passed = db.DictField()
     pending = db.DictField()
     sectors = db.ListField()
-    raised = db.IntField()
     progress = db.ListField()
     feedback = db.DictField()
     connected = db.DictField()
+    round_size = db.IntField()
     position = db.StringField()
     password = db.StringField()
     location = db.StringField()
@@ -78,7 +79,6 @@ class Startup(db.Document, UserMixin):
     count_invited = db.IntField()
     slide_deck = db.StringField()
     referred_by = db.EmailField()
-    round_size = db.StringField()
     company_link = db.StringField()
     company_name = db.StringField()
     num_team_members = db.IntField()

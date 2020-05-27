@@ -32,14 +32,14 @@ from common_utilities.json_schema_startup_validation import (validate_str_first_
 
 
 #<==================================================================================================>
-#                                         LOGGER + BLUEPRINT
+#                                     LOGGER + BLUEPRINT
 #<==================================================================================================>
 logger = logging.getLogger(__name__)
 startup_blueprint = Blueprint('startup', __name__, url_prefix='/api/v1/startup')
 
 
 #<==================================================================================================>
-#                                         GOOGLE SIGNUP AND SIGNIN
+#                                    GOOGLE SIGNUP AND SIGNIN
 #<==================================================================================================>
 @startup_blueprint.route("/google-token", methods=["POST"])
 def google_token():
@@ -135,7 +135,7 @@ def google_token():
 
 
 #<==================================================================================================>
-#                                               LOGIN
+#                                           LOGIN
 #<==================================================================================================>
 @startup_blueprint.route('/login', methods=['POST'])
 def login():
@@ -195,7 +195,7 @@ def login():
 
 
 #<==================================================================================================>
-#                                        PASSWORD RESET LINK
+#                                    PASSWORD RESET LINK
 #<==================================================================================================>
 @startup_blueprint.route('/reset-link/<token>', methods=['GET', 'POST'])
 def reset_link(token):
@@ -227,7 +227,7 @@ def reset_link(token):
 
 
 #<==================================================================================================>
-#                                    PASSWORD RESET REQUEST (HOMEPAGE)
+#                                PASSWORD RESET REQUEST (HOMEPAGE)
 #<==================================================================================================>
 @startup_blueprint.route('/forgot-password', methods=['POST'])
 def forgot_password():
@@ -255,7 +255,7 @@ def forgot_password():
 
 
 #<==================================================================================================>
-#                                                REGISTER
+#                                       REGISTER
 #<==================================================================================================>
 @startup_blueprint.route('/register', methods=['POST'])
 def register():
@@ -295,8 +295,9 @@ def register():
     else:
         return jsonify(response)
 
+
 #<==================================================================================================>
-#                                     EMAIL CONFIRMATION TOKEN
+#                                   EMAIL CONFIRMATION TOKEN
 #<==================================================================================================>
 @startup_blueprint.route('/email-confirmed/<token>', methods=['GET'])
 def email_confirmed(token):
@@ -323,7 +324,7 @@ def email_confirmed(token):
 
 
 #<==================================================================================================>
-#                                            LOGOUT
+#                                          LOGOUT
 #<==================================================================================================>
 @startup_blueprint.route('/logout', methods=["POST"])
 @jwt_required
@@ -339,7 +340,7 @@ def logout():
 
 
 #<==================================================================================================>
-#                                            REFERRAL LINK
+#                                       REFERRAL LINK
 #<==================================================================================================>
 @startup_blueprint.route('/referral-link', methods=["POST"])
 @jwt_required
@@ -370,7 +371,7 @@ def referral_link():
 
 
 #<==================================================================================================>
-#                                        UPDATE INFORMATION
+#                                      UPDATE INFORMATION
 #<==================================================================================================>
 @startup_blueprint.route('/update-info', methods=['PATCH'])
 @jwt_required
