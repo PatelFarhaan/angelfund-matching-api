@@ -6,7 +6,8 @@ class InvestorUserSchema(ma.Schema):
     class Meta:
         fields = ("first_name", "last_name", "email", "sectors", "deals", "profile_pic_link",
                   "bio", "location", "accreditation", "syndicate", "angel", "prior_investments",
-                  "email_confirmed", "approved", "first_dashboard_visit")
+                  "email_confirmed", "approved", "first_dashboard_visit", "monday_notification",
+                  "show_profile")
 
 
 class InvestorMLSchema(ma.Schema):

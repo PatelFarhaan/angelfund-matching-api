@@ -523,13 +523,59 @@ def update_info():
         return return_data_results(False, message)
 
 
+#<==================================================================================================>
+#                                    MONDAY NOTIFICATION
+#<==================================================================================================>
+@investor_blueprint.route('/monday-notifications', methods=["POST"])
+@jwt_required
+def monday_notifications():
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+
+    if request.method == "POST":
+        response = validate_inv_monday_notification_schema(request.get_json())
+        if response["result"]:
+            setattr(inv_obj, "monday_notification", response["data"]["monday_notification"])
+            inv_obj.save()
+
+            if update_into_matching(inv_obj.email, {"monday_notification": response["data"]["monday_notification"]}):
+                pass
+                # todo: shoot out an email to the team
+
+            return jsonify({"result": True, "message": "value updated"})
+        else:
+            return jsonify(response)
 
 
+#<==================================================================================================>
+#                                    PROFILE VISIBILITY
+#<==================================================================================================>
+@investor_blueprint.route('/profile-visibility', methods=["POST"])
+@jwt_required
+def profile_visibility():
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+    response = validate_profile_vis_schema(request.get_json())
+    if response["result"]:
+        visible = response["data"]["visible"]
+        setattr(inv_obj, "show_profile", visible)
+        inv_obj.save()
+
+        if update_into_matching(inv_obj.email, {"show_profile": visible}):
+            pass
+            # todo: shoot out an email to the team
+
+        return jsonify({"result": True, "message": "value updated"})
+    else:
+        return jsonify(response)
 
 #########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
-
-
-
 
 
 
@@ -833,23 +879,7 @@ def passed_revisit():
             return jsonify(response)
 
 
-@investor_blueprint.route('/monday-notifications', methods=["POST"])
-@jwt_required
-def monday_notifications():
-    jwt_decode = investor_jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
 
-    inv_obj = jwt_decode["user_obj"]
-
-    if request.method == "POST":
-        response = validate_inv_monday_notification_schema(request.get_json())
-        if response["result"]:
-            setattr(inv_obj,"monday_notification", response["data"]["monday_notification"])
-            inv_obj.save()
-            return jsonify({"result": True, "message": "value updated"})
-        else:
-            return jsonify(response)
 
 
 @investor_blueprint.route('/investor-common-mappings', methods=["GET"])
@@ -895,22 +925,7 @@ def delete_account():
         return jsonify(response)
 
 
-@investor_blueprint.route('/profile-visibility', methods=["POST"])
-@jwt_required
-def profile_visibility():
-    if request.method == "POST":
-        jwt_decode = investor_jwt_decoder(get_jwt_identity())
-        if not jwt_decode["result"]:
-            return jsonify(jwt_decode)
 
-        inv_obj = jwt_decode["user_obj"]
-        response = validate_profile_vis_schema(request.get_json())
-        if response["result"]:
-            visible = response["data"]["visible"]
-            setattr(inv_obj, "show_profile", visible)
-            inv_obj.save()
-            return jsonify({"result": True, "message": "value updated"})
-        return jsonify(response)
 
 
 @investor_blueprint.route('/subscription', methods=["POST"])

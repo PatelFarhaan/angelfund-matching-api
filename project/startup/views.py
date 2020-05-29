@@ -294,6 +294,18 @@ def register():
             return jsonify({"result": False, "error": error})
 
         input_request["password"] = generate_password_hash(input_request["password"])
+
+        input_request["co_founders"] = [
+            {
+                "primary": None,
+                "name": f"{input_request['first_name']} {input_request['last_name']}",
+                "position": [None],
+                "bio": None,
+                "linkedin_link": None,
+                "profile_image": None
+            }
+        ]
+
         new_user = Startup(**input_request)
         new_user.save()
 
@@ -430,7 +442,7 @@ def referral_verification(token):
             details = {
                 "referred_by": None,
                 "referred_to": [referred]
-                }
+            }
             new_ref_obj = Referrals(email=referred_by, details=details)
             new_ref_obj.save()
 
@@ -443,7 +455,7 @@ def referral_verification(token):
         details = {
             "referred_by": referred_by,
             "referred_to": []
-            }
+        }
         new_ref_obj = Referrals(email=referred, details=details)
         new_ref_obj.save()
 
@@ -522,6 +534,59 @@ def update_info():
     else:
         message = "user is not authenticated"
         return return_data_results(False, message)
+
+
+#<==================================================================================================>
+#                                 MONDAY NOTIFICATIONS
+#<==================================================================================================>
+@startup_blueprint.route('/monday-notifications', methods=["POST"])
+@jwt_required
+def monday_notifications():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+
+    if request.method == "POST":
+        response = validate_inv_monday_notification_schema(request.get_json())
+        if response["result"]:
+            setattr(str_obj,"monday_notification", response["data"]["monday_notification"])
+            str_obj.save()
+
+            if update_into_matching(str_obj.email, {"monday_notification": response["data"]["monday_notification"]}):
+                pass
+                # todo: shoot out an email to the team
+
+            return jsonify({"result": True, "message": "value updated"})
+        else:
+            return jsonify(response)
+
+
+#<==================================================================================================>
+#                                  PROFILE VISIBILITY
+#<==================================================================================================>
+@startup_blueprint.route('/profile-visibility', methods=["POST"])
+@jwt_required
+def profile_visibility():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+    response = validate_profile_vis_schema(request.get_json())
+    if response["result"]:
+        visible = response["data"]["visible"]
+        setattr(str_obj, "show_profile", visible)
+        str_obj.save()
+
+        if update_into_matching(str_obj.email, {"show_profile": visible}):
+            pass
+            # todo: shoot out an email to the team
+
+        return jsonify({"result": True, "message": "value updated"})
+    else:
+        return jsonify(response)
 
 
 #########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
@@ -607,12 +672,6 @@ def mime_files():
     else:
         shutil.rmtree(file_location)
         return return_data_results(False, "invalid file type")
-
-
-
-
-
-
 
 
 #<==================================================================================================>
@@ -958,28 +1017,6 @@ def passed():
 #<==================================================================================================>
 #                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
 #<==================================================================================================>
-@startup_blueprint.route('/monday-notifications', methods=["POST"])
-@jwt_required
-def monday_notifications():
-    jwt_decode = startup_jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
-
-    str_obj = jwt_decode["user_obj"]
-
-    if request.method == "POST":
-        response = validate_inv_monday_notification_schema(request.get_json())
-        if response["result"]:
-            setattr(str_obj,"monday_notification", response["data"]["monday_notification"])
-            str_obj.save()
-            return jsonify({"result": True, "message": "value updated"})
-        else:
-            return jsonify(response)
-
-
-#<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
-#<==================================================================================================>
 @startup_blueprint.route('/delete-account', methods=["POST"])
 @jwt_required
 def delete_account():
@@ -997,27 +1034,6 @@ def delete_account():
                 str_obj.save()
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})
-        return jsonify(response)
-
-
-#<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
-#<==================================================================================================>
-@startup_blueprint.route('/profile-visibility', methods=["POST"])
-@jwt_required
-def profile_visibility():
-    if request.method == "POST":
-        jwt_decode = startup_jwt_decoder(get_jwt_identity())
-        if not jwt_decode["result"]:
-            return jsonify(jwt_decode)
-
-        str_obj = jwt_decode["user_obj"]
-        response = validate_profile_vis_schema(request.get_json())
-        if response["result"]:
-            visible = response["data"]["visible"]
-            setattr(str_obj, "show_profile", visible)
-            str_obj.save()
-            return jsonify({"result": True, "message": "value updated"})
         return jsonify(response)
 
 

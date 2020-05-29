@@ -6,9 +6,9 @@ class StartupUserSchema(ma.Schema):
     class Meta:
         fields = ("first_name", "last_name", "email", "location",
                   "sectors", "company_name", "company_link", "startup_pitch",
-                  "bio", "round_size", "raised", "progress", "position",
+                  "bio", "round_size", "raised", "progress", "position", "co_founders",
                   "num_team_members", "slide_deck", "approved", "email_confirmed",
-                  "first_dashboard_visit")
+                  "first_dashboard_visit", "show_profile", "monday_notification")
 
 
 class StartupDashboardSchema(ma.Schema):
