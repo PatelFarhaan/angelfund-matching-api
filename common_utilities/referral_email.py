@@ -9,12 +9,12 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
-def email_referral(user_email, full_name, first_name):
+def email_referral(user_email, full_name, first_name, link):
     full_name = full_name.capitalize()
     first_name = first_name.capitalize()
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = "hello@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Welcome to AngelFund"
@@ -57,7 +57,7 @@ def email_referral(user_email, full_name, first_name):
             Sign up using their link to get early access to the most relevant startups & investors:
             <br>
             <br>
-        <a href="http://www.angelfund.ai">https://www.angelfund.ai</a>
+        <a href="{link}">{link}</a>
                 </span>
 
         </p>
@@ -92,7 +92,7 @@ def email_referral(user_email, full_name, first_name):
 
 </body>
 </html>
-                """.format(full_name=full_name, first_name=first_name)
+                """.format(full_name=full_name, first_name=first_name, link=link)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

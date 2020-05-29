@@ -3,6 +3,9 @@ from flask_login import UserMixin
 from project import db, login_manager
 
 
+#<==================================================================================================>
+#                                      UPDATE INFORMATION
+#<==================================================================================================>
 @login_manager.user_loader
 def user_load(user_obj):
     user_id = user_obj["user_id"]
@@ -12,19 +15,19 @@ def user_load(user_obj):
         return Startup.objects.get(pk=user_id)
 
 
+#<==================================================================================================>
+#                                 INVESTOR COLLECTION
+#<==================================================================================================>
 class Investor(db.Document, UserMixin):
     bio = db.StringField()
     passed = db.DictField()
     pending = db.DictField()
     deals = db.ListField()
     sectors = db.ListField()
-    angel = db.BooleanField()
     syndicate = db.ListField()
     connected = db.DictField()
     location = db.StringField()
     password = db.StringField()
-    referred_to = db.ListField()
-    referred_by = db.EmailField()
     accreditation = db.StringField()
     prior_investments = db.ListField()
     profile_pic_link = db.StringField()
@@ -60,6 +63,9 @@ class Investor(db.Document, UserMixin):
         return self.is_user_authenticated
 
 
+#<==================================================================================================>
+#                                  STARTUP COLLECTION
+#<==================================================================================================>
 class Startup(db.Document, UserMixin):
     raised = db.IntField()
     bio = db.StringField()
@@ -73,12 +79,10 @@ class Startup(db.Document, UserMixin):
     position = db.StringField()
     password = db.StringField()
     location = db.StringField()
-    referred_to = db.ListField()
     co_founders = db.ListField()
     count_passed = db.IntField()
     count_invited = db.IntField()
     slide_deck = db.StringField()
-    referred_by = db.EmailField()
     company_link = db.StringField()
     company_name = db.StringField()
     num_team_members = db.IntField()
@@ -116,6 +120,19 @@ class Startup(db.Document, UserMixin):
         return self.is_user_authenticated
 
 
+#<==================================================================================================>
+#                                   REFERRALS COLLECTION
+#<==================================================================================================>
+class Referrals(db.Document):
+    email = db.EmailField(required=True, unique=True)
+    details = db.DictField()
+
+    meta = dict(indexes=['email'])
+
+
+#<==================================================================================================>
+#                                   NOT USED IN PHASE 1
+#<==================================================================================================>
 class SignUpMappings(db.Document):
     deals_data = db.DictField()
     sector_data = db.DictField()
@@ -132,3 +149,5 @@ class StartupSubscriptionEmails(db.Document):
     email = db.EmailField()
 
     meta = dict(indexes=['email'])
+
+

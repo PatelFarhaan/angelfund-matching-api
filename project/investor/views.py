@@ -19,16 +19,17 @@ from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.get_inv_common_mappings import get_common_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
-from project.models import Investor, Startup, InvestorSubscriptionEmails
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
+from project.models import Investor, Startup, InvestorSubscriptionEmails, Referrals
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
+from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.startup.marshmallow_serialize import (StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema)
 from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_matching_data, process_all_str_data)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
-validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema, validate_google_schema, validate_inv_login_schema,
-validate_inv_password_reset_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_profile_vis_schema)
+                                                              validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema, validate_google_schema, validate_inv_login_schema,
+                                                              validate_inv_password_reset_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_profile_vis_schema)
 
 
 #<==================================================================================================>
@@ -68,6 +69,13 @@ def google_token():
 
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
+
+                        rev_acc_data = rev_accreditation_data()
+                        rev_sectors_data = rev_sector_data()
+
+                        user_objs["accreditation"] = rev_acc_data.get(user_objs["accreditation"])
+                        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
                         jwt_obj = {"email": email, "model": "Investor"}
                         access_token = create_access_token(identity=jwt_obj)
 
@@ -117,6 +125,13 @@ def google_token():
 
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
+
+                        rev_acc_data = rev_accreditation_data()
+                        rev_sectors_data = rev_sector_data()
+
+                        user_objs["accreditation"] = rev_acc_data.get(user_objs["accreditation"])
+                        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
                         jwt_obj = {"email": email, "model": "Investor"}
                         access_token = create_access_token(identity=jwt_obj)
                         ret_obj = {
@@ -181,6 +196,13 @@ def login():
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
+
+            rev_acc_data = rev_accreditation_data()
+            rev_sectors_data = rev_sector_data()
+
+            user_objs["accreditation"] = rev_acc_data.get(user_objs["accreditation"])
+            user_objs["sectors"] = [ rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
             jwt_obj = {"email": email, "model": "Investor"}
             access_token = create_access_token(identity=jwt_obj)
             ret_obj = {
@@ -359,16 +381,80 @@ def referral_link():
         return jsonify(response)
 
     ref_email = response["data"]["email"]
-    refferred_to = list(user_obj.referred_to)
-    refferred_to.append(ref_email)
-    user_obj.referred_to = refferred_to
-    user_obj.save()
+
+    if Investor.objects.filter(email=ref_email).first():
+        return jsonify({"result": False, "error": "user exists"})
+
+    if Startup.objects.filter(email=ref_email).first():
+        return jsonify({"result": False, "error": "user exists"})
 
     full_name = user_obj.first_name + " " + user_obj.last_name
     first_name = user_obj.first_name
 
-    email_referral(ref_email, full_name, first_name)
+    ref_obj = {"referred_by": user_obj.email, "referred": ref_email}
+
+    token = serial.dumps(ref_obj, salt='email_referral')
+    link = url_for('investor.referral_verification', token=token, _external=True)
+    thread = threading.Thread(target=email_referral, args=((ref_email, full_name, first_name, link)))
+    thread.start()
+
     return jsonify({"result": True, "message": "mail sent"})
+
+
+#<==================================================================================================>
+#                                  REFERRAL VERIFICATION
+#<==================================================================================================>
+@investor_blueprint.route('/referral/<token>', methods=["GET"])
+def referral_verification(token):
+    try:
+        ref_obj = serial.loads(token, salt='email_referral')
+        referred_by = ref_obj.get("referred_by")
+        referred = ref_obj.get("referred")
+    except:
+        return redirect("https://www.angelfund.ai/token-expired", code=302)
+
+    user = Investor.objects.filter(email=referred_by).first()
+
+    if user:
+        # For referred_by user
+        ref_by_obj = Referrals.objects.filter(email=user.email).first()
+        if ref_by_obj:
+            details = dict(ref_by_obj.details)
+            referred_to = list(details.get("referred_to"))
+            if referred in referred_to:
+                logger.debug(f"{referred} is already referred by {referred_by}")
+                return redirect("https://www.angelfund.ai", code=302)
+
+            referred_to.append(referred)
+            details["referred_to"] = referred_to
+            ref_by_obj.details = details
+            ref_by_obj.save()
+        else:
+            details = {
+                "referred_by": None,
+                "referred_to": [referred]
+                }
+            new_ref_obj = Referrals(email=referred_by, details=details)
+            new_ref_obj.save()
+
+        # For referred_to user
+        ref_to_obj = Referrals.objects.filter(email=referred).first()
+        if ref_to_obj:
+            logger.debug(f"{referred} is already referred by {referred_by}")
+            return redirect("https://www.angelfund.ai", code=302)
+
+        details = {
+            "referred_by": referred_by,
+            "referred_to": []
+            }
+        new_ref_obj = Referrals(email=referred, details=details)
+        new_ref_obj.save()
+
+        logger.debug(f"{referred} is referred by {referred_by}")
+        return redirect("https://www.angelfund.ai", code=302)
+    else:
+        logger.debug(f"investor does not exist {referred_by} :=> referral verification")
+        return redirect("https://www.angelfund.ai/no-user-found", code=302)
 
 
 #<==================================================================================================>
@@ -420,6 +506,13 @@ def update_info():
 
         ma_schema = InvestorUserSchema()
         user_objs = ma_schema.dump(user_obj)
+
+        rev_acc_data = rev_accreditation_data()
+        rev_sectors_data = rev_sector_data()
+
+        user_objs["accreditation"] = rev_acc_data.get(user_objs["accreditation"])
+        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
         ret_obj = {
             "result": True,
             "user": user_objs,
@@ -605,11 +698,11 @@ def investors_dashboard():
                 str_obj.save()
 
                 deals = {
-                        "0": "$25,000 to $50,000",
-                        "1": "$50,000 to $100,000",
-                        "2": "$100,000 to $250,000",
-                        "3": "$250,000 to $500,000"
-                    }
+                    "0": "$25,000 to $50,000",
+                    "1": "$50,000 to $100,000",
+                    "2": "$100,000 to $250,000",
+                    "3": "$250,000 to $500,000"
+                }
 
                 temp_dict = {}
                 temp_dict["inv_bio"] = inv_obj.bio

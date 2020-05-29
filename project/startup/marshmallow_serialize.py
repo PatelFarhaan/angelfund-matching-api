@@ -34,8 +34,8 @@ class StartupPassedSchema(ma.Schema):
 
 class StartupMLSchema(ma.Schema):
     class Meta:
-        fields = ("bio", "sectors", "raised", "progress", "position", "password", "location", "referred_to",
-                  "slide_deck", "referred_by", "round_size", "company_link", "company_name", "num_team_members",
+        fields = ("bio", "sectors", "raised", "progress", "position", "password", "location",
+                  "slide_deck", "round_size", "company_link", "company_name", "num_team_members",
                   "startup_pitch", "profile_pic_link", "raised_capital_desc", "password_reset_meta_data", "approved",
                   "last_name", "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email",
                   "first_dashboard_visit", "created", "investor", "feedback", "connected", "passed", "matched_week",

@@ -36,18 +36,6 @@ def sector_data():
             'Other': 'other'}
 
 
-def deals_data():
-    return {
-        "0 - 10 000": "0",
-        "10 000 - 25 000": "10",
-        "$25,000 to $50,000": "25",
-        "$50,000 to $100,000": "50",
-        "$100,000 to $250,000": "100",
-        "$250,000 to $500,000": "250",
-        "500 000+": "500"
-    }
-
-
 def accreditation_data():
     return {
         "I have a net worth of $1 million or more, excluding my primary home.": "1000000",

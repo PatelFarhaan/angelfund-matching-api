@@ -17,11 +17,12 @@ from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.get_str_common_mappings import get_str_users
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
-from project.models import Startup, Investor, StartupSubscriptionEmails
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, progress_mapping
+from project.models import Startup, Investor, StartupSubscriptionEmails, Referrals
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
+from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
@@ -65,6 +66,13 @@ def google_token():
 
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
+
+                        rev_sectors_data = rev_sector_data()
+                        rev_progress_data = rev_progress_mapping()
+
+                        user_objs["progress"] = [rev_progress_data.get(i) for i in user_objs["progress"] if rev_progress_data.get(i)]
+                        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
                         jwt_obj = {"email": email, "model": "Startup"}
                         access_token = create_access_token(identity=jwt_obj)
 
@@ -114,6 +122,13 @@ def google_token():
 
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
+
+                        rev_sectors_data = rev_sector_data()
+                        rev_progress_data = rev_progress_mapping()
+
+                        user_objs["progress"] = [rev_progress_data.get(i) for i in user_objs["progress"] if rev_progress_data.get(i)]
+                        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
                         jwt_obj = {"email": email, "model": "Startup"}
                         access_token = create_access_token(identity=jwt_obj)
                         ret_obj = {
@@ -178,6 +193,13 @@ def login():
 
             ma_schema = StartupUserSchema()
             user_objs = ma_schema.dump(user)
+
+            rev_sectors_data = rev_sector_data()
+            rev_progress_data = rev_progress_mapping()
+
+            user_objs["progress"] = [rev_progress_data.get(i) for i in user_objs["progress"] if rev_progress_data.get(i)]
+            user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
             jwt_obj = {"email": email, "model": "Startup"}
             access_token = create_access_token(identity=jwt_obj)
             ret_obj = {
@@ -188,8 +210,7 @@ def login():
             return ret_obj
         else:
             logger.debug(f"startup wrong credentials: {email}")
-            error = "wrong credentails"
-            return jsonify({"result": False, "error": error})
+            return jsonify({"result": False, "error": "wrong credentials"})
     else:
         return jsonify(response)
 
@@ -345,29 +366,92 @@ def logout():
 @startup_blueprint.route('/referral-link', methods=["POST"])
 @jwt_required
 def referral_link():
-    if request.method == "POST":
-        jwt_decode = startup_jwt_decoder(get_jwt_identity())
-        if not jwt_decode["result"]:
-            return jsonify(jwt_decode)
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
 
-        user_obj = jwt_decode["user_obj"]
-        inp_req = request.get_json()
-        response = validate_referrer_schema(inp_req)
+    user_obj = jwt_decode["user_obj"]
+    inp_req = request.get_json()
+    response = validate_referrer_schema(inp_req)
 
-        if not response["result"]:
-            return jsonify(response)
+    if not response["result"]:
+        return jsonify(response)
 
-        ref_email = response["data"]["email"]
-        refferred_to = list(user_obj.referred_to)
-        refferred_to.append(ref_email)
-        user_obj.referred_to = refferred_to
-        user_obj.save()
+    ref_email = response["data"]["email"]
 
-        full_name = user_obj.first_name + " " + user_obj.last_name
-        first_name = user_obj.first_name
+    if Investor.objects.filter(email=ref_email).first():
+        return jsonify({"result": False, "error": "user exists"})
 
-        email_referral(ref_email, full_name, first_name)
-        return jsonify({"result": True, "message": "mail sent"})
+    if Startup.objects.filter(email=ref_email).first():
+        return jsonify({"result": False, "error": "user exists"})
+
+    full_name = user_obj.first_name + " " + user_obj.last_name
+    first_name = user_obj.first_name
+
+    ref_obj = {"referred_by": user_obj.email, "referred": ref_email}
+
+    token = serial.dumps(ref_obj, salt='email_referral')
+    link = url_for('startup.referral_verification', token=token, _external=True)
+    thread = threading.Thread(target=email_referral, args=((ref_email, full_name, first_name, link)))
+    thread.start()
+
+    return jsonify({"result": True, "message": "mail sent"})
+
+
+#<==================================================================================================>
+#                                  REFERRAL VERIFICATION
+#<==================================================================================================>
+@startup_blueprint.route('/referral/<token>', methods=["GET"])
+def referral_verification(token):
+    try:
+        ref_obj = serial.loads(token, salt='email_referral')
+        referred_by = ref_obj.get("referred_by")
+        referred = ref_obj.get("referred")
+    except:
+        return redirect("https://www.angelfund.ai/token-expired", code=302)
+
+    user = Startup.objects.filter(email=referred_by).first()
+
+    if user:
+        # For referred_by user
+        ref_by_obj = Referrals.objects.filter(email=user.email).first()
+        if ref_by_obj:
+            details = dict(ref_by_obj.details)
+            referred_to = list(details.get("referred_to"))
+            if referred in referred_to:
+                logger.debug(f"{referred} is already referred by {referred_by}")
+                return redirect("https://www.angelfund.ai", code=302)
+
+            referred_to.append(referred)
+            details["referred_to"] = referred_to
+            ref_by_obj.details = details
+            ref_by_obj.save()
+        else:
+            details = {
+                "referred_by": None,
+                "referred_to": [referred]
+                }
+            new_ref_obj = Referrals(email=referred_by, details=details)
+            new_ref_obj.save()
+
+        # For referred_to user
+        ref_to_obj = Referrals.objects.filter(email=referred).first()
+        if ref_to_obj:
+            logger.debug(f"{referred} is already referred by {referred_by}")
+            return redirect("https://www.angelfund.ai", code=302)
+
+        details = {
+            "referred_by": referred_by,
+            "referred_to": []
+            }
+        new_ref_obj = Referrals(email=referred, details=details)
+        new_ref_obj.save()
+
+        logger.debug(f"{referred} is referred by {referred_by}")
+        return redirect("https://www.angelfund.ai", code=302)
+    else:
+        logger.debug(f"investor does not exist {referred_by} :=> referral verification")
+        return redirect("https://www.angelfund.ai/no-user-found", code=302)
 
 
 #<==================================================================================================>
@@ -423,6 +507,13 @@ def update_info():
 
         ma_schema = StartupUserSchema()
         user_objs = ma_schema.dump(user_obj)
+
+        rev_sectors_data = rev_sector_data()
+        rev_progress_data = rev_progress_mapping()
+
+        user_objs["progress"] = [rev_progress_data.get(i) for i in user_objs["progress"] if rev_progress_data.get(i)]
+        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
         ret_obj = {
             "result": True,
             "user": user_objs,
