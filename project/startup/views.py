@@ -479,7 +479,7 @@ def update_info():
     user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
         input_data = request.get_json()
-        available_fields = {"location", "sectors", "company_name", "company_link",
+        available_fields = {"location", "sectors", "company_name", "company_link", "co_founders",
                             "startup_pitch", "bio", "round_size", "raised", "profile_pic_link",
                             "progress", "position", "num_team_members", "slide_deck"}
 
