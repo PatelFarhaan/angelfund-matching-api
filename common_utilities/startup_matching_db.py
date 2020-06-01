@@ -86,7 +86,6 @@ def process_all_str_data(data: list) -> list:
         str_data = get_str_details(_id)
         if str_data["result"]:
             str_details = processing_helper(str_data["email"])
-            print(str_details)
             if str_details["result"]:
                 res.append(str_details["data"])
 

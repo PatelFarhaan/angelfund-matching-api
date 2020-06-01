@@ -23,7 +23,7 @@ class InvestorMLSchema(ma.Schema):
 class InvestorDashboardSchema(ma.Schema):
     class Meta:
         fields = ("profile_pic_link", "first_name", "last_name", "bio", "prior_investments", "sectors", "location",
-                  "deals", "syndicate")
+                  "deals", "syndicate", "email")
 
 
 class InvestorConnectedSchema(ma.Schema):
