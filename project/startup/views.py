@@ -590,6 +590,9 @@ def profile_visibility():
         return jsonify(response)
 
 
+#<==================================================================================================>
+#                                    REMOVE SLIDE DECK
+#<==================================================================================================>
 @startup_blueprint.route('/remove-slide-deck', methods=["POST"])
 @jwt_required
 def remove_slide_deck():
@@ -615,31 +618,8 @@ def remove_slide_deck():
         return jsonify(response)
 
 
-#########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                          MIME FILE UPLOAD (IMAGE + APPLICATION :=> PDF)
 #<==================================================================================================>
 @startup_blueprint.route('/mime-files', methods=["POST"])
 @jwt_required
@@ -698,6 +678,79 @@ def mime_files():
     else:
         shutil.rmtree(file_location)
         return return_data_results(False, "invalid file type")
+
+
+#<==================================================================================================>
+#                                IMAGE UPLOAD TO S3 (CO FOUNDERS)
+#<==================================================================================================>
+@startup_blueprint.route('/image-upload', methods=["POST"])
+@jwt_required
+def co_founders_image_upload_to_s3():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+
+    file_name = None
+    file_type = request.form.get("type")
+    file_obj = request.files.get('file_obj')
+    if file_obj:
+        file_name = f"{user_obj.id}-" + file_obj.filename.replace(' ', '')
+        file_name = file_name.split('.', 1)[0]
+
+    if not all([file_obj, file_name, file_type]):
+        return return_data_results(False, "missing key data")
+
+    file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
+    if os._exists(file_location):
+        shutil.rmtree(file_location)
+
+    os.mkdir(file_location)
+    with open(f"{file_location}/{file_name}", 'wb') as f:
+        f.write(file_obj.read())
+
+    mime = magic.Magic(mime=True)
+    mime_type = mime.from_file(f"{file_location}/{file_name}")
+    mime_base = mime_type.split('/',1)[0]        # base mime type
+    mime_extention = mime_type.split('/', 1)[1]  # jpeg
+
+    if file_type == "image":
+        if mime_base == "image":
+            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            shutil.rmtree(file_location)
+            return jsonify({"result": True, "url": image_url})
+        else:
+            shutil.rmtree(file_location)
+            return return_data_results(False, "image file required")
+
+    else:
+        shutil.rmtree(file_location)
+        return return_data_results(False, "invalid file type")
+
+
+#########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 #<==================================================================================================>
