@@ -29,7 +29,7 @@ from common_utilities.flask_jwt_extended import jwt_required, create_access_toke
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                              validate_referrer_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
-                                                             validate_str_password_reset_schema, validate_profile_vis_schema)
+                                                             validate_str_password_reset_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
 
 
 #<==================================================================================================>
@@ -481,7 +481,8 @@ def update_info():
         input_data = request.get_json()
         available_fields = {"location", "sectors", "company_name", "company_link", "co_founders",
                             "startup_pitch", "bio", "round_size", "raised", "profile_pic_link",
-                            "progress", "position", "num_team_members", "slide_deck"}
+                            "progress", "position", "num_team_members", "slide_deck", "first_invite",
+                            "first_dashboard_visit"}
 
         for field in input_data:
             if field in available_fields:
@@ -581,6 +582,31 @@ def profile_visibility():
         str_obj.save()
 
         if update_into_matching(str_obj.email, {"show_profile": visible}):
+            pass
+            # todo: shoot out an email to the team
+
+        return jsonify({"result": True, "message": "value updated"})
+    else:
+        return jsonify(response)
+
+
+@startup_blueprint.route('/remove-slide-deck', methods=["POST"])
+@jwt_required
+def remove_slide_deck():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+    response = validate_remove_slide_deck_schema(request.get_json())
+    if response["result"]:
+        remove = response["data"]["remove_slide_deck"]
+        if remove:
+            setattr(str_obj, "slide_deck", None)
+            # Todo: add logic for removing the slide deck from AWS S3 also.
+            str_obj.save()
+
+        if update_into_matching(str_obj.email, {"slide_deck": None}):
             pass
             # todo: shoot out an email to the team
 

@@ -5,7 +5,7 @@ from flask_marshmallow import fields as fd
 class StartupUserSchema(ma.Schema):
     class Meta:
         fields = ("first_name", "last_name", "email", "location", "profile_pic_link",
-                  "sectors", "company_name", "company_link", "startup_pitch",
+                  "sectors", "company_name", "company_link", "startup_pitch", "first_invite",
                   "bio", "round_size", "raised", "progress", "position", "co_founders",
                   "num_team_members", "slide_deck", "approved", "email_confirmed",
                   "first_dashboard_visit", "show_profile", "monday_notification")
@@ -34,7 +34,7 @@ class StartupPassedSchema(ma.Schema):
 
 class StartupMLSchema(ma.Schema):
     class Meta:
-        fields = ("bio", "sectors", "raised", "progress", "position", "password", "location",
+        fields = ("bio", "sectors", "raised", "progress", "position", "password", "location", "first_invite",
                   "slide_deck", "round_size", "company_link", "company_name", "num_team_members",
                   "startup_pitch", "profile_pic_link", "raised_capital_desc", "password_reset_meta_data", "approved",
                   "last_name", "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email",

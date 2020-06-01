@@ -269,3 +269,24 @@ def validate_profile_vis_schema(data):
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 #############################################################################################################################################
+str_rmeove_slide_deck_schema = {
+    "type": "object",
+    "properties": {
+        "remove_slide_deck": {
+            "type": "boolean",
+        },
+    },
+    "required": ["remove_slide_deck"],
+    "additionalProperties": False
+}
+
+
+def validate_remove_slide_deck_schema(data):
+    try:
+        validate(instance=data, schema= str_rmeove_slide_deck_schema)
+    except ValidationError as e:
+        return {'result': False, 'error': e.message}
+    except SchemaError as e:
+        return {'result': False, 'error': e.message}
+    return {'result': True, 'data': data}
+#############################################################################################################################################

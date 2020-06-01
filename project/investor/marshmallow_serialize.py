@@ -7,13 +7,13 @@ class InvestorUserSchema(ma.Schema):
         fields = ("first_name", "last_name", "email", "sectors", "deals", "profile_pic_link",
                   "bio", "location", "accreditation", "syndicate", "angel", "prior_investments",
                   "email_confirmed", "approved", "first_dashboard_visit", "monday_notification",
-                  "show_profile")
+                  "show_profile", "first_invite")
 
 
 class InvestorMLSchema(ma.Schema):
     class Meta:
         fields = ("bio", "deals", "sectors", "angel", "syndicate", "location", "password", "accreditation",
-                  "profile_pic_link", "password_reset_meta_data", "approved",
+                  "profile_pic_link", "password_reset_meta_data", "approved", "first_invite",
                   "last_name", "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email",
                   "first_dashboard_visit", "created", "investor", "show_profile", "monday_notifications", "show_limit",
                   "matched_week", "prior_investments", "connected", "passed", "pending", "delete_account", "count_invited",

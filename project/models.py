@@ -42,6 +42,7 @@ class Investor(db.Document, UserMixin):
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
     show_profile = db.BooleanField(default=True)
+    first_invite = db.BooleanField(default=True)
     is_logged_in = db.BooleanField(defalut=False)
     delete_account = db.BooleanField(default=False)
     email_confirmed = db.BooleanField(default=False)
@@ -52,7 +53,7 @@ class Investor(db.Document, UserMixin):
     invite_accepted_notify = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
-    meta = dict(indexes=['email', '-created', 'is_google_signup'])
+    meta = dict(indexes=['email', '-created', 'is_google_signup'], strict=False)
 
     def get_id(self):
         return {
@@ -98,6 +99,7 @@ class Startup(db.Document, UserMixin):
     last_name = db.StringField(max_length=70)
     first_name = db.StringField(max_length=70)
     show_profile = db.BooleanField(default=True)
+    first_invite = db.BooleanField(default=True)
     is_logged_in = db.BooleanField(defalut=False)
     show_slide_deck = db.BooleanField(default=True)
     delete_account = db.BooleanField(default=False)
@@ -109,7 +111,7 @@ class Startup(db.Document, UserMixin):
     invite_accepted_notify = db.BooleanField(default=True)
     created = db.DateTimeField(default=datetime.datetime.utcnow())
 
-    meta = dict(indexes=['email', '-created', 'is_google_signup'])
+    meta = dict(indexes=['email', '-created', 'is_google_signup'], strict=False)
 
     def get_id(self):
         return {

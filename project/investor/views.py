@@ -470,8 +470,8 @@ def update_info():
     user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
         input_data = request.get_json()
-        available_fields = {"sectors", "deals", "bio", "location", "prior_investments",
-                            "accreditation", "syndicate", "angel", "profile_pic_link"}
+        available_fields = {"sectors", "deals", "bio", "location", "prior_investments", "first_invite",
+                            "accreditation", "syndicate", "angel", "profile_pic_link", "first_dashboard_visit"}
         for field in input_data:
             if field in available_fields:
                 if field == "sectors":
