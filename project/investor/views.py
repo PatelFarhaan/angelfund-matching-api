@@ -314,6 +314,11 @@ def register():
         link = url_for('investor.email_confirmed', token=token, _external=True)
         thread = threading.Thread(target=email_confirmation, args=(email, link, input_request.get("first_name")))
         thread.start()
+
+        # New Added
+        user.passowrd_confirm_meta_data = {"is_clicked": False}
+        user.save()
+
         message = "investor created"
         return jsonify({"result": True, "message": message})
     else:
@@ -333,18 +338,50 @@ def email_confirmed(token):
     user = Investor.objects.filter(email=email).first()
 
     if user:
-        user.email_confirmed = True
-        user.save()
+        if user.passowrd_confirm_meta_data == {}:
+            return jsonify({"result": False, "error": "link can be used only once"})
+        else:
+            user.email_confirmed = True
+            user.save()
 
         if update_into_matching(email, {"email_confirmed": True}):
             pass
             # todo: shoot out an email to the team with the user email as the subject header
 
         logger.debug(f"investor email confirmed {email}")
-        return redirect("https://www.angelfund.ai", code=302)
+
+        # Logic goes here
+        login_user(user)
+        user.is_logged_in = True
+        user.passowrd_confirm_meta_data = {}
+        user.save()
+        logger.debug(f"investor logged in: {email}")
+
+        ma_schema = InvestorUserSchema()
+        user_objs = ma_schema.dump(user)
+
+        rev_acc_data = rev_accreditation_data()
+        rev_sectors_data = rev_sector_data()
+
+        user_objs["accreditation"] = rev_acc_data.get(user_objs["accreditation"])
+        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
+        jwt_obj = {"email": email, "model": "Investor"}
+        access_token = create_access_token(identity=jwt_obj)
+
+        ret_obj = {
+            "result": True,
+            "user": user_objs,
+            "token": access_token,
+        }
+        # return ret_obj
+        return redirect("http://localhost:3000/login")
+
+        # return redirect("https://www.angelfund.ai", code=302)
     else:
         logger.debug(f"investor does not exist {email}")
         return redirect("https://www.angelfund.ai/no-user-found", code=302)
+        # Todo: create a new no user page
 
 
 #<==================================================================================================>

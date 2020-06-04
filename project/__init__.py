@@ -34,4 +34,3 @@ from project.error.error_handler import errorpage_blueprint
 app.register_blueprint(startup_blueprint)
 app.register_blueprint(investor_blueprint)
 app.register_blueprint(errorpage_blueprint)
-
