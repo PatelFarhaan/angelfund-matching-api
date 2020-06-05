@@ -1031,7 +1031,6 @@ def history():
             data.append(resp)
         else:
             resp = {}
-            # resp["deals"] = None
             resp["deals"] = []
             resp["location"] = None
             resp["last_name"] = None
@@ -1054,8 +1053,6 @@ def history():
     for k, v in connected.items():
         inv_obj = Investor.objects.filter(email=k).first()
         temp_resp = ma_schema.dump(inv_obj)
-        # temp_resp["deals"] = deals[temp_resp["deals"]]
-        temp_resp["deals"] = [deals[temp_resp["deals"]]]
         data.append(temp_resp)
 
     return jsonify({"result": True, "data": data})
@@ -1085,8 +1082,6 @@ def connected():
     for k,v in connected.items():
         inv_obj = Investor.objects.filter(email=k).first()
         temp_obj = ma_schema.dump(inv_obj)
-        # temp_obj["deals"] = deals[temp_obj["deals"]]
-        temp_obj["deals"] = [deals[temp_obj["deals"]]]
         data.append(temp_obj)
     return jsonify({"result": True, "data": data})
 
