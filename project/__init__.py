@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_cors import CORS
 from flask_login import LoginManager
 from common_utilities import CONSTANT
 from flask_mongoengine import MongoEngine
@@ -17,6 +18,19 @@ app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
 db = MongoEngine(app)
 ma = Marshmallow(app)
 jwt = JWTManager(app)
+
+CORS(app)
+CORS(app, support_credentials=True, resources={r"/foo": {"origins": "*"}})
+
+
+@app.after_request
+def after_request(response):
+  response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
+  response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+  response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  response.headers.add('Access-Control-Allow-Credentials', 'true')
+  return response
+
 
 login_manager = LoginManager(app)
 
