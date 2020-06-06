@@ -10,6 +10,7 @@ from flask_login import login_user
 from common_utilities import CONSTANT
 from common_utilities.ml_apis import get_discover
 from common_utilities.referral_email import email_referral
+from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.company_images import company_images_api
@@ -315,7 +316,6 @@ def register():
         thread = threading.Thread(target=email_confirmation, args=(email, link, input_request.get("first_name")))
         thread.start()
 
-        # New Added
         user.passowrd_confirm_meta_data = {"is_clicked": False}
         user.save()
 
@@ -611,6 +611,28 @@ def profile_visibility():
         return jsonify({"result": True, "message": "value updated"})
     else:
         return jsonify(response)
+
+
+
+#<==================================================================================================>
+#                                     WAIT LIST API
+#<==================================================================================================>
+@investor_blueprint.route('/waitlist', methods=['GET'])
+@jwt_required
+def waitlist_email():
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
+    email, first_name = user_obj.email, user_obj.first_name
+    thread = threading.Thread(target=wait_list_user, args=(email, first_name,))
+    thread.start()
+    logger.debug(f"investor wait list email sent: {email}")
+    return jsonify({"result": True, "message": "email sent if the user exists"})
+
+
+
 
 #########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
 
