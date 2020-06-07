@@ -509,6 +509,11 @@ def update_info():
         input_data = request.get_json()
         available_fields = {"sectors", "deals", "bio", "location", "prior_investments", "first_invite",
                             "accreditation", "syndicate", "angel", "profile_pic_link", "first_dashboard_visit"}
+
+        for key in list(input_data.keys()):
+            if key not in available_fields:
+                return jsonify({"result": False, "error": "invalid user field"})
+
         for field in input_data:
             if field in available_fields:
                 if field == "sectors":
@@ -538,8 +543,7 @@ def update_info():
                 user_obj.save()
 
             else:
-                message = "invalid user field"
-                return return_data_results(False, message)
+                return jsonify({"result": False, "error": "invalid user field"})
 
         ma_schema = InvestorUserSchema()
         user_objs = ma_schema.dump(user_obj)
@@ -556,8 +560,7 @@ def update_info():
         }
         return ret_obj
     else:
-        message = "user is not authenticated"
-        return return_data_results(False, message)
+        return jsonify({"result": False, "error": "user is not authenticated"})
 
 
 #<==================================================================================================>
@@ -932,7 +935,7 @@ def passed():
 #<==================================================================================================>
 #                                    HISTORY PASSED REVISIT
 #<==================================================================================================>
-@investor_blueprint.route('/history-passed-revisit', methods=["POST"])
+@investor_blueprint.route('/history-profile-view', methods=["POST"])
 @jwt_required
 def passed_revisit():
     if request.method == "POST":

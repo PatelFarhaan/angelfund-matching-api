@@ -1,9 +1,7 @@
 import sys
 sys.path.append("../")
 from pymongo import MongoClient
-from project.models import Startup
 from common_utilities import CONSTANT
-from project.startup.marshmallow_serialize import StartupDashboardSchema
 
 
 def db_details():
@@ -31,8 +29,7 @@ def insert_into_matching():
             try:
                 str_collection.insert_one(i)
             except:
-                print("jere")
-
+                print("Exception occoured")
 
 
 insert_into_matching()

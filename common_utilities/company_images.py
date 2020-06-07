@@ -4,7 +4,6 @@ import boto3
 import shutil
 import requests
 from pymongo import MongoClient
-
 sys.path.append("../")
 from common_utilities import CONSTANT
 

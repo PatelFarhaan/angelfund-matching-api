@@ -519,6 +519,10 @@ def update_info():
                             "progress", "position", "num_team_members", "slide_deck", "first_invite",
                             "first_dashboard_visit"}
 
+        for key in list(input_data.keys()):
+            if key not in available_fields:
+                return jsonify({"result": False, "error": "invalid user field"})
+
         for field in input_data:
             if field in available_fields:
 
@@ -549,8 +553,7 @@ def update_info():
                 user_obj.save()
 
             else:
-                message = "invalid user field"
-                return return_data_results(False, message)
+                jsonify({"result": False, "error": "invalid user field"})
 
 
         ma_schema = StartupUserSchema()
@@ -568,8 +571,7 @@ def update_info():
         }
         return ret_obj
     else:
-        message = "user is not authenticated"
-        return return_data_results(False, message)
+        jsonify({"result": False, "error": "user is not authenticated"})
 
 
 #<==================================================================================================>
@@ -1052,6 +1054,7 @@ def history():
         else:
             resp = {}
             resp["deals"] = []
+            resp["action"] = "Passed"
             resp["location"] = None
             resp["last_name"] = None
             resp["first_name"] = None
@@ -1120,6 +1123,7 @@ def passed():
         else:
             resp = {}
             resp["deals"] = []
+            resp["action"] = "Passed"
             resp["location"] = None
             resp["last_name"] = None
             resp["first_name"] = None
@@ -1135,7 +1139,7 @@ def passed():
 #<==================================================================================================>
 #                                 HISTORY CONNECTED REVISIT
 #<==================================================================================================>
-@startup_blueprint.route('/history-connected-revisit', methods=["POST"])
+@startup_blueprint.route('/history-connected-profile-view', methods=["POST"])
 @jwt_required
 def passed_revisit():
     if request.method == "POST":

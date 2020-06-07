@@ -1,17 +1,26 @@
+#<==================================================================================================>
+#                                        IMPORTS
+#<==================================================================================================>
 import sys
 import time
 import boto3
 import logging
 import threading
-sys.path.append("../")
+sys.path.append("../../")
 from pymongo import MongoClient
 from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                        LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
+#<==================================================================================================>
+#                                MONDAY NOTIFICATIONS LOGIC
+#<==================================================================================================>
 def monday_notofication():
     remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
@@ -20,18 +29,24 @@ def monday_notofication():
 
     my_query = {"monday_notification": True}
 
-    docs = list(collection.find(my_query)) # query in chuncks
-    for doc in docs:
-        email = doc.get("email")
-        last_name = doc.get("last_name")
-        first_name = doc.get("first_name")
-        if email in ("patel.farhaaan@gmail.com"):
-            thread = threading.Thread(target=wait_list_user, args=(email, first_name))
-            thread.start()
-            time.sleep(0.01)
-            wait_list_user(email, first_name)
+    total_count = collection.estimated_document_count()
+    for offset in range(0, total_count, 100):
+        data_chunk = list(collection.find(my_query).skip(offset).limit(100))
+
+        for doc in data_chunk:
+            email = doc.get("email")
+            last_name = doc.get("last_name")
+            first_name = doc.get("first_name")
+            if email in ("patel.farhaaan@gmail.com"):
+                thread = threading.Thread(target=wait_list_user, args=(email, first_name))
+                thread.start()
+                time.sleep(0.01)
+                wait_list_user(email, first_name)
 
 
+#<==================================================================================================>
+#                                MONDAY NOTIFICATIONS EMAIL
+#<==================================================================================================>
 def wait_list_user(user_email, first_name):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
@@ -97,4 +112,10 @@ def wait_list_user(user_email, first_name):
         logger.debug(f"common utilities: monday notifications: success {user_email}")
 
 
+#<==================================================================================================>
+#                             MONDAY NOTIFICATIONS CALLING FUNCTION
+#<==================================================================================================>
 monday_notofication()
+
+
+# * * * * * cd /Users/farhaan/projects && source venv/bin/activate && cd /Users/farhaan/projects/angelfund/flask/common_utilities/scripts && python3 monday_notifications_script.py
