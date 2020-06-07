@@ -21,21 +21,24 @@ class InvestorMLSchema(ma.Schema):
 
 
 class InvestorDashboardSchema(ma.Schema):
+    id = fd.fields.String()
+
     class Meta:
         fields = ("profile_pic_link", "first_name", "last_name", "bio", "prior_investments", "sectors", "location",
-                  "deals", "syndicate", "email")
+                  "deals", "syndicate", "id")
 
 
 class InvestorConnectedSchema(ma.Schema):
     action = fd.fields.String(default="Invite Sent")
     status = fd.fields.String(default="Connected")
+    id = fd.fields.String()
 
     class Meta:
-        fields = ("location", "deals", "first_name", "last_name", "profile_pic_link")
+        fields = ("location", "deals", "first_name", "last_name", "profile_pic_link", "action", "status", "id")
 
 
 class InvestorFeedbackSchema(ma.Schema):
     action = fd.fields.String(default="Passed")
 
     class Meta:
-        fields = ("location", "deals", "first_name", "last_name", "profile_pic_link")
+        fields = ("location", "deals", "first_name", "last_name", "profile_pic_link", "action")

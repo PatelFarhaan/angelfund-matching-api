@@ -69,6 +69,6 @@ def wait_list_user(user_email, first_name):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: email confirmation: failed {user_email}")
+        logger.error(f"common utilities: wait list: failed {user_email}")
     else:
-        logger.debug(f"common utilities: email confirmation: success {user_email}")
+        logger.debug(f"common utilities: wait list: success {user_email}")

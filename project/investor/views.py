@@ -61,7 +61,7 @@ def google_token():
                     user = Investor.objects.filter(email=email).first()
                     if user:
                         if getattr(user, "delete_account"):
-                            return jsonify({"result": False, "message": "account deleted"})
+                            return jsonify({"result": False, "error": "account deleted"})
 
                         login_user(user)
                         user.is_logged_in = True
@@ -613,7 +613,6 @@ def profile_visibility():
         return jsonify(response)
 
 
-
 #<==================================================================================================>
 #                                     WAIT LIST API
 #<==================================================================================================>
@@ -685,6 +684,9 @@ def mime_files():
         return return_data_results(False, "invalid file type")
 
 
+#<==================================================================================================>
+#                                      DASHBOARD
+#<==================================================================================================>
 @investor_blueprint.route('/dashboard', methods=["GET", "POST"])
 @jwt_required
 def investors_dashboard():
@@ -697,20 +699,20 @@ def investors_dashboard():
         matching_obj = get_matching_data(user_obj.email)
 
         if matching_obj == {}:
-            return {"result": False, "message": "no match found"}
+            return {"result": False, "error": "no match found"}
 
         _id = matching_obj.get("_id")
 
         if not _id:
-            return {"result": False, "message": "no id found"}
+            return {"result": False, "error": "no id found"}
 
         discover = get_discover(_id)
 
         if not discover["result"]:
-            return {"result": False, "message": "no match found"}
+            return {"result": False, "error": "no match found"}
 
         elif discover["result"] and discover["data"] == []:
-            return {"result": False, "message": "no match found"}
+            return {"result": False, "error": "no match found"}
 
         else:
             str_data = process_all_str_data(discover["data"])
@@ -733,13 +735,13 @@ def investors_dashboard():
         str_invite = response["data"]["invite"]
 
         if inv_obj.connected.get(str_email):
-            return jsonify({"result": False, "message": "already connected"})
+            return jsonify({"result": False, "error": "already connected"})
 
         if not str_invite:
             str_obj = Startup.objects.filter(email=str_email).first()
 
             if not response["data"].get("feedback"):
-                return jsonify({"result": False, "message": "feedback is mandotory"})
+                return jsonify({"result": False, "error": "feedback is mandotory"})
 
             str_feedback = response["data"]["feedback"]
 
@@ -857,6 +859,9 @@ def investors_dashboard():
                 return jsonify({"result": True, "message": "invitation"})
 
 
+#<==================================================================================================>
+#                                     HISTORY ALL
+#<==================================================================================================>
 @investor_blueprint.route('/history-all', methods=["GET"])
 @jwt_required
 def history():
@@ -884,6 +889,9 @@ def history():
     return jsonify({"result": True, "data": data})
 
 
+#<==================================================================================================>
+#                                     HISTORY CONNECTED
+#<==================================================================================================>
 @investor_blueprint.route('/history-connected', methods=["GET"])
 @jwt_required
 def connected():
@@ -901,6 +909,9 @@ def connected():
     return jsonify({"result": True, "data": data})
 
 
+#<==================================================================================================>
+#                                     HISTORY PASSED
+#<==================================================================================================>
 @investor_blueprint.route('/history-passed', methods=["GET"])
 @jwt_required
 def passed():
@@ -918,6 +929,9 @@ def passed():
     return jsonify({"result": True, "data": data})
 
 
+#<==================================================================================================>
+#                                    HISTORY PASSED REVISIT
+#<==================================================================================================>
 @investor_blueprint.route('/history-passed-revisit', methods=["POST"])
 @jwt_required
 def passed_revisit():
@@ -926,10 +940,10 @@ def passed_revisit():
         response = validate_inv_passed_recvisit_schema(input_req)
 
         if response["result"]:
-            email = response["data"]["email"]
-            str_obj = Startup.objects.filter(email=email).first()
+            user_id = response["data"]["user_id"]
+            str_obj = Startup.objects.filter(id=user_id).first()
             if not str_obj:
-                return jsonify({"result": False, "data": None})
+                return jsonify({"result": False, "error": "user does not exist"})
 
             ma_schema = StartupDashboardSchema()
             data = ma_schema.dump(str_obj)

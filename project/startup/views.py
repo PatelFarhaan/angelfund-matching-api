@@ -25,8 +25,9 @@ from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSc
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
-from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema
+from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                              validate_referrer_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
@@ -807,7 +808,7 @@ def waitlist_email():
 
 
 #<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                            STARTUP ACCOUNT + PAGINATION + SINGLE USER
 #<==================================================================================================>
 @startup_blueprint.route('/dashboard', methods=["GET", "POST"])
 @jwt_required
@@ -1026,7 +1027,7 @@ def startup_dashboard():
 
 
 #<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                            STARTUP ACCOUNT + PAGINATION + SINGLE USER
 #<==================================================================================================>
 @startup_blueprint.route('/history-all', methods=["GET"])
 @jwt_required
@@ -1040,14 +1041,13 @@ def history():
 
     # # passed
     feedback = getattr(str_obj, "feedback")
-    print(feedback)
     feedback_schema = InvestorFeedbackSchema()
     for k, v in feedback.items():
         if not v["is_anonymous"]:
             inv_obj = Investor.objects.filter(email=k).first()
             resp = feedback_schema.dump(inv_obj)
             resp["comment"] = v["comment"]
-            resp["fields"] = v["fields"]
+            resp["reason"] = v["reason"]
             data.append(resp)
         else:
             resp = {}
@@ -1056,18 +1056,12 @@ def history():
             resp["last_name"] = None
             resp["first_name"] = None
             resp["first_name"] = None
-            resp["fields"] = v["fields"]
+            resp["reason"] = v["reason"]
             resp["comment"] = v["comment"]
             resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
             data.append(resp)
 
     # connected
-    deals = {
-        "0": "$25,000 to $50,000",
-        "1": "$50,000 to $100,000",
-        "2": "$100,000 to $250,000",
-        "3": "$250,000 to $500,000"
-    }
     connected = getattr(str_obj, "connected")
     ma_schema = InvestorConnectedSchema()
     for k, v in connected.items():
@@ -1079,7 +1073,7 @@ def history():
 
 
 #<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                                      HISTORY CONNECTED
 #<==================================================================================================>
 @startup_blueprint.route('/history-connected', methods=["GET"])
 @jwt_required
@@ -1088,16 +1082,10 @@ def connected():
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
 
-    deals = {
-        "0": "$25,000 to $50,000",
-        "1": "$50,000 to $100,000",
-        "2": "$100,000 to $250,000",
-        "3": "$250,000 to $500,000"
-    }
-
     inv_obj = jwt_decode["user_obj"]
     connected = getattr(inv_obj, "connected")
     ma_schema = InvestorConnectedSchema()
+
     data = []
     for k,v in connected.items():
         inv_obj = Investor.objects.filter(email=k).first()
@@ -1106,8 +1094,9 @@ def connected():
     return jsonify({"result": True, "data": data})
 
 
+
 #<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                                    HISTORY PASSED
 #<==================================================================================================>
 @startup_blueprint.route('/history-passed', methods=["GET"])
 @jwt_required
@@ -1119,13 +1108,14 @@ def passed():
     res = []
     str_obj = jwt_decode["user_obj"]
     feedback = getattr(str_obj, "feedback")
+
     feedback_schema = InvestorFeedbackSchema()
     for k,v in feedback.items():
         if not v["is_anonymous"]:
             inv_obj = Investor.objects.filter(email=k).first()
             resp = feedback_schema.dump(inv_obj)
             resp["comment"] = v["comment"]
-            resp["fields"] = v["fields"]
+            resp["reason"] = v["reason"]
             res.append(resp)
         else:
             resp = {}
@@ -1134,12 +1124,36 @@ def passed():
             resp["last_name"] = None
             resp["first_name"] = None
             resp["first_name"] = None
-            resp["fields"] = v["fields"]
+            resp["reason"] = v["reason"]
             resp["comment"] = v["comment"]
             resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
             res.append(resp)
 
     return {"result": True, "data": res}
+
+
+#<==================================================================================================>
+#                                 HISTORY CONNECTED REVISIT
+#<==================================================================================================>
+@startup_blueprint.route('/history-connected-revisit', methods=["POST"])
+@jwt_required
+def passed_revisit():
+    if request.method == "POST":
+        input_req = request.get_json()
+        response = validate_inv_passed_recvisit_schema(input_req)
+
+        if response["result"]:
+            user_id = response["data"]["user_id"]
+            inv_obj = Investor.objects.filter(id=user_id).first()
+            if not inv_obj:
+                return jsonify({"result": False, "error": "user does not exist"})
+
+            ma_schema = InvestorDashboardSchema()
+            data = ma_schema.dump(inv_obj)
+            return jsonify({"result": True, "data": data})
+        else:
+            return jsonify(response)
+
 
 
 #<==================================================================================================>

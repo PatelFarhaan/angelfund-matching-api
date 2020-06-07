@@ -12,24 +12,29 @@ class StartupUserSchema(ma.Schema):
 
 
 class StartupDashboardSchema(ma.Schema):
+    id = fd.fields.String()
+
     class Meta:
-        fields = ("bio", "raised", "sectors", "location", "email", "progress", "round_size",
+        fields = ("bio", "raised", "sectors", "location", "id", "progress", "round_size",
                   "slide_deck", "co_founders", "company_link", "profile_pic_link", "company_name")
 
 
 class StartupConnectedSchema(ma.Schema):
     action = fd.fields.String(default="Invite Sent")
     status = fd.fields.String(default="Connected")
+    id = fd.fields.String()
 
     class Meta:
-        fields = ("location", "round_size", "company_name", "profile_pic_link")
+        fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "status", "id")
 
 
 class StartupPassedSchema(ma.Schema):
+    status = fd.fields.String(default="Revisit Deal")
     action = fd.fields.String(default="Passed")
+    id = fd.fields.String()
 
     class Meta:
-        fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "email")
+        fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "status", "id")
 
 
 class StartupMLSchema(ma.Schema):

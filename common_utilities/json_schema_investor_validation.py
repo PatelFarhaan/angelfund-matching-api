@@ -208,12 +208,13 @@ def validate_company_schema(data):
 inv_passed_recvisit_schema = {
     "type": "object",
     "properties": {
-        "email": {
+        "user_id": {
             "type": "string",
-            "format": "email"
+            "minLength": 24,
+            "maxLength": 24
         },
     },
-    "required": ["email"],
+    "required": ["user_id"],
     "additionalProperties": False
 }
 

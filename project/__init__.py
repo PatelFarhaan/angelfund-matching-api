@@ -1,14 +1,16 @@
 from flask import Flask
-from flask_cors import CORS
 from flask_login import LoginManager
+from flask_cors import CORS
 from common_utilities import CONSTANT
 from flask_mongoengine import MongoEngine
 from flask_marshmallow import Marshmallow
 from itsdangerous import URLSafeTimedSerializer
 from common_utilities.flask_jwt_extended import JWTManager
 
-######################################   *** :=>  CONFIG  <=: ***   #########################################
 
+#<==================================================================================================>
+#                                         CONFIG
+#<==================================================================================================>
 app = Flask(__name__)
 app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
 app.config['JWT_SECRET_KEY'] = CONSTANT.JWT_SECRET_KEY.value
@@ -19,28 +21,26 @@ db = MongoEngine(app)
 ma = Marshmallow(app)
 jwt = JWTManager(app)
 
-CORS(app)
-CORS(app, support_credentials=True, resources={r"/foo": {"origins": "*"}})
-
+CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
 
 @app.after_request
 def after_request(response):
-  response.headers.add('Access-Control-Allow-Origin', 'http://localhost:3000')
-  response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-  response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+  response.headers.add('Access-Control-Allow-Origin', '*')
+  response.headers.add('Access-Control-Allow-Headers', '*')
+  response.headers.add('Access-Control-Allow-Methods', '*')
   response.headers.add('Access-Control-Allow-Credentials', 'true')
   return response
 
 
 login_manager = LoginManager(app)
-
 login_manager.blueprint_login_views = {
     "startup": "startup.login",
     "investor": "investor.login"
 }
 
-######################################   *** :=>  BLUEPRINT  <=: ***   #########################################
-
+#<==================================================================================================>
+#                                         BLUEPRINT
+#<==================================================================================================>
 from project.startup.views import startup_blueprint
 from project.investor.views import investor_blueprint
 from project.error.error_handler import errorpage_blueprint

@@ -182,6 +182,6 @@ def email_connected(inv_email: str, str_email: str, all_info):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: email confirmation: failed {inv_email, str_email}")
+        logger.error(f"common utilities: email connected: failed {inv_email, str_email}")
     else:
-        logger.debug(f"common utilities: email confirmation: success {inv_email, str_email}")
+        logger.debug(f"common utilities: email connected: success {inv_email, str_email}")
