@@ -1,10 +1,13 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import datetime
 from flask_login import UserMixin
 from project import db, login_manager
 
 
 #<==================================================================================================>
-#                                      UPDATE INFORMATION
+#                                       UPDATE INFORMATION
 #<==================================================================================================>
 @login_manager.user_loader
 def user_load(user_obj):
@@ -16,7 +19,7 @@ def user_load(user_obj):
 
 
 #<==================================================================================================>
-#                                 INVESTOR COLLECTION
+#                                    INVESTOR COLLECTION
 #<==================================================================================================>
 class Investor(db.Document, UserMixin):
     bio = db.StringField()
@@ -61,12 +64,9 @@ class Investor(db.Document, UserMixin):
             "user_id": str(self.id),
             "role": "investor"}
 
-    def is_jwt_authenticated(self):
-        return self.is_user_authenticated
-
 
 #<==================================================================================================>
-#                                  STARTUP COLLECTION
+#                                     STARTUP COLLECTION
 #<==================================================================================================>
 class Startup(db.Document, UserMixin):
     raised = db.IntField()
@@ -120,12 +120,9 @@ class Startup(db.Document, UserMixin):
             "user_id": str(self.id),
             "role": "startup"}
 
-    def is_jwt_authenticated(self):
-        return self.is_user_authenticated
-
 
 #<==================================================================================================>
-#                                   REFERRALS COLLECTION
+#                                     REFERRALS COLLECTION
 #<==================================================================================================>
 class Referrals(db.Document):
     email = db.EmailField(required=True, unique=True)
@@ -141,17 +138,3 @@ class SignUpMappings(db.Document):
     deals_data = db.DictField()
     sector_data = db.DictField()
     accreditation_data = db.DictField()
-
-
-class InvestorSubscriptionEmails(db.Document):
-    email = db.EmailField()
-
-    meta = dict(indexes=['email'])
-
-
-class StartupSubscriptionEmails(db.Document):
-    email = db.EmailField()
-
-    meta = dict(indexes=['email'])
-
-

@@ -3,8 +3,10 @@ from flask_marshmallow import fields as fd
 
 
 class StartupUserSchema(ma.Schema):
+    id = fd.fields.String()
+
     class Meta:
-        fields = ("first_name", "last_name", "email", "location", "profile_pic_link",
+        fields = ("first_name", "last_name", "id", "location", "profile_pic_link",
                   "sectors", "company_name", "company_link", "startup_pitch", "first_invite",
                   "bio", "round_size", "raised", "progress", "position", "co_founders",
                   "num_team_members", "slide_deck", "approved", "email_confirmed",

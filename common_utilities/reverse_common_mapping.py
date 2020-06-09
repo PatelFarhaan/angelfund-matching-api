@@ -44,6 +44,7 @@ def rev_accreditation_data():
 
 def rev_progress_mapping():
     return  {'mockups': 'Idea/Sketches',
+
              'prototype': 'Prototype/Pre-Launch',
              'product': 'Product Launched',
              'beta': 'Beta Launched',

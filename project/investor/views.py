@@ -6,23 +6,22 @@ import logging
 import requests
 import threading
 from project import serial
-from flask_login import login_user
 from common_utilities import CONSTANT
 from common_utilities.ml_apis import get_discover
+from project.models import Investor, Startup, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.company_images import company_images_api
+from flask_login import login_required, current_user, login_user
 from common_utilities.password_reset import password_reset_email
 from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
-from common_utilities.get_inv_common_mappings import get_common_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
-from project.models import Investor, Startup, InvestorSubscriptionEmails, Referrals
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
@@ -101,10 +100,6 @@ def google_token():
                         # noinspection PyArgumentList
                         new_user = Investor(**user_dict)
                         new_user.save()
-
-                        user = InvestorSubscriptionEmails.objects.filter(email=email).first()
-                        if user:
-                            user.delete()
 
                         ml_schema = InvestorMLSchema()
                         user = Investor.objects.filter(email=email).first()
@@ -333,13 +328,13 @@ def email_confirmed(token):
     try:
         email = serial.loads(token, salt='email_confirm')
     except:
-        return redirect("https://www.angelfund.ai/token-expired", code=302)
+        return redirect("https://www.angelfund.ai/login", code=302)
 
     user = Investor.objects.filter(email=email).first()
 
     if user:
         if user.passowrd_confirm_meta_data == {}:
-            return jsonify({"result": False, "error": "link can be used only once"})
+            return redirect("https://www.angelfund.ai/login", code=302)
         else:
             user.email_confirmed = True
             user.save()
@@ -350,37 +345,16 @@ def email_confirmed(token):
 
         logger.debug(f"investor email confirmed {email}")
 
-        # Logic goes here
         login_user(user)
         user.is_logged_in = True
         user.passowrd_confirm_meta_data = {}
         user.save()
         logger.debug(f"investor logged in: {email}")
+        return redirect("http://localhost:3000/investor/signup")
 
-        ma_schema = InvestorUserSchema()
-        user_objs = ma_schema.dump(user)
-
-        rev_acc_data = rev_accreditation_data()
-        rev_sectors_data = rev_sector_data()
-
-        user_objs["accreditation"] = rev_acc_data.get(user_objs["accreditation"])
-        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
-
-        jwt_obj = {"email": email, "model": "Investor"}
-        access_token = create_access_token(identity=jwt_obj)
-
-        ret_obj = {
-            "result": True,
-            "user": user_objs,
-            "token": access_token,
-        }
-        # return ret_obj
-        return redirect("http://localhost:3000/login")
-
-        # return redirect("https://www.angelfund.ai", code=302)
     else:
         logger.debug(f"investor does not exist {email}")
-        return redirect("https://www.angelfund.ai/no-user-found", code=302)
+        return redirect("http://52.52.127.206/startup/signup")
         # Todo: create a new no user page
 
 
@@ -498,13 +472,10 @@ def referral_verification(token):
 #                                      UPDATE INFORMATION
 #<==================================================================================================>
 @investor_blueprint.route('/update-info', methods=['PATCH'])
-@jwt_required
+@login_required
 def update_info():
-    jwt_decode = investor_jwt_decoder(get_jwt_identity())
-    if not jwt_decode["result"]:
-        return jsonify(jwt_decode)
+    user_obj = current_user
 
-    user_obj = jwt_decode["user_obj"]
     if user_obj.is_logged_in:
         input_data = request.get_json()
         available_fields = {"sectors", "deals", "bio", "location", "prior_investments", "first_invite",
@@ -634,12 +605,9 @@ def waitlist_email():
     return jsonify({"result": True, "message": "email sent if the user exists"})
 
 
-
-
-#########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
-
-
-
+#<==================================================================================================>
+#                                    MIME FILE UPLOAD
+#<==================================================================================================>
 @investor_blueprint.route('/mime-files', methods=["POST"])
 @jwt_required
 def mime_files():
@@ -733,15 +701,20 @@ def investors_dashboard():
         if not response["result"]:
             return jsonify(response)
 
+        user_id = response["data"]["user_id"]
 
-        str_email = response["data"]["email"]
+        str_obj = Startup.objects.filter(id=user_id).first()
+        if not str_obj:
+            return jsonify({"result": False, "error": "user does not exist"})
+
+        str_email = str_obj.email
         str_invite = response["data"]["invite"]
+
 
         if inv_obj.connected.get(str_email):
             return jsonify({"result": False, "error": "already connected"})
 
         if not str_invite:
-            str_obj = Startup.objects.filter(email=str_email).first()
 
             if not response["data"].get("feedback"):
                 return jsonify({"result": False, "error": "feedback is mandotory"})
@@ -955,14 +928,34 @@ def passed_revisit():
             return jsonify(response)
 
 
+#<==================================================================================================>
+#                               CHANGE PASSWORD (PROFILE SETTINGS)
+#<==================================================================================================>
+@investor_blueprint.route('/change-password', methods=["GET"])
+@jwt_required
+def change_password():
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+    if inv_obj is not None:
+        token = serial.dumps(inv_obj.email, salt='email_reset')
+        link = url_for('investor.reset_link', token=token, _external=True)
+        inv_obj.password_reset_meta_data = {"is_clicked": False}
+        inv_obj.save()
+
+        thread = threading.Thread(target=password_reset_email, args=(inv_obj.email, link,))
+        thread.start()
+        logger.debug(f"investor password reset link sent: {inv_obj.email}")
+        return jsonify({"result": True, "message": "email sent if the user exists"})
+    else:
+        return jsonify({"result": False, "error": "user does not exists"})
 
 
-
-@investor_blueprint.route('/investor-common-mappings', methods=["GET"])
-def investors_common_mapping():
-    return get_common_mapping()
-
-
+#<==================================================================================================>
+#                                    COMPANY IMAGE API
+#<==================================================================================================>
 @investor_blueprint.route('/company-image-api', methods=["POST"])
 @jwt_required
 def general_company_images():
@@ -981,6 +974,9 @@ def general_company_images():
         return company_images_api(company_name)
 
 
+#<==================================================================================================>
+#                                          DELETE ACCOUNT
+#<==================================================================================================>
 @investor_blueprint.route('/delete-account', methods=["POST"])
 @jwt_required
 def delete_account():
@@ -1003,24 +999,6 @@ def delete_account():
 
 
 
-
-@investor_blueprint.route('/subscription', methods=["POST"])
-def subscription_email():
-    if request.method == "POST":
-        inp_req = request.get_json()
-        response = validate_email_schema(inp_req)
-        if response["result"]:
-            email = response["data"]["email"]
-            inv_obj = InvestorSubscriptionEmails.objects.filter(email=email).first()
-
-            if inv_obj is not None:
-                return jsonify({"result": False, "error": "Email already exists"})
-
-            new_obj = InvestorSubscriptionEmails(email=email)
-            new_obj.save()
-            return jsonify({"result": True})
-
-        return jsonify(response)
 
 ##################################################   *** HELPERS ***   ####################################################
 def return_none_results(name, status_code=200):

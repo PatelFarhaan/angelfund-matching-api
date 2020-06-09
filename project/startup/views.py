@@ -9,18 +9,17 @@ from project import serial
 from flask_login import login_user
 from common_utilities import CONSTANT
 from common_utilities.ml_apis import get_discover
+from project.models import Startup, Investor, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.password_reset import password_reset_email
 from flask import url_for, request, Blueprint, jsonify, redirect
-from common_utilities.get_str_common_mappings import get_str_users
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, progress_mapping
-from project.models import Startup, Investor, StartupSubscriptionEmails, Referrals
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
@@ -766,7 +765,6 @@ def co_founders_image_upload_to_s3():
         return return_data_results(False, "invalid file type")
 
 
-
 #<==================================================================================================>
 #                                     WAIT LIST API
 #<==================================================================================================>
@@ -783,30 +781,6 @@ def waitlist_email():
     thread.start()
     logger.debug(f"startup wait list email sent: {email}")
     return jsonify({"result": True, "message": "email sent if the user exists"})
-
-
-#########      TEST ONCE ONBOARDING FLOW IS COMPLETED        #########
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #<==================================================================================================>
@@ -854,7 +828,13 @@ def startup_dashboard():
         if not response["result"]:
             return jsonify(response)
 
-        inv_email = response["data"]["email"]
+        user_id = response["data"]["user_id"]
+
+        inv_obj = Investor.objects.filter(id=user_id).first()
+        if not inv_obj:
+            return jsonify({"result": False, "error": "user does not exist"})
+
+        inv_email = inv_obj.email
         inv_invite = response["data"]["invite"]
 
         if str_obj.connected.get(inv_email):
@@ -922,7 +902,6 @@ def startup_dashboard():
                 }
                 temp_dict = {}
                 temp_dict["inv_bio"] = inv_obj.bio
-                # temp_dict["inv_deals"] = deals.get(inv_obj.deals)
                 temp_dict["inv_deals"] = list(deals.get(inv_obj.deals))[0]
                 temp_dict["inv_fn"] = inv_obj.first_name
                 if inv_obj.profile_pic_link:
@@ -979,7 +958,6 @@ def startup_dashboard():
                 }
                 temp_dict = {}
                 temp_dict["inv_bio"] = inv_obj.bio
-                # temp_dict["inv_deals"] = deals.get(inv_obj.deals)
                 temp_dict["inv_deals"] = list(deals.get(inv_obj.deals))[0]
                 temp_dict["inv_fn"] = inv_obj.first_name
                 if inv_obj.profile_pic_link:
@@ -1029,7 +1007,7 @@ def startup_dashboard():
 
 
 #<==================================================================================================>
-#                            STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                                       HISTORY ALL
 #<==================================================================================================>
 @startup_blueprint.route('/history-all', methods=["GET"])
 @jwt_required
@@ -1159,9 +1137,8 @@ def passed_revisit():
             return jsonify(response)
 
 
-
 #<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                                       DELETE ACCOUNT
 #<==================================================================================================>
 @startup_blueprint.route('/delete-account', methods=["POST"])
 @jwt_required
@@ -1183,37 +1160,32 @@ def delete_account():
         return jsonify(response)
 
 
-#<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
-#<==================================================================================================>
-@startup_blueprint.route('/subscription', methods=["POST"])
-def subscription_email():
-    if request.method == "POST":
-        inp_req = request.get_json()
-        response = validate_email_schema(inp_req)
-        if response["result"]:
-            email = response["data"]["email"]
-            str_obj = StartupSubscriptionEmails.objects.filter(email=email).first()
-
-            if str_obj is not None:
-                return jsonify({"result": False, "error": "Email already exists"})
-
-            new_obj = StartupSubscriptionEmails(email=email)
-            new_obj.save()
-            return jsonify({"result": True})
-
-        return jsonify(response)
-
 
 #<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                               CHANGE PASSWORD (PROFILE SETTINGS)
 #<==================================================================================================>
-@startup_blueprint.route('/get-users/<offset>', methods=["GET"])
+@startup_blueprint.route('/change-password', methods=["GET"])
 @jwt_required
-def startup_users_mapping(offset):
-    if not offset.isdigit():
-        return return_data_results(False, "query parameter should be an integer")
-    return jsonify(get_str_users(offset=int(offset)*10))
+def change_password():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+    if str_obj is not None:
+        token = serial.dumps(str_obj.email, salt='email_reset')
+        link = url_for('startup.reset_link', token=token, _external=True)
+        str_obj.password_reset_meta_data = {"is_clicked": False}
+        str_obj.save()
+
+        thread = threading.Thread(target=password_reset_email, args=(str_obj.email, link,))
+        thread.start()
+        logger.debug(f"startup password reset link sent: {str_obj.email}")
+        return jsonify({"result": True, "message": "email sent if the user exists"})
+    else:
+        return jsonify({"result": False, "error": "user does not exists"})
+
+
 
 
 #<==================================================================================================>

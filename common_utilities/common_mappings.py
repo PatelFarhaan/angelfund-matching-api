@@ -1,6 +1,5 @@
 import sys
 sys.path.append('../')
-from project.models import SignUpMappings
 
 
 def sector_data():
@@ -58,13 +57,3 @@ def progress_mapping():
         "Early Users Acquired": "users",
         "Early Revenue Generated": "revenue"
     }
-
-def main():
-    SignUpMappings.objects.delete()
-    insert_obj = SignUpMappings(
-        deals_data=deals_data(),
-        sector_data=sector_data(),
-        accreditation_data=accreditation_data()
-    )
-    insert_obj.save()
-    print("Inserted Successfully")

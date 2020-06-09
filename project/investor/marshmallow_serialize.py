@@ -3,8 +3,10 @@ from flask_marshmallow import fields as fd
 
 
 class InvestorUserSchema(ma.Schema):
+    id = fd.fields.String()
+
     class Meta:
-        fields = ("first_name", "last_name", "email", "sectors", "deals", "profile_pic_link",
+        fields = ("first_name", "last_name", "id", "sectors", "deals", "profile_pic_link",
                   "bio", "location", "accreditation", "syndicate", "angel", "prior_investments",
                   "email_confirmed", "approved", "first_dashboard_visit", "monday_notification",
                   "show_profile", "first_invite")

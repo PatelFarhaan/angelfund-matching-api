@@ -136,15 +136,16 @@ def validate_google_schema(data):
 inv_dashboard_schema = {
     "type": "object",
     "properties": {
-        "email": {
+        "user_id": {
             "type": "string",
-            "format": "email"
+            "minLength": 24,
+            "maxLength": 24
         },
         "invite": {
             "type": "boolean"
         },
     },
-    "required": ["email", "invite"],
+    "required": ["user_id", "invite"],
 }
 
 
