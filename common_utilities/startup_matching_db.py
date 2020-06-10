@@ -48,7 +48,7 @@ def update_into_matching(email: str, user_obj: dict) -> bool:
     return True
 
 
-def get_matching_data(email: str) -> object:
+def get_str_matching_data(email: str) -> object:
     collection = db_details()
     my_query = {"email": email, "investor": False}
 
@@ -92,3 +92,26 @@ def process_all_str_data(data: list) -> list:
         if len(res) == 3:
             return res
     return res
+
+
+def str_mutual_updates(str_obj):
+    all_passed = True
+    email = str_obj.email
+    passed = dict(str_obj.passed)
+    pending = dict(str_obj.pending)
+    connected = dict(str_obj.connected)
+
+    collection = db_details()
+    my_query = {"email": email, "investor": False}
+    all_trasactions = [{"passed": passed}, {"pending": pending}, {"connected": connected}]
+
+    for i in all_trasactions:
+        newvalues = {"$set": i}
+
+        try:
+            collection.update_one(my_query, newvalues)
+        except:
+            all_passed = False
+            continue
+
+    return True if all_passed else False

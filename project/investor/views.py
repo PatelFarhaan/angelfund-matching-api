@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import os
 import uuid
 import magic
@@ -7,13 +10,13 @@ import requests
 import threading
 from project import serial
 from common_utilities import CONSTANT
-from common_utilities.ml_apis import get_discover
 from project.models import Investor, Startup, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.company_images import company_images_api
+from common_utilities.ml_apis import get_discover, set_response
 from flask_login import login_required, current_user, login_user
 from common_utilities.password_reset import password_reset_email
 from flask import url_for, request, Blueprint, jsonify, redirect
@@ -23,10 +26,12 @@ from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
+from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.startup.marshmallow_serialize import (StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema)
-from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_matching_data, process_all_str_data)
+from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
+                                                   inv_mutual_updates)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema, validate_google_schema, validate_inv_login_schema,
                                                               validate_inv_password_reset_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_profile_vis_schema)
@@ -139,11 +144,11 @@ def google_token():
                 else:
                     message = "User email not available or not verified by Google."
                     logger.debug(f"{message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
-                    return return_data_results(False, message, 400)
+                    return jsonify({"result": False, "error": message}), 400
             else:
-                return return_data_results(False, "invalid token", 400)
+                return jsonify({"result": False, "error": "invalid token"}), 400
         except:
-            return return_data_results(False, "token not validated", 400)
+            return jsonify({"result": False, "error": "token not validated"}), 400
     else:
         return jsonify(response)
 
@@ -422,7 +427,7 @@ def referral_verification(token):
         referred_by = ref_obj.get("referred_by")
         referred = ref_obj.get("referred")
     except:
-        return redirect("https://www.angelfund.ai/token-expired", code=302)
+        return redirect(url_for("investor.expired_token"))
 
     user = Investor.objects.filter(email=referred_by).first()
 
@@ -452,7 +457,7 @@ def referral_verification(token):
         ref_to_obj = Referrals.objects.filter(email=referred).first()
         if ref_to_obj:
             logger.debug(f"{referred} is already referred by {referred_by}")
-            return redirect("https://www.angelfund.ai", code=302)
+            return redirect(url_for("investor.expired_token"))
 
         details = {
             "referred_by": referred_by,
@@ -462,10 +467,10 @@ def referral_verification(token):
         new_ref_obj.save()
 
         logger.debug(f"{referred} is referred by {referred_by}")
-        return redirect("https://www.angelfund.ai", code=302)
+        return redirect(url_for("investor.expired_token"))
     else:
         logger.debug(f"investor does not exist {referred_by} :=> referral verification")
-        return redirect("https://www.angelfund.ai/no-user-found", code=302)
+        return redirect(url_for("investor.expired_token")) # no-user found
 
 
 #<==================================================================================================>
@@ -532,6 +537,14 @@ def update_info():
         return ret_obj
     else:
         return jsonify({"result": False, "error": "user is not authenticated"})
+
+
+#<==================================================================================================>
+#                                      EXPIRED TOKEN HOMEPAGE REDIRECT
+#<==================================================================================================>
+@investor_blueprint.route('/expired-token', methods=['GET'])
+def expired_token():
+    return redirect("http://52.52.127.206", code=302)
 
 
 #<==================================================================================================>
@@ -625,7 +638,7 @@ def mime_files():
         file_name = file_name.split('.', 1)[0]
 
     if not all([file_obj, file_name, file_type]):
-        return return_data_results(False, "missing key data")
+        return jsonify({"message": False, "error": "missing key data"})
 
     file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
     if os._exists(file_location):
@@ -649,10 +662,10 @@ def mime_files():
             return jsonify({"result": True, "url": image_url})
         else:
             shutil.rmtree(file_location)
-            return return_data_results(False, "image file required")
+            return jsonify({"message": False, "error": "image file required"})
     else:
         shutil.rmtree(file_location)
-        return return_data_results(False, "invalid file type")
+        return jsonify({"message": False, "error": "invalid file type"})
 
 
 #<==================================================================================================>
@@ -667,7 +680,7 @@ def investors_dashboard():
             return jsonify(jwt_decode)
 
         user_obj = jwt_decode["user_obj"]
-        matching_obj = get_matching_data(user_obj.email)
+        matching_obj = get_inv_matching_data(user_obj.email)
 
         if matching_obj == {}:
             return {"result": False, "error": "no match found"}
@@ -710,7 +723,6 @@ def investors_dashboard():
         str_email = str_obj.email
         str_invite = response["data"]["invite"]
 
-
         if inv_obj.connected.get(str_email):
             return jsonify({"result": False, "error": "already connected"})
 
@@ -741,6 +753,29 @@ def investors_dashboard():
 
             inv_obj.save()
             str_obj.save()
+
+            inv_transactional_replicas = inv_mutual_updates(inv_obj)
+            str_transactional_replicas = str_mutual_updates(str_obj)
+
+            if not inv_transactional_replicas:
+                pass
+                # Todo: Send a mail to the internal team.
+
+            if not str_transactional_replicas:
+                pass
+                # Todo: Send a mail to the internal team.
+
+            str_matching_obj = get_str_matching_data(str_email)
+            str_id = str_matching_obj.get("_id")
+
+            inv_matching_obj = get_inv_matching_data(inv_email)
+            inv_id = inv_matching_obj.get("_id")
+
+            resp = set_response(inv_id, str_id, False)
+            if resp.get("status_code") != 200:
+                pass
+                # Todo: Msg internal team to look into this issue
+
             return jsonify({"result": True, "message": "passed"})
 
         if str_invite:
@@ -780,6 +815,17 @@ def investors_dashboard():
                 inv_obj.save()
                 str_obj.save()
 
+                inv_transactional_replicas = inv_mutual_updates(inv_obj)
+                str_transactional_replicas = str_mutual_updates(str_obj)
+
+                if not inv_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                if not str_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
                 deals = {
                     "0": "$25,000 to $50,000",
                     "1": "$50,000 to $100,000",
@@ -789,7 +835,6 @@ def investors_dashboard():
 
                 temp_dict = {}
                 temp_dict["inv_bio"] = inv_obj.bio
-                # temp_dict["inv_deals"] = deals.get(inv_obj.deals)
                 temp_dict["inv_deals"] = list(deals.get(inv_obj.deals))[0]
                 temp_dict["inv_fn"] = inv_obj.first_name
 
@@ -819,6 +864,17 @@ def investors_dashboard():
 
                 email_connected(inv_email, str_email, temp_dict)
 
+                str_matching_obj = get_str_matching_data(str_email)
+                str_id = str_matching_obj.get("_id")
+
+                inv_matching_obj = get_inv_matching_data(inv_email)
+                inv_id = inv_matching_obj.get("_id")
+
+                resp = set_response(inv_id, str_id, False)
+                if resp.get("status_code") != 200:
+                    pass
+                    # Todo: Msg internal team to look into this issue
+
                 return jsonify({"result": True, "message": "connected"})
 
             else:
@@ -832,6 +888,29 @@ def investors_dashboard():
                 inv_obj.pending = inv_pending_req
 
                 inv_obj.save()
+
+                inv_transactional_replicas = inv_mutual_updates(inv_obj)
+                str_transactional_replicas = str_mutual_updates(str_obj)
+
+                if not inv_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                if not str_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                str_matching_obj = get_str_matching_data(str_email)
+                str_id = str_matching_obj.get("_id")
+
+                inv_matching_obj = get_inv_matching_data(inv_email)
+                inv_id = inv_matching_obj.get("_id")
+
+                resp = set_response(inv_id, str_id, False)
+                if resp.get("status_code") != 200:
+                    pass
+                    # Todo: Msg internal team to look into this issue
+
                 return jsonify({"result": True, "message": "invitation"})
 
 
@@ -995,25 +1074,3 @@ def delete_account():
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})
         return jsonify(response)
-
-
-
-
-
-##################################################   *** HELPERS ***   ####################################################
-def return_none_results(name, status_code=200):
-    return_obj = {
-        "result": False,
-        "status_code": status_code,
-        "message": f"{name} cannot be empty"
-    }
-    return jsonify(return_obj)
-
-
-def return_data_results(result, message, status_code=200):
-    return_obj = {
-        "result": result,
-        "status_code": status_code,
-        "message": message
-    }
-    return jsonify(return_obj)

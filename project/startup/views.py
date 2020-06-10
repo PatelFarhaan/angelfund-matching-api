@@ -27,7 +27,7 @@ from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upl
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
-from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_matching_data, process_all_str_data
+from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                              validate_referrer_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
                                                              validate_str_password_reset_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
@@ -795,7 +795,7 @@ def startup_dashboard():
             return jsonify(jwt_decode)
 
         user_obj = jwt_decode["user_obj"]
-        matching_obj = get_matching_data(user_obj.email)
+        matching_obj = get_str_matching_data(user_obj.email)
 
         if matching_obj == {}:
             return {"result": False, "message": "no match found"}

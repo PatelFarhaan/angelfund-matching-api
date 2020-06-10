@@ -54,12 +54,8 @@ def default_expired_token_callback(expired_token):
     """
     I have override this return object and added status code and result
     """
-    return jsonify(
-        {config.error_msg_key: 'Token has expired',
-         "status_code": 401,
-         "result": False,
-         }
-    )
+    from flask import redirect, url_for
+    return redirect(url_for("investor.expired_token"), code=302)
     # return jsonify({config.error_msg_key: 'Token has expired'}), 401
 
 

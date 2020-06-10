@@ -46,14 +46,12 @@ def accreditation_data():
 
 def progress_mapping():
     return  {
-        "Mockups/Renderings": "mockups",
-        "Prototype/Pre-Launch": "prototype",
-        "Launched": "product",
-        "Idea/Sketches": "mockups",
-        "Beta Launched": "beta" ,
-        "Taking Preorders": "preorders",
-        "Product Launched": "product",
-        "Team Built": "team",
-        "Early Users Acquired": "users",
-        "Early Revenue Generated": "revenue"
+        'Idea/Sketches': 'ideas',
+        'Mockups/Renderings': 'mockups',
+        'Prototype/Pre-Launch': 'prototype',
+        'Beta Launched': 'beta',
+        'Taking Preorders': 'preorders',
+        'Product Launched': 'product',
+        'Early Users Acquired': 'users',
+        'Early Revenue Generated': 'revenue'
     }
