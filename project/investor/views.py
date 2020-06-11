@@ -540,14 +540,6 @@ def update_info():
 
 
 #<==================================================================================================>
-#                                      EXPIRED TOKEN HOMEPAGE REDIRECT
-#<==================================================================================================>
-@investor_blueprint.route('/expired-token', methods=['GET'])
-def expired_token():
-    return redirect("http://52.52.127.206", code=302)
-
-
-#<==================================================================================================>
 #                                    MONDAY NOTIFICATION
 #<==================================================================================================>
 @investor_blueprint.route('/monday-notifications', methods=["POST"])
@@ -1071,6 +1063,7 @@ def delete_account():
             if check_password_hash(inv_obj.password, password):
                 setattr(inv_obj, "delete_account", True)
                 inv_obj.save()
+                # Todo: Delete user from machine learning collection
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})
         return jsonify(response)

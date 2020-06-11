@@ -3,13 +3,14 @@
 #<==================================================================================================>
 from flask_cors import CORS
 from datetime import timedelta
+from flask import Flask, session
+from flask_login import LoginManager
 from common_utilities import CONSTANT
 from flask_mongoengine import MongoEngine
 from flask_marshmallow import Marshmallow
 from itsdangerous import URLSafeTimedSerializer
-from flask import Flask, session
-from flask_login import LoginManager
 from common_utilities.flask_jwt_extended import JWTManager
+
 
 #<==================================================================================================>
 #                                         CONFIG
@@ -23,7 +24,7 @@ app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
 db = MongoEngine(app)
 ma = Marshmallow(app)
 jwt = JWTManager(app)
-CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 @app.before_request
 def make_session_permanent():

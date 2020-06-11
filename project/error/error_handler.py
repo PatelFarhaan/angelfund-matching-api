@@ -3,6 +3,7 @@ from flask import Blueprint, jsonify
 
 errorpage_blueprint = Blueprint('error', __name__)
 
+
 @errorpage_blueprint.app_errorhandler(403)
 def error_403(e):
     return_obj = {

@@ -6,8 +6,9 @@ loader decorators. For further information, check out the following links:
 http://flask-jwt-extended.readthedocs.io/en/latest/changing_default_behavior.html
 http://flask-jwt-extended.readthedocs.io/en/latest/tokens_from_complex_object.html
 """
-from flask import jsonify
 import sys
+from flask import jsonify
+from flask import redirect, url_for
 sys.path.append('../')
 from common_utilities.flask_jwt_extended.config import config
 
@@ -54,8 +55,8 @@ def default_expired_token_callback(expired_token):
     """
     I have override this return object and added status code and result
     """
-    from flask import redirect, url_for
-    return redirect(url_for("investor.expired_token"), code=302)
+
+    return redirect("http://52.52.127.206"), 302
     # return jsonify({config.error_msg_key: 'Token has expired'}), 401
 
 
