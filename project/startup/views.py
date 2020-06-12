@@ -6,28 +6,29 @@ import logging
 import requests
 import threading
 from project import serial
-from flask_login import login_user
 from common_utilities import CONSTANT
-from common_utilities.ml_apis import get_discover
+from flask_login import login_user, login_required
 from project.models import Startup, Investor, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.password_reset import password_reset_email
-from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
+from flask import url_for, request, session, Blueprint, jsonify, redirect
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, progress_mapping
+from common_utilities.ml_apis import get_discover, set_response, delete_user_ml
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
+from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
-from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data
+from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                              validate_referrer_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
                                                              validate_str_password_reset_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
@@ -99,10 +100,6 @@ def google_token():
                         new_user = Startup(**user_dict)
                         new_user.save()
 
-                        subs_user = StartupSubscriptionEmails.objects.filter(email=email).first()
-                        if subs_user:
-                            subs_user.delete()
-
                         ml_schema = StartupMLSchema()
                         user = Startup.objects.filter(email=email).first()
                         ml_schema_resp = ml_schema.dump(user)
@@ -141,11 +138,11 @@ def google_token():
                 else:
                     message = "User email not available or not verified by Google."
                     logger.debug(f"{message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
-                    return return_data_results(False, message, 400)
+                    return jsonify({"result": False, "error": message}), 400
             else:
-                return return_data_results(False, "invalid token", 400)
+                return jsonify({"result": False, "error": "invalid token"}), 400
         except:
-            return return_data_results(False, "token not validated", 400)
+            return jsonify({"result": False, "error": "token not validated"}), 400
     else:
         return jsonify(response)
 
@@ -342,32 +339,98 @@ def email_confirmed(token):
     try:
         email = serial.loads(token, salt='email_confirm')
     except:
-        return redirect("https://www.angelfund.ai/token-expired", code=302)
+        return redirect("https://www.angelfund.ai/login", code=302)
 
     user = Startup.objects.filter(email=email).first()
 
     if user:
         if user.passowrd_confirm_meta_data == {}:
-            return jsonify({"result": False, "error": "link can be used only once"})
+            return redirect("https://www.angelfund.ai/login", code=302)
         else:
             user.email_confirmed = True
             user.save()
 
-        if update_into_matching(email, {"email_confirmed": True}):
+        if not update_into_matching(email, {"email_confirmed": True}):
             pass
             # todo: shoot out an email to the team with the user email as the subject header
 
         logger.debug(f"startup email confirmed {email}")
 
-        # Logic goes here
         login_user(user)
         user.is_logged_in = True
         user.passowrd_confirm_meta_data = {}
         user.save()
+        session["email"] = email
         logger.debug(f"startup logged in: {email}")
+        # Todo: check if both investor and startup signin with the same email it show be multi-tenant like jwt
+        return redirect(url_for("startup.confirmation_signup_flow", email=email, code=307))
+
+    else:
+        logger.debug(f"startup does not exist {email}")
+        return redirect("https://www.angelfund.ai/login", code=302)
+
+
+#<==================================================================================================>
+#                                   CONFIRMATION SIGNUP FLOW
+#<==================================================================================================>
+@startup_blueprint.route('/confirmation-signup-flow', methods=["GET", "PATCH"])
+@login_required
+def confirmation_signup_flow():
+    email = session.get("email")
+
+    if not email:
+        return jsonify({"reuslt": False, "error": "session expired"})
+
+    if request.method == "GET":
+        return redirect("http://localhost:3000/startup/signup?confirmed=True"), 302
+
+    user_obj = Investor.objects.filter(email=email).first()
+    if user_obj.is_logged_in:
+        input_data = request.get_json()
+        available_fields = {"location", "sectors", "company_name", "company_link", "co_founders",
+                            "startup_pitch", "bio", "round_size", "raised", "profile_pic_link",
+                            "progress", "position", "num_team_members", "slide_deck", "first_invite",
+                            "first_dashboard_visit"}
+
+        for key in list(input_data.keys()):
+            if key not in available_fields:
+                return jsonify({"result": False, "error": "invalid user field"})
+
+        for field in input_data:
+            if field in available_fields:
+
+                if field == "sectors":
+                    sectors_map = sector_data()
+                    res = [ sectors_map.get(i) for i in input_data[field] if sectors_map.get(i) != None ]
+                    setattr(user_obj, field, res)
+
+                    if update_into_matching(user_obj.email, {field: res}):
+                        pass
+                    # todo: shoot out an email to the team
+
+                elif field == "progress":
+                    progress_map = progress_mapping()
+                    res = [ progress_map.get(i) for i in input_data[field] if progress_map.get(i) != None ]
+                    setattr(user_obj, field, res)
+
+                    if update_into_matching(user_obj.email, {field: res}):
+                        pass
+                    # todo: shoot out an email to the team
+
+                else:
+                    setattr(user_obj, field, input_data[field])
+                    if update_into_matching(user_obj.email, {field: input_data[field]}):
+                        pass
+                    # todo: shoot out an email to the team
+
+                user_obj.save()
+
+            else:
+                jsonify({"result": False, "error": "invalid user field"})
+
 
         ma_schema = StartupUserSchema()
-        user_objs = ma_schema.dump(user)
+        user_objs = ma_schema.dump(user_obj)
 
         rev_sectors_data = rev_sector_data()
         rev_progress_data = rev_progress_mapping()
@@ -375,19 +438,13 @@ def email_confirmed(token):
         user_objs["progress"] = [rev_progress_data.get(i) for i in user_objs["progress"] if rev_progress_data.get(i)]
         user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
 
-        jwt_obj = {"email": email, "model": "Startup"}
-        access_token = create_access_token(identity=jwt_obj)
-
         ret_obj = {
             "result": True,
             "user": user_objs,
-            "token": access_token
         }
-        # return ret_obj
-        return redirect("http://localhost:3000/investor/login")
+        return ret_obj
     else:
-        logger.debug(f"startup does not exist {email}")
-        return redirect("https://www.angelfund.ai/no-user-found", code=302)
+        jsonify({"result": False, "error": "user is not authenticated"})
 
 
 #<==================================================================================================>
@@ -674,7 +731,7 @@ def mime_files():
         file_name = file_name.split('.', 1)[0]
 
     if not all([file_obj, file_name, file_type]):
-        return return_data_results(False, "missing key data")
+        return jsonify({"result": False, "error": "missing key data"})
 
     file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
     if os._exists(file_location):
@@ -698,7 +755,7 @@ def mime_files():
             return jsonify({"result": True, "url": pdf_url})
         else:
             shutil.rmtree(file_location)
-            return return_data_results(False, "pdf file required")
+            return jsonify({"result": False, "error": "pdf file required"})
 
     elif file_type == "image":
         if mime_base == "image":
@@ -709,11 +766,11 @@ def mime_files():
             return jsonify({"result": True, "url": image_url})
         else:
             shutil.rmtree(file_location)
-            return return_data_results(False, "image file required")
+            return jsonify({"result": False, "error": "image file required"})
 
     else:
         shutil.rmtree(file_location)
-        return return_data_results(False, "invalid file type")
+        return jsonify({"result": False, "error": "invalid file type"})
 
 
 #<==================================================================================================>
@@ -736,7 +793,7 @@ def co_founders_image_upload_to_s3():
         file_name = file_name.split('.', 1)[0]
 
     if not all([file_obj, file_name, file_type]):
-        return return_data_results(False, "missing key data")
+        return jsonify({"result": False, "error": "missing key data"})
 
     file_location = f"{os.getcwd()}/{str(uuid.uuid4())}"
     if os._exists(file_location):
@@ -758,11 +815,11 @@ def co_founders_image_upload_to_s3():
             return jsonify({"result": True, "url": image_url})
         else:
             shutil.rmtree(file_location)
-            return return_data_results(False, "image file required")
+            return jsonify({"result": False, "error": "image file required"})
 
     else:
         shutil.rmtree(file_location)
-        return return_data_results(False, "invalid file type")
+        return jsonify({"result": False, "error": "invalid file type"})
 
 
 #<==================================================================================================>
@@ -784,7 +841,7 @@ def waitlist_email():
 
 
 #<==================================================================================================>
-#                            STARTUP ACCOUNT + PAGINATION + SINGLE USER
+#                                          DASHBOARD
 #<==================================================================================================>
 @startup_blueprint.route('/dashboard', methods=["GET", "POST"])
 @jwt_required
@@ -846,6 +903,29 @@ def startup_dashboard():
                 pending_obj.pop(inv_email)
                 str_obj.pending = pending_obj
                 str_obj.save()
+
+                inv_transactional_replicas = inv_mutual_updates(inv_obj)
+                str_transactional_replicas = str_mutual_updates(str_obj)
+
+                if not inv_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                if not str_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                str_matching_obj = get_str_matching_data(str_email)
+                str_id = str_matching_obj.get("_id")
+
+                inv_matching_obj = get_inv_matching_data(inv_email)
+                inv_id = inv_matching_obj.get("_id")
+
+                resp = set_response(str_id, inv_id, False)
+                if resp.get("status_code") != 200:
+                    pass
+                    # Todo: Msg internal team to look into this issue
+
             return jsonify({"result": False, "messgae": "already passed"})
 
         if not inv_invite:
@@ -854,6 +934,29 @@ def startup_dashboard():
             str_obj.passed = str_passed_requests
 
             str_obj.save()
+
+            inv_transactional_replicas = inv_mutual_updates(inv_obj)
+            str_transactional_replicas = str_mutual_updates(str_obj)
+
+            if not inv_transactional_replicas:
+                pass
+                # Todo: Send a mail to the internal team.
+
+            if not str_transactional_replicas:
+                pass
+                # Todo: Send a mail to the internal team.
+
+            str_matching_obj = get_str_matching_data(str_email)
+            str_id = str_matching_obj.get("_id")
+
+            inv_matching_obj = get_inv_matching_data(inv_email)
+            inv_id = inv_matching_obj.get("_id")
+
+            resp = set_response(str_id, inv_id, False)
+            if resp.get("status_code") != 200:
+                pass
+                # Todo: Msg internal team to look into this issue
+
             return jsonify({"result": True, "message": "passed"})
 
         if inv_invite:
@@ -894,6 +997,17 @@ def startup_dashboard():
                 inv_obj.save()
                 str_obj.save()
 
+                inv_transactional_replicas = inv_mutual_updates(inv_obj)
+                str_transactional_replicas = str_mutual_updates(str_obj)
+
+                if not inv_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                if not str_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
                 deals = {
                     "0": "$25,000 to $50,000",
                     "1": "$50,000 to $100,000",
@@ -930,6 +1044,17 @@ def startup_dashboard():
 
                 email_connected(inv_email, str_email, temp_dict)
 
+                str_matching_obj = get_str_matching_data(str_email)
+                str_id = str_matching_obj.get("_id")
+
+                inv_matching_obj = get_inv_matching_data(inv_email)
+                inv_id = inv_matching_obj.get("_id")
+
+                resp = set_response(str_id, inv_id, True)
+                if resp.get("status_code") != 200:
+                    pass
+                    # Todo: Msg internal team to look into this issue
+
                 return jsonify({"result": True, "message": "connected"})
 
             elif inv_connected_requests.get(inv_email):
@@ -949,6 +1074,28 @@ def startup_dashboard():
 
                 inv_obj.save()
                 str_obj.save()
+
+                inv_transactional_replicas = inv_mutual_updates(inv_obj)
+                str_transactional_replicas = str_mutual_updates(str_obj)
+
+                if not inv_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                if not str_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                str_matching_obj = get_str_matching_data(str_email)
+                str_id = str_matching_obj.get("_id")
+
+                inv_matching_obj = get_inv_matching_data(inv_email)
+                inv_id = inv_matching_obj.get("_id")
+
+                resp = set_response(str_id, inv_id, True)
+                if resp.get("status_code") != 200:
+                    pass
+                    # Todo: Msg internal team to look into this issue
 
                 deals = {
                     "0": "$25,000 to $50,000",
@@ -1003,6 +1150,29 @@ def startup_dashboard():
                 str_obj.pending = str_pending_req
 
                 str_obj.save()
+
+                inv_transactional_replicas = inv_mutual_updates(inv_obj)
+                str_transactional_replicas = str_mutual_updates(str_obj)
+
+                if not inv_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                if not str_transactional_replicas:
+                    pass
+                    # Todo: Send a mail to the internal team.
+
+                str_matching_obj = get_str_matching_data(str_email)
+                str_id = str_matching_obj.get("_id")
+
+                inv_matching_obj = get_inv_matching_data(inv_email)
+                inv_id = inv_matching_obj.get("_id")
+
+                resp = set_response(str_id, inv_id, True)
+                if resp.get("status_code") != 200:
+                    pass
+                    # Todo: Msg internal team to look into this issue
+
                 return jsonify({"result": True, "message": "invitation"})
 
 
@@ -1155,6 +1325,13 @@ def delete_account():
             if check_password_hash(str_obj.password, password):
                 setattr(str_obj, "delete_account", True)
                 str_obj.save()
+
+                matching_obj = get_str_matching_data(str_obj.email)
+                str_id = matching_obj.get("_id")
+                if not delete_user_ml(str_id):
+                    pass
+                    # Todo: Shoot out a mail to the internal team
+
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})
         return jsonify(response)
@@ -1184,26 +1361,3 @@ def change_password():
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify({"result": False, "error": "user does not exists"})
-
-
-
-
-#<==================================================================================================>
-#                              STARTUP ACCOUNT + PAGINATION + SINGLE USER
-#<==================================================================================================>
-def return_none_results(name, status_code=200):
-    return_obj = {
-        "result": False,
-        "status_code": status_code,
-        "message": f"{name} cannot be empty"
-    }
-    return jsonify(return_obj)
-
-
-def return_data_results(result, message, status_code=200):
-    return_obj = {
-        "result": result,
-        "status_code": status_code,
-        "message": message
-    }
-    return jsonify(return_obj)

@@ -10,21 +10,21 @@ import requests
 import threading
 from project import serial
 from common_utilities import CONSTANT
+from flask_login import login_required, login_user
 from project.models import Investor, Startup, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.company_images import company_images_api
-from common_utilities.ml_apis import get_discover, set_response
-from flask_login import login_required, current_user, login_user
 from common_utilities.password_reset import password_reset_email
-from flask import url_for, request, Blueprint, jsonify, redirect
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
+from flask import url_for, request, Blueprint, jsonify, redirect, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
+from common_utilities.ml_apis import get_discover, set_response, delete_user_ml
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
@@ -151,7 +151,6 @@ def google_token():
             return jsonify({"result": False, "error": "token not validated"}), 400
     else:
         return jsonify(response)
-
 
 #<==================================================================================================>
 #                                            LOGIN
@@ -344,7 +343,7 @@ def email_confirmed(token):
             user.email_confirmed = True
             user.save()
 
-        if update_into_matching(email, {"email_confirmed": True}):
+        if not update_into_matching(email, {"email_confirmed": True}):
             pass
             # todo: shoot out an email to the team with the user email as the subject header
 
@@ -354,14 +353,88 @@ def email_confirmed(token):
         user.is_logged_in = True
         user.passowrd_confirm_meta_data = {}
         user.save()
+        session["email"] = email
         logger.debug(f"investor logged in: {email}")
-        return redirect("http://localhost:3000/investor/signup")
+        return redirect(url_for("investor.confirmation_signup_flow", email=email, code=307))
 
     else:
         logger.debug(f"investor does not exist {email}")
-        return redirect("http://52.52.127.206/startup/signup")
+        return redirect("http://52.52.127.206/investor/signup")
         # Todo: create a new no user page
 
+
+#<==================================================================================================>
+#                                   CONFIRMATION SIGNUP FLOW
+#<==================================================================================================>
+@investor_blueprint.route('/confirmation-signup-flow', methods=["GET", "PATCH"])
+@login_required
+def confirmation_signup_flow():
+    email = session.get("email")
+
+    if not email:
+        return jsonify({"reuslt": False, "error": "session expired"})
+
+    if request.method == "GET":
+        return redirect("http://localhost:3000/investor/signup?confirmed=True"), 302
+
+    user_obj = Investor.objects.filter(email=email).first()
+
+    if user_obj.is_logged_in:
+        input_data = request.get_json()
+        available_fields = {"sectors", "deals", "bio", "location", "prior_investments", "first_invite",
+                            "accreditation", "syndicate", "angel", "profile_pic_link", "first_dashboard_visit"}
+
+        for key in list(input_data.keys()):
+            if key not in available_fields:
+                return jsonify({"result": False, "error": "invalid user field"})
+
+        for field in input_data:
+            if field in available_fields:
+                if field == "sectors":
+                    sectors_map = sector_data()
+                    res = [ sectors_map.get(i) for i in input_data[field] if sectors_map.get(i) != None ]
+                    setattr(user_obj, field, res)
+
+                    if update_into_matching(user_obj.email, {field: res}):
+                        pass
+                        # todo: shoot out an email to the team with the user email as the subject header
+
+                elif field == "accreditation":
+                    accreditation_map = accreditation_data()
+                    res = accreditation_map.get(input_data[field])
+                    setattr(user_obj, field, res)
+
+                    if update_into_matching(user_obj.email, {field: res}):
+                        pass
+                        # todo: shoot out an email to the team with the user email as the subject header
+
+                else:
+                    setattr(user_obj, field, input_data[field])
+                    if update_into_matching(user_obj.email, {field: input_data[field]}):
+                        pass
+                        # todo: shoot out an email to the team with the user email as the subject header
+
+                user_obj.save()
+
+            else:
+                return jsonify({"result": False, "error": "invalid user field"})
+
+        ma_schema = InvestorUserSchema()
+        user_objs = ma_schema.dump(user_obj)
+
+        rev_acc_data = rev_accreditation_data()
+        rev_sectors_data = rev_sector_data()
+
+        user_objs["accreditation"] = rev_acc_data.get(user_objs["accreditation"])
+        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
+
+        ret_obj = {
+            "result": True,
+            "user": user_objs,
+        }
+        return ret_obj
+    else:
+        return jsonify({"result": False, "error": "user is not authenticated"})
 
 #<==================================================================================================>
 #                                          LOGOUT
@@ -477,9 +550,13 @@ def referral_verification(token):
 #                                      UPDATE INFORMATION
 #<==================================================================================================>
 @investor_blueprint.route('/update-info', methods=['PATCH'])
-@login_required
+@jwt_required
 def update_info():
-    user_obj = current_user
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    user_obj = jwt_decode["user_obj"]
 
     if user_obj.is_logged_in:
         input_data = request.get_json()
@@ -1063,6 +1140,13 @@ def delete_account():
             if check_password_hash(inv_obj.password, password):
                 setattr(inv_obj, "delete_account", True)
                 inv_obj.save()
+
+                matching_obj = get_inv_matching_data(inv_obj.email)
+                str_id = matching_obj.get("_id")
+                if not delete_user_ml(str_id):
+                    pass
+                    # Todo: Shoot out a mail to the internal team
+
                 # Todo: Delete user from machine learning collection
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})

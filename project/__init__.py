@@ -24,20 +24,21 @@ app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
 db = MongoEngine(app)
 ma = Marshmallow(app)
 jwt = JWTManager(app)
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+CORS(app)
 
 @app.before_request
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=60)
 
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', '*')
-    response.headers.add('Access-Control-Allow-Methods', '*')
-    response.headers.add('Access-Control-Allow-Credentials', 'true')
-    return response
+# @app.after_request
+# def after_request(response):
+#     response.headers.add('Access-Control-Allow-Origin', '*')
+#     response.headers.add('Access-Control-Allow-Headers', '*')
+#     response.headers.add('Access-Control-Allow-Methods', '*')
+#     response.headers.add('Access-Control-Allow-Credentials', 'true')
+#     return response
+
 
 login_manager = LoginManager(app)
 login_manager.blueprint_login_views = {
