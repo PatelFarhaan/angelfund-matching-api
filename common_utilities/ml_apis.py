@@ -35,16 +35,6 @@ def set_response(user_id: int, user_id_to: int, response: bool):
     return response.json()
 
 
-def clean_discover():
-    url = f"{CONSTANT.ML_SERVER_EIP.value}clean_discover"
-    payload = {}
-    headers = {
-        'x-auth-key': x_auth_key,
-    }
-    response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
-    return response.json()
-
-
 def reset_settings(user_id):
     url = f"{CONSTANT.ML_SERVER_EIP.value}reset_settings"
     payload = {"user_id": user_id}
@@ -52,8 +42,11 @@ def reset_settings(user_id):
         'x-auth-key': x_auth_key,
         'Content-Type': content_type
     }
-    response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
-    return response.json()
+    try:
+        response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
+    except:
+        return False
+    return True
 
 
 def hide_profile_from_discover(user_id):

@@ -7,11 +7,15 @@ from common_utilities.company_images import company_images_api
 from project.startup.marshmallow_serialize import StartupDashboardSchema
 
 
-def db_details():
+def db_details(**kwargs):
     remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
-    collection = db.users
+    if kwargs.get("collection"):
+        collection_name = kwargs.get("collection")
+        collection = db[collection_name]
+    else:
+        collection = db.users
     return collection
 
 

@@ -56,9 +56,9 @@ def default_expired_token_callback(expired_token):
     I have override this return object and added status code and result
     """
     if expired_token.get("identity").get("model") == "Investor":
-        return jsonify({"result": False, "is_expired": True, "error": "token expired", "is_investor": True}), 200
+        return jsonify({"result": False, "is_expired": True, "error": "token expired", "is_investor": True}), 401
     else:
-        return jsonify({"result": False, "is_expired": True, "error": "token expired", "is_investor": False}), 200
+        return jsonify({"result": False, "is_expired": True, "error": "token expired", "is_investor": False}), 401
 
 
 def default_invalid_token_callback(error_string):

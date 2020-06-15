@@ -6,8 +6,9 @@ from datetime import timedelta
 from flask import Flask, session
 from flask_login import LoginManager
 from common_utilities import CONSTANT
-from flask_mongoengine import MongoEngine
 from flask_marshmallow import Marshmallow
+from flask_mongoengine import MongoEngine
+# import flask_monitoringdashboard as dashboard
 from itsdangerous import URLSafeTimedSerializer
 from common_utilities.flask_jwt_extended import JWTManager
 
@@ -17,27 +18,21 @@ from common_utilities.flask_jwt_extended import JWTManager
 #<==================================================================================================>
 app = Flask(__name__)
 app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
-app.config['JWT_SECRET_KEY'] = CONSTANT.JWT_SECRET_KEY.value
-
 serial = URLSafeTimedSerializer(CONSTANT.SECRET_KEY.value)
+app.config['JWT_SECRET_KEY'] = CONSTANT.JWT_SECRET_KEY.value
+# dashboard.config.init_from(file=CONSTANT.DASHBOARD_CONFIG_FILE.value)
 app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
+
+CORS(app)
+# dashboard.bind(app)
 db = MongoEngine(app)
 ma = Marshmallow(app)
 jwt = JWTManager(app)
-CORS(app)
 
 @app.before_request
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=60)
-
-# @app.after_request
-# def after_request(response):
-#     response.headers.add('Access-Control-Allow-Origin', '*')
-#     response.headers.add('Access-Control-Allow-Headers', '*')
-#     response.headers.add('Access-Control-Allow-Methods', '*')
-#     response.headers.add('Access-Control-Allow-Credentials', 'true')
-#     return response
 
 
 login_manager = LoginManager(app)

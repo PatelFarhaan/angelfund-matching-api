@@ -19,17 +19,19 @@ from common_utilities.connected_emails import email_connected
 from common_utilities.company_images import company_images_api
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
+from common_utilities.technical_error_mail import technical_errors
 from common_utilities.google_email import google_email_confirmation
+from common_utilities.hide_user_profile import hide_user, unhide_user
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
-from flask import url_for, request, Blueprint, jsonify, redirect, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
-from common_utilities.ml_apis import get_discover, set_response, delete_user_ml
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
+from flask import url_for, request, Blueprint, jsonify, redirect, session, render_template
 from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from project.startup.marshmallow_serialize import (StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema)
+from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
+from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
                                                    inv_mutual_updates)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
@@ -110,8 +112,7 @@ def google_token():
                         user = Investor.objects.filter(email=email).first()
                         ml_schema_resp = ml_schema.dump(user)
                         if not insert_into_matching(email, ml_schema_resp):
-                            pass
-                            # todo: shoot out a mail to angelfund team to get the data from investor db and dump it to matching db
+                            technical_errors("INVESTOR: SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
 
                         logger.debug(f"investor created {email} via Google OAuth")
 
@@ -222,33 +223,43 @@ def login():
 #<==================================================================================================>
 #                                      PASSWORD RESET LINK
 #<==================================================================================================>
-@investor_blueprint.route('/reset-link/<token>', methods=['POST'])
+@investor_blueprint.route('/reset-link/<token>', methods=['GET', 'POST'])
 def reset_link(token):
-    try:
-        email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
-    except:
-        return redirect("https://www.angelfund.ai/token-expired", code=302)
+    if request.method == "GET":
+        try:
+            email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
+        except:
+            return redirect("https://www.angelfund.ai", code=302)
 
-    user = Investor.objects.filter(email=email).first()
-    if user:
-        input_request = request.get_json()
-        response = validate_inv_password_reset_schema(input_request)
-        if response["result"]:
-            password = response["data"]["password"]
+        user = Investor.objects.filter(email=email).first()
+        if user:
+            if user.password_reset_meta_data == {}:
+                return redirect("https://www.angelfund.ai", code=302)
+
+        return render_template("reset.html")
+
+    elif request.method == "POST":
+        try:
+            email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
+        except:
+            return redirect("https://www.angelfund.ai", code=302)
+
+        user = Investor.objects.filter(email=email).first()
+        if user:
+            password = request.form.get("password")
 
             if user.password_reset_meta_data == {}:
-                return jsonify({"result": False, "error": "link can be used only once"})
+                # link can only be clicked once
+                return redirect("https://www.angelfund.ai", code=302)
 
             if not user.password_reset_meta_data["is_clicked"]:
                 user.password = generate_password_hash(password)
                 user.password_reset_meta_data = {}
                 user.save()
                 logger.debug(f"investor password changed: {email}")
-                message = "password changed successfully"
-                return jsonify({"result": True, "message": message})
+                return render_template("reset-success-inv.html")
         else:
-            return jsonify(response)
-
+            return redirect("https://www.angelfund.ai", code=302)
 
 #<==================================================================================================>
 #                               PASSWORD RESET REQUEST (HOMEPAGE)
@@ -305,8 +316,7 @@ def register():
         ml_schema_resp = ml_schema.dump(user)
 
         if not insert_into_matching(email, ml_schema_resp):
-            pass
-            # todo: shoot out a mail to angelfund team to get the data from investor db and dump it to matching db
+            technical_errors("INVESTOR: REGISTER UPDATE UNSUCCESSFUL", email)
 
         logger.debug(f"investor created {email}")
 
@@ -344,8 +354,7 @@ def email_confirmed(token):
             user.save()
 
         if not update_into_matching(email, {"email_confirmed": True}):
-            pass
-            # todo: shoot out an email to the team with the user email as the subject header
+            technical_errors("INVESTOR: EMAIL CONFIRMATION UPDATE UNSUCCESSFUL", email)
 
         logger.debug(f"investor email confirmed {email}")
 
@@ -353,14 +362,13 @@ def email_confirmed(token):
         user.is_logged_in = True
         user.passowrd_confirm_meta_data = {}
         user.save()
-        session["email"] = email
+        session["email"] = email   # Todo: check this code with current_user module
         logger.debug(f"investor logged in: {email}")
         return redirect(url_for("investor.confirmation_signup_flow", email=email, code=307))
 
     else:
         logger.debug(f"investor does not exist {email}")
         return redirect("http://52.52.127.206/investor/signup")
-        # Todo: create a new no user page
 
 
 #<==================================================================================================>
@@ -395,24 +403,21 @@ def confirmation_signup_flow():
                     res = [ sectors_map.get(i) for i in input_data[field] if sectors_map.get(i) != None ]
                     setattr(user_obj, field, res)
 
-                    if update_into_matching(user_obj.email, {field: res}):
-                        pass
-                        # todo: shoot out an email to the team with the user email as the subject header
+                    if not update_into_matching(user_obj.email, {field: res}):
+                        technical_errors("INVESTOR: EMAIL CONFIRMATION SIGNUP FLOW SECTORS UPDATE UNSUCCESSFUL", email)
 
                 elif field == "accreditation":
                     accreditation_map = accreditation_data()
                     res = accreditation_map.get(input_data[field])
                     setattr(user_obj, field, res)
 
-                    if update_into_matching(user_obj.email, {field: res}):
-                        pass
-                        # todo: shoot out an email to the team with the user email as the subject header
+                    if not update_into_matching(user_obj.email, {field: res}):
+                        technical_errors("INVESTOR: EMAIL CONFIRMATION SIGNUP FLOW PROGRESS UPDATE UNSUCCESSFUL", email)
 
                 else:
                     setattr(user_obj, field, input_data[field])
-                    if update_into_matching(user_obj.email, {field: input_data[field]}):
-                        pass
-                        # todo: shoot out an email to the team with the user email as the subject header
+                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
+                        technical_errors("INVESTOR: EMAIL CONFIRMATION SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
 
                 user_obj.save()
 
@@ -500,7 +505,7 @@ def referral_verification(token):
         referred_by = ref_obj.get("referred_by")
         referred = ref_obj.get("referred")
     except:
-        return redirect(url_for("investor.expired_token"))
+        return redirect("https://www.angelfund.ai", code=302)
 
     user = Investor.objects.filter(email=referred_by).first()
 
@@ -530,7 +535,7 @@ def referral_verification(token):
         ref_to_obj = Referrals.objects.filter(email=referred).first()
         if ref_to_obj:
             logger.debug(f"{referred} is already referred by {referred_by}")
-            return redirect(url_for("investor.expired_token"))
+            return redirect("https://www.angelfund.ai", code=302)
 
         details = {
             "referred_by": referred_by,
@@ -543,7 +548,7 @@ def referral_verification(token):
         return redirect(url_for("investor.expired_token"))
     else:
         logger.debug(f"investor does not exist {referred_by} :=> referral verification")
-        return redirect(url_for("investor.expired_token")) # no-user found
+        return redirect("https://www.angelfund.ai", code=302)
 
 
 #<==================================================================================================>
@@ -574,25 +579,30 @@ def update_info():
                     res = [ sectors_map.get(i) for i in input_data[field] if sectors_map.get(i) != None ]
                     setattr(user_obj, field, res)
 
-                    if update_into_matching(user_obj.email, {field: res}):
-                        pass
-                        # todo: shoot out an email to the team with the user email as the subject header
+                    if not update_into_matching(user_obj.email, {field: res}):
+                        technical_errors("INVESTOR: SIGNUP FLOW SECTORS UPDATE UNSUCCESSFUL", user_obj.email)
 
                 elif field == "accreditation":
                     accreditation_map = accreditation_data()
                     res = accreditation_map.get(input_data[field])
                     setattr(user_obj, field, res)
 
-                    if update_into_matching(user_obj.email, {field: res}):
-                        pass
-                        # todo: shoot out an email to the team with the user email as the subject header
+                    if not update_into_matching(user_obj.email, {field: res}):
+                        technical_errors("INVESTOR: SIGNUP FLOW ACCREDATIONS UPDATE UNSUCCESSFUL", user_obj.email)
 
                 else:
                     setattr(user_obj, field, input_data[field])
-                    if update_into_matching(user_obj.email, {field: input_data[field]}):
-                        pass
-                        # todo: shoot out an email to the team with the user email as the subject header
+                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
+                        technical_errors("INVESTOR: SIGNUP FLOW UPDATE UNSUCCESSFUL", user_obj.email)
 
+                matching_obj = get_inv_matching_data(user_obj.email)
+
+                if matching_obj == {}:
+                    technical_errors("INVESTOR: NO DATA FOUND FOR USER IN MACHINE LEARNING COLLECTION", user_obj.email)
+
+                _id = matching_obj.get("_id")
+                if not reset_settings(_id):
+                    technical_errors("INVESTOR: WEIGHT ADJUSTMENT UPDATE UNSUCCESSFUL", user_obj.email)
                 user_obj.save()
 
             else:
@@ -634,9 +644,8 @@ def monday_notifications():
             setattr(inv_obj, "monday_notification", response["data"]["monday_notification"])
             inv_obj.save()
 
-            if update_into_matching(inv_obj.email, {"monday_notification": response["data"]["monday_notification"]}):
-                pass
-                # todo: shoot out an email to the team
+            if not update_into_matching(inv_obj.email, {"monday_notification": response["data"]["monday_notification"]}):
+                technical_errors("INVESTOR: MONDAY NOTIFICATIONS UPDATE UNSUCCESSFUL", inv_obj.email)
 
             return jsonify({"result": True, "message": "value updated"})
         else:
@@ -660,9 +669,26 @@ def profile_visibility():
         setattr(inv_obj, "show_profile", visible)
         inv_obj.save()
 
-        if update_into_matching(inv_obj.email, {"show_profile": visible}):
-            pass
-            # todo: shoot out an email to the team
+        matching_obj = get_inv_matching_data(inv_obj.email)
+
+        if matching_obj == {}:
+            technical_errors("INVESTOR: SHOW PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING CODE", inv_obj.email)
+            return {"result": False, "message": "no match found"}
+
+        _id = matching_obj.get("_id")
+
+        if visible:
+            if not unhide_user(email=inv_obj.email, id=_id):
+                technical_errors("INVESTOR: UNHIDE PROFILE UPDATE UNSUCCESSFUL INTO HIDE PROFILE COLLECTION", inv_obj.email)
+        elif not visible:
+            if not hide_user(email=inv_obj.email, id=_id):
+                technical_errors("INVESTOR: HIDE PROFILE UPDATE UNSUCCESSFUL INTO HIDE PROFILE COLLECTION", inv_obj.email)
+
+            if not hide_profile_from_discover(_id):
+                technical_errors("INVESTOR: HIDE PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING CODE", inv_obj.email)
+
+        if not update_into_matching(inv_obj.email, {"show_profile": visible}):
+            technical_errors("INVESTOR: SHOW PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING COLLECTION", inv_obj.email)
 
         return jsonify({"result": True, "message": "value updated"})
     else:
@@ -827,12 +853,10 @@ def investors_dashboard():
             str_transactional_replicas = str_mutual_updates(str_obj)
 
             if not inv_transactional_replicas:
-                pass
-                # Todo: Send a mail to the internal team.
+                technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
 
             if not str_transactional_replicas:
-                pass
-                # Todo: Send a mail to the internal team.
+                technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
             str_matching_obj = get_str_matching_data(str_email)
             str_id = str_matching_obj.get("_id")
@@ -842,8 +866,7 @@ def investors_dashboard():
 
             resp = set_response(inv_id, str_id, False)
             if resp.get("status_code") != 200:
-                pass
-                # Todo: Msg internal team to look into this issue
+                technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
 
             return jsonify({"result": True, "message": "passed"})
 
@@ -888,12 +911,10 @@ def investors_dashboard():
                 str_transactional_replicas = str_mutual_updates(str_obj)
 
                 if not inv_transactional_replicas:
-                    pass
-                    # Todo: Send a mail to the internal team.
+                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
 
                 if not str_transactional_replicas:
-                    pass
-                    # Todo: Send a mail to the internal team.
+                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
                 deals = {
                     "0": "$25,000 to $50,000",
@@ -941,8 +962,7 @@ def investors_dashboard():
 
                 resp = set_response(inv_id, str_id, False)
                 if resp.get("status_code") != 200:
-                    pass
-                    # Todo: Msg internal team to look into this issue
+                    technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
 
                 return jsonify({"result": True, "message": "connected"})
 
@@ -962,12 +982,10 @@ def investors_dashboard():
                 str_transactional_replicas = str_mutual_updates(str_obj)
 
                 if not inv_transactional_replicas:
-                    pass
-                    # Todo: Send a mail to the internal team.
+                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
 
                 if not str_transactional_replicas:
-                    pass
-                    # Todo: Send a mail to the internal team.
+                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
                 str_matching_obj = get_str_matching_data(str_email)
                 str_id = str_matching_obj.get("_id")
@@ -977,8 +995,7 @@ def investors_dashboard():
 
                 resp = set_response(inv_id, str_id, False)
                 if resp.get("status_code") != 200:
-                    pass
-                    # Todo: Msg internal team to look into this issue
+                    technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
 
                 return jsonify({"result": True, "message": "invitation"})
 
@@ -1144,10 +1161,8 @@ def delete_account():
                 matching_obj = get_inv_matching_data(inv_obj.email)
                 str_id = matching_obj.get("_id")
                 if not delete_user_ml(str_id):
-                    pass
-                    # Todo: Shoot out a mail to the internal team
+                    technical_errors("INVESTOR: DELETE API UNSUCCESSFUL", inv_obj.email)
 
-                # Todo: Delete user from machine learning collection
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})
         return jsonify(response)
