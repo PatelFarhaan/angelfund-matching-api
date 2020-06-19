@@ -21,7 +21,7 @@ app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
 serial = URLSafeTimedSerializer(CONSTANT.SECRET_KEY.value)
 app.config['JWT_SECRET_KEY'] = CONSTANT.JWT_SECRET_KEY.value
 # dashboard.config.init_from(file=CONSTANT.DASHBOARD_CONFIG_FILE.value)
-app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
+app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.TEST_DB_CLUSTER.value}
 
 CORS(app)
 # dashboard.bind(app)

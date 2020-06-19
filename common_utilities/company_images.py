@@ -10,7 +10,7 @@ from common_utilities import CONSTANT
 
 
 def search_in_database(company_name):
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.images
     collection = db.companies
@@ -18,7 +18,7 @@ def search_in_database(company_name):
 
 
 def insert_in_mongo(company_url, company_name):
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.images
     collection = db.companies

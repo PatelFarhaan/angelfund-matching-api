@@ -5,7 +5,7 @@ from common_utilities import CONSTANT
 
 
 def db_details():
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.users
@@ -16,7 +16,7 @@ def insert_into_matching():
     collection = db_details()
     my_query = {}
 
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.admin
     str_collection = db.startup
