@@ -1,9 +1,12 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import sys
-sys.path.append("../")
 import csv
 import ast
 import json
 import pandas as pd
+sys.path.append("../")
 from pymongo import MongoClient
 from common_utilities import CONSTANT
 from project.models import Startup, Investor
@@ -11,6 +14,9 @@ from project.startup.marshmallow_serialize import StartupMLSchema
 from project.investor.marshmallow_serialize import InvestorMLSchema
 
 
+#<==================================================================================================>
+#                                      INVESTOR DATA DUMP
+#<==================================================================================================>
 def investor_data(investor_path):
     ma_schema = InvestorMLSchema()
     sectors_det = sectors_data()
@@ -54,7 +60,9 @@ def investor_data(investor_path):
     print("All investors data inserted successfully!!!")
 
 
-
+#<==================================================================================================>
+#                                      STARTUP DATA DUMP
+#<==================================================================================================>
 def startup_data(startup_path):
     collection = db_connection_details()
     progress = progress_mapping()
@@ -80,6 +88,7 @@ def startup_data(startup_path):
             i["num_team_members"] = int(float(i["num_team_members"]))
 
         round_size = round_def(int(i["round_size"]))
+        i["round_size"] = int(i["round_size"])
         i["raised"] = int(float(i["raised"]))
         i["email_confirmed"] = True
         i["approved"] = True
@@ -92,6 +101,8 @@ def startup_data(startup_path):
         else:
             _id = (((users_count - 1) * 100) + 100)
 
+        i = {k:(v if v != "" else None) for k,v in i.items()}
+
         str_obj = Startup(**i)
         str_obj.save()
 
@@ -99,33 +110,41 @@ def startup_data(startup_path):
         resp = ma_schema.dump(str_obj)
         resp["_id"] = _id
         resp["deals"] = [round_size]
+
         collection.insert_one(resp)
     print("All data inserted into startup and user startup successfully!")
 
 
+#<==================================================================================================>
+#                                   DATABASE CONNECTION DETAILS
+#<==================================================================================================>
 def db_connection_details():
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.users
     return collection
 
 
+#<==================================================================================================>
+#                                  PROGRESS MAPPING :=> STARTUP
+#<==================================================================================================>
 def progress_mapping():
-    return  {
+    return {
+        "Ideas/Sketches": "ideas",
         "Mockups/Renderings": "mockups",
         "Prototype/Pre-Launch": "prototype",
-        "Launched": "product",
-        "Idea/Sketches": "mockups",
-        "Beta Launched": "beta" ,
+        "Beta Launched": "beta",
         "Taking Preorders": "preorders",
         "Product Launched": "product",
-        "Team Built": "team",
         "Early Users Acquired": "users",
         "Early Revenue Generated": "revenue"
     }
 
 
+#<==================================================================================================>
+#                                  ROUNDING FUNCTION :=> STARTUP
+#<==================================================================================================>
 def round_def(number):
     if 0 <= number <= 10000:
         return "0"
@@ -143,6 +162,9 @@ def round_def(number):
         return "500"
 
 
+#<==================================================================================================>
+#                                  EXCEL TO CSV CONVERTION
+#<==================================================================================================>
 def convert_excel_to_csv(file_path, is_investor):
     if is_investor:
         file_name = "investor"
@@ -154,9 +176,12 @@ def convert_excel_to_csv(file_path, is_investor):
     return path
 
 
+#<==================================================================================================>
+#                               SECTORS MAPPING :=> INVESTORS
+#<==================================================================================================>
 def sectors_data():
     return {'Agriculture / Agtech': 'agtech',
-            'Artifitial Intelligence': 'ai',
+            'Artificial Intelligence': 'ai',
             'Augmented Reality': 'ar',
             'Biomedical': 'biomed',
             'Biotech': 'biotech',
@@ -186,6 +211,10 @@ def sectors_data():
             'Virtual Reality': 'vr',
             'Other': 'other'}
 
+
+#<==================================================================================================>
+#                                    MAIN FUNCTION
+#<==================================================================================================>
 if __name__ == '__main__':
     startup_data("/Users/farhaan/Downloads/AngelFund/new_data/startup.xlsx")
     investor_data("/Users/farhaan/Downloads/AngelFund/new_data/investor.xlsx")
