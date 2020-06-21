@@ -1,0 +1,14 @@
+version: 0.0
+os: linux
+files:
+  - source: /
+    destination: /var/flaskapp/test_cd
+hooks:
+  BeforeInstall:
+    - location: common_utilities/scripts/before_deploy_req_install.sh
+      timeout: 500
+      runas: root
+  ApplicationStart:
+    - location: common_utilities/scripts/after_deploy_supervisor_restart.sh
+      timeout: 300
+      runas: root
