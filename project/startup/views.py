@@ -33,7 +33,7 @@ from project.investor.marshmallow_serialize import InvestorConnectedSchema, Inve
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_inv_monday_notification_schema,
                                                              validate_referrer_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
-                                                             validate_str_password_reset_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
+                                                             validate_email_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
 
 
 #<==================================================================================================>
@@ -343,7 +343,7 @@ def email_confirmed(token):
 
 
 #<==================================================================================================>
-#                                       CONFIRMATION SIGNUP FLOW
+#                                  CONFIRMATION SIGNUP FLOW
 #<==================================================================================================>
 @startup_blueprint.route('/confirmation-signup-flow', methods=["GET", "PATCH"])
 @login_required
@@ -1310,6 +1310,33 @@ def delete_account():
             return jsonify({"result": False, "message": "wrong credentials"})
         return jsonify(response)
 
+
+#<==================================================================================================>
+#                               PASSWORD RESET REQUEST (HOMEPAGE)
+#<==================================================================================================>
+@startup_blueprint.route('/forgot-password', methods=['POST'])
+def forgot_password():
+    input_request = request.get_json()
+    response = validate_email_schema(input_request)
+    if response["result"]:
+        email = response["data"]["email"]
+        user = Startup.objects.filter(email=email).first()
+
+        if user is None:
+            logger.debug(f"startup does not exist: {email}")
+            return jsonify({"result": True, "message": "email sent if the user exists"})
+
+        token = serial.dumps(user.email, salt='email_reset')
+        link = url_for('startup.reset_link', token=token, _external=True)
+        user.password_reset_meta_data = {"is_clicked": False}
+        user.save()
+
+        thread = threading.Thread(target=password_reset_email, args=(email, link,))
+        thread.start()
+        logger.debug(f"startup password reset link sent: {email}")
+        return jsonify({"result": True, "message": "email sent if the user exists"})
+    else:
+        return jsonify(response)
 
 
 #<==================================================================================================>
