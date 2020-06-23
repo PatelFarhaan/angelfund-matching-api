@@ -343,7 +343,7 @@ def email_confirmed(token):
 
 
 #<==================================================================================================>
-#                                       CONFIRMATION SIGNUP FLOW
+#                                  CONFIRMATION SIGNUP FLOW
 #<==================================================================================================>
 @startup_blueprint.route('/confirmation-signup-flow', methods=["GET", "PATCH"])
 @login_required
@@ -1337,7 +1337,6 @@ def forgot_password():
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify(response)
-
 
 
 #<==================================================================================================>

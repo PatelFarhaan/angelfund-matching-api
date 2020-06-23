@@ -36,7 +36,7 @@ from common_utilities.investor_matching_db import (insert_into_matching, update_
                                                    inv_mutual_updates)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema, validate_google_schema, validate_inv_login_schema,
-                                                              validate_inv_password_reset_schema, validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_profile_vis_schema)
+                                                              validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_profile_vis_schema)
 
 
 #<==================================================================================================>
@@ -260,6 +260,7 @@ def reset_link(token):
                 return render_template("reset-success-inv.html")
         else:
             return redirect("https://www.angelfund.ai", code=302)
+
 
 #<==================================================================================================>
 #                               PASSWORD RESET REQUEST (HOMEPAGE)

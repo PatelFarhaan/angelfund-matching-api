@@ -1,0 +1,50 @@
+image: python:3.7.3
+
+pipelines:
+  branches:
+    test_server:
+    - step:
+        name: Build
+        caches:
+          - pip
+        script:
+          - pip3 install -r requirements.txt
+          - apt-get update
+          - apt-get install -y zip
+          - zip -r application1.zip .
+        artifacts:
+          - application1.zip
+    - step:
+        name: Uploading to S3
+        caches:
+          - pip
+        script:
+          - pipe: atlassian/aws-code-deploy:0.5.3
+            variables:
+              COMMAND: 'upload'
+              S3_BUCKET: $S3_BUCKET
+              ZIP_FILE: 'application1.zip'
+              VERSION_LABEL: 'my-app-1.0.0'
+              APPLICATION_NAME: $APPLICATION_NAME
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+              AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
+    - step:
+        name: Deploying on Test Server
+        deployment: staging_server
+        caches:
+          - pip
+        script:
+          - pipe: atlassian/aws-code-deploy:0.5.3
+            variables:
+              WAIT: 'true'
+              COMMAND: 'deploy'
+              S3_BUCKET: $S3_BUCKET
+              VERSION_LABEL: 'my-app-1.0.0'
+              FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
+              APPLICATION_NAME: $APPLICATION_NAME
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              IGNORE_APPLICATION_STOP_FAILURES: 'true'
+              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+              DEPLOYMENT_GROUP: $DEPLOYMENT_GROUP_NAME
+              AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
