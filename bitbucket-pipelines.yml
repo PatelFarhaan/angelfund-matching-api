@@ -17,7 +17,6 @@ pipelines:
           - application1.zip
     - step:
         name: Uploading to S3
-        deployment: Production
         caches:
           - pip
         script:
