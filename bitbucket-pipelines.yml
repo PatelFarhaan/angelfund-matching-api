@@ -17,6 +17,7 @@ pipelines:
           - application1.zip
     - step:
         name: Uploading to S3
+        deployment: Production
         caches:
           - pip
         script:
@@ -32,7 +33,7 @@ pipelines:
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
         name: Deploying on Test Server
-        deployment: Test
+        deployment: Production
         caches:
           - pip
         script:
