@@ -1,7 +1,8 @@
 image: python:3.7.3
 
 pipelines:
-  default:
+  branches:
+    test_server:
     - step:
         name: Build
         caches:
@@ -20,29 +21,30 @@ pipelines:
         script:
           - pipe: atlassian/aws-code-deploy:0.5.3
             variables:
-              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
-              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-              AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
-              APPLICATION_NAME: $APPLICATION_NAME
-              S3_BUCKET: $S3_BUCKET
               COMMAND: 'upload'
+              S3_BUCKET: $S3_BUCKET
               ZIP_FILE: 'application1.zip'
               VERSION_LABEL: 'my-app-1.0.0'
+              APPLICATION_NAME: $APPLICATION_NAME
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+              AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
         name: Deploying on Test Server
+        deployment: staging_server
         caches:
           - pip
         script:
           - pipe: atlassian/aws-code-deploy:0.5.3
             variables:
-              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
-              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-              AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
-              APPLICATION_NAME: $APPLICATION_NAME
-              DEPLOYMENT_GROUP: $DEPLOYMENT_GROUP_NAME
-              S3_BUCKET: $S3_BUCKET
-              COMMAND: 'deploy'
               WAIT: 'true'
+              COMMAND: 'deploy'
+              S3_BUCKET: $S3_BUCKET
               VERSION_LABEL: 'my-app-1.0.0'
-              IGNORE_APPLICATION_STOP_FAILURES: 'true'
               FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
+              APPLICATION_NAME: $APPLICATION_NAME
+              AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+              IGNORE_APPLICATION_STOP_FAILURES: 'true'
+              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+              DEPLOYMENT_GROUP: $DEPLOYMENT_GROUP_NAME
+              AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
