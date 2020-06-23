@@ -1,5 +1,4 @@
-python-magic
-python-magic-bin
+python-magic==0.4.15
 attrs==19.3.0
 boto3==1.14.7
 botocore==1.17.7
