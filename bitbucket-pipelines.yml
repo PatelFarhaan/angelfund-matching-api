@@ -8,9 +8,11 @@ pipelines:
         caches:
           - pip
         script:
+          - apt-get update
+          - virtualenv venv --python=python3
+          - source venv/bin/activate
           - python3 -m pip install --upgrade --force pip
           - pip3 install -r requirements.txt
-          - apt-get update
           - apt-get install -y zip
           - zip -r application1.zip .
         artifacts:
