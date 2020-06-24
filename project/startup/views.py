@@ -354,7 +354,11 @@ def confirmation_signup_flow():
         return jsonify({"reuslt": False, "error": "session expired"})
 
     if request.method == "GET":
-        return redirect(f"http://{CONSTANT.TEST_SERVER_IP.value}/startup/signup?confirmed=True"), 302
+        str_obj = Startup.objects.filter(email=email).first()
+        first_name = (str_obj.first_name).strip().replace(" ", "_")
+        last_name = (str_obj.last_name).strip().replace(" ", "_")
+        query_string = f"confirmed=True&email={str_obj.email}&fn={first_name}&ln={last_name}"
+        return redirect(f"http://{CONSTANT.TEST_SERVER_IP.value}/startup/signup?{query_string}"), 302
 
     user_obj = Investor.objects.filter(email=email).first()
     if user_obj.is_logged_in:
