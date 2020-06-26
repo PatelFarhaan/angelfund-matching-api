@@ -10,14 +10,15 @@ from common_utilities import CONSTANT
 from flask_login import login_user, login_required
 from project.models import Startup, Investor, Referrals
 from common_utilities.referral_email import email_referral
-from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.connected_emails import email_connected
+from common_utilities.wait_list_email_str import wait_list_user_str
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.technical_error_mail import technical_errors
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.account_delete_email import delete_user_account
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, progress_mapping
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
@@ -167,9 +168,8 @@ def login():
 
         if user.is_google_signup:
             return_obj = {
-                "status_code": 200,
-                "message": "registered with google account",
-                "redirect_url": "https://127.0.0.1:5000/startup/login/callback"
+                "result": False,
+                "error": "registered with google account",
             }
             return jsonify(return_obj)
 
@@ -828,7 +828,7 @@ def waitlist_email():
 
     user_obj = jwt_decode["user_obj"]
     email, first_name = user_obj.email, user_obj.first_name
-    thread = threading.Thread(target=wait_list_user, args=(email, first_name,))
+    thread = threading.Thread(target=wait_list_user_str, args=(email, first_name,))
     thread.start()
     logger.debug(f"startup wait list email sent: {email}")
     return jsonify({"result": True, "message": "email sent if the user exists"})
@@ -1309,6 +1309,10 @@ def delete_account():
                 str_id = matching_obj.get("_id")
                 if not delete_user_ml(str_id):
                     technical_errors("STARTUP: DELETE ACCOUNT UPDATE UNSUCCESSFUL", str_obj.email)
+
+                thread = threading.Thread(target=delete_user_account, args=(str_obj.email))
+                thread.start()
+                logger.debug(f"startup delete account email sent: {str_obj.email}")
 
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})

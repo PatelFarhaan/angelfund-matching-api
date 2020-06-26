@@ -9,15 +9,13 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
-def email_referral(user_email, full_name, first_name, link):
-    full_name = full_name.capitalize()
-    first_name = first_name.capitalize()
+def delete_user_account(user_email):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
-    SENDER = "hello@angelfund.ai"
+    SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"{first_name} has invited you to join Angelfund.ai!"
+    SUBJECT = "Your Angelfund.ai account has been deleted"
     BODY_HTML = """
 <html>
   <head>
@@ -158,28 +156,20 @@ def email_referral(user_email, full_name, first_name, link):
     </div>
     <div class="title">
       <h1>
-        Referral From {full_name}
+        Account Deleted
       </h1>
     </div>
     <div class="hook">
-      <strong class="sizing">
-        {first_name} is inviting you to join
-        <span style="color: #5e51f4;">Angelfund.ai!</span>
-      </strong>
       <p class="sizing">
-        Sign up using their link to get early access to the most relevant
-        startups & investors:
+        Your Angelfund.ai account has been successfully deleted. We're sad to
+        see you go!
       </p>
-      <p class="sizing" style="text-decoration: none;">
-        <a
-          style="
-            word-wrap: break-word;
-            text-decoration: underline;
-            color: #5e51f4;
-          "
-          href="{link}"
-          >{link}</a
-        >
+      <p class="sizing">
+        If you didn't request an account deletion, please contact us immediately.
+      </p>
+      <p class="sizing">
+        We wish you all the best! <br />
+        <span style="color: #5e51f4;">Angelfund.ai</span>
       </p>
     </div>
     <div class="footer">
@@ -210,8 +200,7 @@ def email_referral(user_email, full_name, first_name, link):
     </div>
   </div>
 </html>
-
-                """.format(full_name=full_name, first_name=first_name, link=link)
+                """
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,
@@ -238,6 +227,9 @@ def email_referral(user_email, full_name, first_name, link):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: email confirmation: failed {user_email}")
+        logger.error(f"common utilities: account deletion: failed {user_email}")
     else:
-        logger.debug(f"common utilities: email confirmation: success {user_email}")
+        logger.debug(f"common utilities: account deletion: success {user_email}")
+
+
+delete_user_account("patel.farhaaan@gmail.com")

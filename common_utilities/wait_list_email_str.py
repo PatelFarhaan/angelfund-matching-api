@@ -9,15 +9,13 @@ from botocore.exceptions import ClientError
 logger = logging.getLogger(__name__)
 
 
-def email_referral(user_email, full_name, first_name, link):
-    full_name = full_name.capitalize()
-    first_name = first_name.capitalize()
+def wait_list_user_str(user_email, first_name):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
-    SENDER = "hello@angelfund.ai"
+    SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"{first_name} has invited you to join Angelfund.ai!"
+    SUBJECT = "You’re on the waitlist!"
     BODY_HTML = """
 <html>
   <head>
@@ -34,12 +32,12 @@ def email_referral(user_email, full_name, first_name, link):
 
       .container {{
         display: block !important;
-        width: 600px !important;
+        width: 700px !important;
         margin: auto !important;
         font-family: "Roboto", sans-serif !important;
         border: 2px solid #f3f3f3 !important;
         box-shadow: 0px 2px 3px 0px #f2f2ff !important;
-        margin-top: 5% !important;
+        margin-top: 2% !important;
         border-radius: 5px !important;
       }}
 
@@ -68,17 +66,22 @@ def email_referral(user_email, full_name, first_name, link):
       }}
 
       .hook {{
-        padding-top: 30px;
+        padding-top: 5px;
         text-align: left;
         padding-bottom: 10px;
         margin: 3%;
+      }}
+
+      .bottom-text {{
+        margin: 3%;
+        padding-bottom: 10px;
       }}
 
       .footer {{
         margin: 0% !important;
         left: 0%;
         bottom: 0%;
-        width: 100%;
+        width: 700px;
         text-align: center;
         background-color: lightgrey;
         opacity: 0.3;
@@ -100,15 +103,32 @@ def email_referral(user_email, full_name, first_name, link):
         font-size: 17px !important;
       }}
 
-      a {{
+      button {{
+        height: 50px;
+        margin-top: 30px;
+        padding: 10px 30px;
+        background-color: #5e51f4;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        box-shadow: none;
+        border: none;
         transition: all 0.5s ease-in-out;
       }}
 
-      a:hover {{
-        font-size: 18px;
+      button:hover {{
+        transform: scale(1.1);
       }}
 
-      @media only screen and (max-width: 600px) {{
+      .bottom-section {{
+        text-align: left !important;
+        color: #707070 !important;
+        border-top: 2px solid #e6e6e6;
+        margin-top: 35px;
+      }}
+
+      @media only screen and (max-width: 700px) {{
         .logo {{
           padding-left: 5%;
           margin: 0px !important;
@@ -124,6 +144,16 @@ def email_referral(user_email, full_name, first_name, link):
         }}
 
         .hook {{
+          display: block;
+          margin: auto;
+          width: 80%;
+        }}
+
+        .bottom-section {{
+          margin: auto;
+        }}
+
+        .bottom-text {{
           display: block;
           margin: auto;
           width: 80%;
@@ -145,6 +175,13 @@ def email_referral(user_email, full_name, first_name, link):
         .footer {{
           position: fixed;
           font-size: 15px;
+          text-align: center;
+          width: 100%;
+        }}
+
+        button {{
+          margin-left: 0px !important;
+          margin-bottom: 30px !important;
         }}
       }}
     </style>
@@ -157,37 +194,55 @@ def email_referral(user_email, full_name, first_name, link):
       />
     </div>
     <div class="title">
-      <h1>
-        Referral From {full_name}
-      </h1>
+      <h1>{first_name}, new investors are waiting for you! ⏱️</h1>
     </div>
     <div class="hook">
-      <strong class="sizing">
-        {first_name} is inviting you to join
-        <span style="color: #5e51f4;">Angelfund.ai!</span>
-      </strong>
       <p class="sizing">
-        Sign up using their link to get early access to the most relevant
-        startups & investors:
+        Hey {first_name}—
       </p>
-      <p class="sizing" style="text-decoration: none;">
-        <a
-          style="
-            word-wrap: break-word;
-            text-decoration: underline;
-            color: #5e51f4;
-          "
-          href="{link}"
-          >{link}</a
-        >
+      <p class="sizing">
+        You've got new investors waiting for you on Angelfund.ai!
       </p>
+      <p class="sizing">
+        Every week, our algorithm learns more about your preferences and gets
+        better at finding you the most relevant investors.
+      </p>
+      <strong style="margin-bottom: 6%;" class="sizing">
+        That means every week, Angelfund.ai will show you better investors.
+      </strong>
+      <div style="text-align: left;">
+        <button target="_blank" href="https://www.angelfund.ai/login">
+          <a style="color: white; text-decoration: none;"
+            >See This Week's Investors</a
+          >
+        </button>
+      </div>
+    </div>
+    <div class="bottom-section">
+      <div class="bottom-text">
+        <p class="sizing">
+          <strong class="sizing">Button not working?</strong><br />
+          Just click on the link below or paste it into your browser.
+          https://www.angelfund.ai/login
+        </p>
+        <p class="sizing">
+          You received this email because you requested to be alerted when there
+          are new deals. If you did not,
+          <span style="text-decoration: underline;">please contact us.</span>
+        </p>
+      </div>
     </div>
     <div class="footer">
       <div>
         <a
           href="#"
           class="fa fa-twitter"
-          style="font-size: 25px;text-decoration: none;margin-right: 10px;color: gray; border-top 3px solid lightgray;"
+          style="
+            font-size: 25px;
+            text-decoration: none;
+            margin-right: 10px;
+            color: gray;
+          "
         ></a>
         <a
           href="#"
@@ -201,7 +256,7 @@ def email_referral(user_email, full_name, first_name, link):
           "
         ></a>
       </div>
-      <p style="font-weight: bold;">
+      <p>
         2375 Zanker Road #250, San Jose, CA 95131
       </p>
       <footer>
@@ -211,7 +266,7 @@ def email_referral(user_email, full_name, first_name, link):
   </div>
 </html>
 
-                """.format(full_name=full_name, first_name=first_name, link=link)
+                """.format(first_name=first_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,
@@ -238,6 +293,6 @@ def email_referral(user_email, full_name, first_name, link):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: email confirmation: failed {user_email}")
+        logger.error(f"common utilities: wait list: failed {user_email}")
     else:
-        logger.debug(f"common utilities: email confirmation: success {user_email}")
+        logger.debug(f"common utilities: wait list: success {user_email}")

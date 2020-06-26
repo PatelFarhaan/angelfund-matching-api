@@ -15,107 +15,237 @@ def password_reset_email(user_email, password_reset_link):
     SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Password reset link for your ANGELFUND account"
+    SUBJECT = "Reset your Angelfund.ai password"
     BODY_HTML = """
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      body,
+      html {{
+        margin: 0 !important;
+        padding: 0 !important;
+      }}
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+      .container {{
+        display: block !important;
+        width: 600px !important;
+        margin: auto !important;
+        font-family: "Roboto", sans-serif !important;
+        border: 2px solid #f3f3f3 !important;
+        box-shadow: 0px 2px 3px 0px #f2f2ff !important;
+        margin-top: 2% !important;
+        border-radius: 5px !important;
+      }}
 
-</head>
-<body style="margin-left: 5%; margin-right: 5%;">
-<div>
-    <div style="text-align: center;">
-        <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/new_header2.png" style="height: 34px; width: 180px;" />
+      p,
+      h1,
+      .sizing {{
+        font-family: "Roboto", sans-serif !important;
+      }}
+
+      p {{
+        margin: 30px 0 !important;
+      }}
+
+      .logo {{
+        display: block !important;
+        margin: auto !important;
+        text-align: center !important;
+        padding-top: 10px !important;
+      }}
+
+      .title {{
+        padding-top: 30px;
+        padding-bottom: 10px;
+        padding-left: 10px;
+        border-bottom: 2px solid #e6e6e6;
+      }}
+
+      .hook {{
+        padding-top: 30px;
+        text-align: center;
+        padding-bottom: 10px;
+        margin: 3%;
+      }}
+
+      .bottom-text {{
+        margin: 3%;
+        padding-bottom: 10px;
+      }}
+
+      .footer {{
+        margin: 0% !important;
+        left: 0%;
+        bottom: 0%;
+        width: 100%;
+        text-align: center;
+        background-color: lightgrey;
+        opacity: 0.3;
+        padding: 2% 0;
+      }}
+
+      h1 {{
+        font-size: 28px !important;
+        font-family: Lato;
+        font-weight: 500;
+        color: #707070;
+      }}
+
+      strong {{
+        font-weight: 500;
+      }}
+
+      .sizing {{
+        font-size: 17px !important;
+      }}
+
+      button {{
+        height: 50px;
+        margin-top: 10px;
+        /* margin-left: 15%; */
+        padding: 10px 30px;
+        background-color: #5e51f4;
+        color: white;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        box-shadow: none;
+        border: none;
+        transition: all 0.5s ease-in-out;
+      }}
+
+      button:hover {{
+        transform: scale(1.1);
+      }}
+
+      .bottom-section {{
+        text-align: left !important;
+        color: #707070 !important;
+        border-top: 2px solid #e6e6e6;
+        margin-top: 35px;
+      }}
+
+      @media only screen and (max-width: 600px) {{
+        .logo {{
+          padding-left: 5%;
+          margin: 0px !important;
+          text-align: left !important;
+        }}
+
+        .container {{
+          margin: 0px !important;
+          padding: 0% !important;
+          border: none !important;
+          box-shadow: none !important;
+          width: 100% !important;
+        }}
+
+        .hook {{
+          display: block;
+          margin: auto;
+          width: 80%;
+        }}
+
+        h1 {{
+          font-size: 20px !important;
+        }}
+
+        .sizing {{
+          font-size: 15px !important;
+        }}
+
+        .title {{
+          padding-left: 5% !important;
+          margin-left: 0% !important;
+        }}
+
+        .footer {{
+          position: fixed;
+          font-size: 15px;
+        }}
+
+        button {{
+          margin-left: 0px !important;
+        }}
+      }}
+    </style>
+  </head>
+  <div class="container">
+    <div class="logo">
+      <img
+        src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
+        style="height: 30px;"
+      />
     </div>
-    <br><br>
-    <div style="border-bottom: 2px solid #E6E6E6E6;">
-        <p style="font-family: Lato; font-weight:700; font-size: 30px; color: #707070;">Reset Password
+    <div class="title">
+      <h1>Reset Password</h1>
+    </div>
+    <div class="hook">
+      <strong class="sizing">
+        Resetting your password is simple-we'll have you up and running in no
+        time.
+      </strong>
+      <p style="margin-bottom: 6%;" class="sizing">
+        If you requested a password reset, click here to create a new one:
+      </p>
+      <div style="text-align: center;">
+        <button target="_blank" href="{password_reset_link}">
+          <a style="color: white; text-decoration: none;">Reset my Password</a>
+        </button>
+      </div>
+    </div>
+    <div class="bottom-section">
+      <div class="bottom-text">
+        <p class="sizing">
+          <strong class="sizing">Button not working?</strong><br />
+          Just click on the link below or paste it into your browser.
+          {password_reset_link}
         </p>
-    </div>
-
-
-    <div style="padding-top: 3%; text-align: center;
-             padding-bottom: 3%;border-bottom: 2px solid  #E6E6E6;margin-bottom: 5%;">
-        <p style="margin-bottom: 6%;
-                padding: 1%;
-                margin: 1%;
-                font-weight: 500;
-                font-family: Roboto;
-                font-size: 20px;
-                text-align: center;">
-            <span>Resetting your password is simple—we'll have you up and running in no time.</span>
-            <br>
-            <span style="font-weight: 400;">
-            If you requested a password reset, click here to choose a new one:
-                </span>
+        <p class="sizing">
+          You received this email because you requested a password reset. If you
+          did not,
+          <span style="text-decoration: underline;">please contact us.</span>
         </p>
-        <div style="text-align: center;">
-            <a style="color:white; text-decoration: none;" target="_blank"
-               href="{password_reset_link}">
-                <button style="
-                   background-color: #5a51f4;
-                   color: white;
-                   min-height: 6%;
-                   height: auto;
-                   border: none;
-                   width: 15%;
-                   font-weight: 700;
-                   font-size: 18px;
-                   border-radius: 4px;">Reset my password</button></a>
-        </div>
+      </div>
     </div>
-    <div>
-        <p style="margin-bottom: 6%;
-                padding: 1%;
-                margin: 1%;
-                color: #707070;
-                font-weight: 400;
-                font-family: Roboto;
-                font-size: 18px;
-                text-align: left;">
-            <strong>Button not working?</strong>
-            <br>
-            Just click on the link below or paste it into your browser.
-            <br>
-            <a style="color: #707070;">{password_reset_link}</a>
-            <br>
-            <br>
-            You received this email because you signed up for an Angelfund.ai account with this
-            <br>
-            email address. If this was a mistake, please ignore this message.
-        </p>
+    <div class="footer">
+      <div>
+        <a
+          href="#"
+          class="fa fa-twitter"
+          style="
+            font-size: 25px;
+            text-decoration: none;
+            margin-right: 10px;
+            color: gray;
+          "
+        ></a>
+        <a
+          href="#"
+          class="fa fa-linkedin"
+          style="
+            font-size: 25px;
+            text-decoration: none;
+            background-color: gray;
+            width: 30px;
+            color: white;
+          "
+        ></a>
+      </div>
+      <p>
+        2375 Zanker Road #250, San Jose, CA 95131
+      </p>
+      <footer>
+        Copyright &copy;2020 Global Angel Fund, Inc.
+      </footer>
     </div>
-    <br>
-    <br>
-    <div style="font-family: Roboto;
-             font-size: 14px;
-             text-align: center;
-             color: #919191;
-             background-color: #F8F8F8;
-             border-radius: 4px;
-             padding-top: 2%;
-             padding-bottom: 2%;">
-        <div>
-            <a href="https://mobile.twitter.com/AngelFundAI" class="fa fa-twitter"
-               style="font-size: 25px;text-decoration: none;margin-right: 20px;color: gray;"></a>
-            <a href="https://www.linkedin.com/company/angelfundai/" class="fa fa-linkedin"
-               style="font-size: 25px; margin-left: 20px; text-decoration: none;color: gray;"></a>
-        </div>
-        <p>
-            2375 Zanker Road #250, San Jose, CA 95131
-        </p>
-        <footer>Copyright &copy;2020 Global Angel Fund, Inc.
-        </footer>
-    </div>
-</div>
-</body>
-
+  </div>
 </html>
+
     """.format(password_reset_link=password_reset_link)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
