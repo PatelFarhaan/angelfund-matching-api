@@ -235,7 +235,6 @@ def reset_link(token):
         if user:
             if user.password_reset_meta_data == {}:
                 return redirect("https://www.angelfund.ai", code=302)
-
         return render_template("reset.html")
 
     elif request.method == "POST":
@@ -550,7 +549,7 @@ def referral_verification(token):
         new_ref_obj.save()
 
         logger.debug(f"{referred} is referred by {referred_by}")
-        return redirect(url_for("investor.expired_token"))
+        return redirect("https://www.angelfund.ai", code=302)
     else:
         logger.debug(f"investor does not exist {referred_by} :=> referral verification")
         return redirect("https://www.angelfund.ai", code=302)

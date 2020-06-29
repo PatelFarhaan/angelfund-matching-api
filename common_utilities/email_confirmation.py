@@ -19,7 +19,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
     BODY_HTML = """
 <html>
   <head>
-    <link
+    <link 
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
     />
@@ -40,6 +40,49 @@ def email_confirmation(user_email, email_confirm_link, first_name):
         margin-top: 2% !important;
         border-radius: 5px !important;
       }}
+      
+      .fa-twitter::before {{
+    content: "\\f099";
+}}
+.fa-linkedin::before {{
+    content: "\\f0e1";
+}}
+
+element {{
+    font-size: 25px;
+    text-decoration: none;
+    background-color: gray;
+    width: 30px;
+    color: white;
+}}
+
+.fa {{
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+        font-size: 14px;
+    font-size: 14px;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}}
+
+element {{
+    font-size: 25px;
+    text-decoration: none;
+    margin-right: 10px;
+    color: gray;
+}}
+
+.fa {{
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+        font-size: 14px;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}}
 
       p,
       h1,
@@ -216,23 +259,11 @@ def email_confirmation(user_email, email_confirm_link, first_name):
       </div>
     </div>
 
-    <div class="footer">
+     <div class="footer">
       <div>
-        <a
-          href="#"
-          class="fa fa-twitter"
-          style="
-            font-size: 25px;
-            text-decoration: none;
-            margin-right: 10px;
-            color: gray;
-          "
-        ></a>
-        <a
-          href="#"
-          class="fa fa-linkedin"
-          style="font-size: 25px; text-decoration: none; color: gray;"
-        ></a>
+        
+        <i class="fa fa-linkedin-square" style="font-size:24px"></i>
+        <i class="fa fa-twitter-square" style="font-size:24px"></i>
       </div>
       <p>
         2375 Zanker Road #250, San Jose, CA 95131
@@ -274,3 +305,4 @@ def email_confirmation(user_email, email_confirm_link, first_name):
         logger.error(f"common utilities: email confirmation: failed {user_email}")
     else:
         logger.debug(f"common utilities: email confirmation: success {user_email}")
+

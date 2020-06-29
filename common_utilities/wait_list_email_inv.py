@@ -296,3 +296,4 @@ def wait_list_user_inv(user_email, first_name):
         logger.error(f"common utilities: wait list: failed {user_email}")
     else:
         logger.debug(f"common utilities: wait list: success {user_email}")
+

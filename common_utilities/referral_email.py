@@ -1,5 +1,6 @@
 import sys
 import boto3
+import string
 import logging
 sys.path.append('../')
 from common_utilities import CONSTANT
@@ -8,9 +9,8 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
-
 def email_referral(user_email, full_name, first_name, link):
-    full_name = full_name.capitalize()
+    full_name = string.capwords(full_name)
     first_name = first_name.capitalize()
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
