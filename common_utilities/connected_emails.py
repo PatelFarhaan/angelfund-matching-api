@@ -169,3 +169,5 @@ all_info["str_fn"] = "AngelFund"
 all_info["str_founders"] = "Birna"
 all_info["str_bio"] = "Test Bio"
 all_info["str_seeking"] = "300000"
+
+# email_connected("birna@angelfund.ai", "farhaan@angelfund.ai", all_info)

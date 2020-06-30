@@ -233,33 +233,29 @@ def wait_list_user_inv(user_email, first_name):
       </div>
     </div>
     <div class="footer">
-      <div>
-        <a
-          href="#"
-          class="fa fa-twitter"
-          style="
-            font-size: 25px;
-            text-decoration: none;
-            margin-right: 10px;
-            color: gray;
-          "
-        ></a>
-        <a
-          href="#"
-          class="fa fa-linkedin"
-          style="
-            font-size: 25px;
-            text-decoration: none;
-            background-color: gray;
-            width: 30px;
-            color: white;
-          "
-        ></a>
-      </div>
-      <p>
-        2375 Zanker Road #250, San Jose, CA 95131
-      </p>
-      <footer>
+         <div>
+            <a target="_blank" href="https://twitter.com/angelfundAI">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
+               height: 25px;
+               width: 25px;
+               text-decoration: none;
+               margin-right: 10px;
+               color: gray; 
+               "></img>
+            </a>
+            <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" style="
+               height: 25px;
+               width: 25px;
+               text-decoration: none;
+               color: gray;
+               "></img>
+            </a>
+         </div>
+         <p>
+            2375 Zanker Road #250, San Jose, CA 95131
+         </p>
+         <footer>
         Copyright &copy;2020 Global Angel Fund, Inc.
       </footer>
     </div>
@@ -296,4 +292,7 @@ def wait_list_user_inv(user_email, first_name):
         logger.error(f"common utilities: wait list: failed {user_email}")
     else:
         logger.debug(f"common utilities: wait list: success {user_email}")
+
+
+# wait_list_user_inv("birna@angelfund.ai", "Birna")
 

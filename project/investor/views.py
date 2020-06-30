@@ -179,7 +179,7 @@ def login():
             return jsonify(return_obj)
 
         if not user.email_confirmed:
-            error = "email address not verified"
+            error = "please confirm your email address"
             token = serial.dumps(email, salt='email_confirm')
             link = url_for('investor.email_confirmed', token=token, _external=True)
             thread = threading.Thread(target=email_confirmation, args=(email, link, user.first_name))

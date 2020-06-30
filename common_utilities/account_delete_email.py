@@ -148,30 +148,34 @@ def delete_user_account(user_email):
       <span style="color: #5e51f4;">Angelfund.ai!</span>
     </p>
   </div>
-  <div class="footer">
-    <div>
-      <a target="_blank" href="https://twitter.com/angelfundAI">
-        <img src="https://cdn2.iconfinder.com/data/icons/font-awesome/1792/twitter-512.png"
-          style="width: 25px;text-decoration: none;margin-right: 10px;color: gray; border-top 3px solid lightgray;"></img>
-      </a>
-      <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
-        <img src="https://image.flaticon.com/icons/png/128/25/25325.png" style="
-            width: 25px;
-            text-decoration: none;
-            color: gray;
-            width: 30px;
-          "></img>
-      </a>
+   <div class="footer">
+         <div>
+            <a target="_blank" href="https://twitter.com/angelfundAI">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
+               height: 25px;
+               width: 25px;
+               text-decoration: none;
+               margin-right: 10px;
+               color: gray; 
+               "></img>
+            </a>
+            <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" style="
+               height: 25px;
+               width: 25px;
+               text-decoration: none;
+               color: gray;
+               "></img>
+            </a>
+         </div>
+         <p>
+            2375 Zanker Road #250, San Jose, CA 95131
+         </p>
+         <footer>
+        Copyright &copy;2020 Global Angel Fund, Inc.
+      </footer>
     </div>
-    <p style="font-weight: bold;">
-      2375 Zanker Road #250, San Jose, CA 95131
-    </p>
-    <footer>
-      Copyright &copy;2020 Global Angel Fund, Inc.
-      <a style="text-decoration: underline;">Unsubscribe</a>
-    </footer>
   </div>
-</div>
 </html>
                 """
     CHARSET = "UTF-8"
