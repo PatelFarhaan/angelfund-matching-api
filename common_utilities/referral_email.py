@@ -123,19 +123,15 @@ def email_referral(user_email, full_name, first_name, link):
          padding-left: 5% !important;
          margin-left: 0% !important;
          }}
-         .footer {{
-         position: fixed;
-         font-size: 15px;
-         }}
          }}
       </style>
    </head>
    <div class="container">
       <div class="logo">
          <img
-            src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
-            style="height: 30px;"
-            />
+        src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
+        style="height: 30px; width: 165px;"
+      />
       </div>
       <div class="title">
          <h1>
@@ -222,5 +218,3 @@ def email_referral(user_email, full_name, first_name, link):
         logger.error(f"common utilities: email confirmation: failed {user_email}")
     else:
         logger.debug(f"common utilities: email confirmation: success {user_email}")
-
-# email_referral("farhaan@angelfund.ai", "Farhaan Patel", "Farhaan", "https://www.google.com")

@@ -161,13 +161,3 @@ def email_connected(inv_email: str, str_email: str, all_info):
         logger.error(f"common utilities: email connected: failed {inv_email, str_email}")
     else:
         logger.debug(f"common utilities: email connected: success {inv_email, str_email}")
-
-
-all_info = {}
-all_info["inv_fn"] = "Farhaan"
-all_info["str_fn"] = "AngelFund"
-all_info["str_founders"] = "Birna"
-all_info["str_bio"] = "Test Bio"
-all_info["str_seeking"] = "300000"
-
-# email_connected("birna@angelfund.ai", "farhaan@angelfund.ai", all_info)

@@ -272,6 +272,3 @@ def password_reset_email(user_email, password_reset_link):
         logger.error(f"common utilities: email confirmation: failed {user_email}")
     else:
         logger.debug(f"common utilities: email confirmation: success {user_email}")
-
-
-# password_reset_email("birna@angelfund.ai", "https://www.angelfund.ai")

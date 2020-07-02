@@ -292,6 +292,3 @@ def email_confirmation(user_email, email_confirm_link, first_name):
         logger.error(f"common utilities: email confirmation: failed {user_email}")
     else:
         logger.debug(f"common utilities: email confirmation: success {user_email}")
-
-
-# email_confirmation("birna@angelfund.ai", "https://www.google.com", "Birna")
