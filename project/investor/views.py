@@ -1174,3 +1174,22 @@ def delete_account():
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})
         return jsonify(response)
+
+
+#<==================================================================================================>
+#                                  IS JWT TOKEN EXPIRED CHECK
+#<==================================================================================================>
+@investor_blueprint.route('/jwt-token-check', methods=["GET"])
+@jwt_required
+def expired_jwt_token_check():
+    """
+     checks whether a JWT token is expired
+
+     : param ==> None
+     : rparam ==> obj (whether or not token is expired)
+     """
+    resp_obj = {
+        "result": True,
+        "message": "token is valid"
+    }
+    return jsonify(resp_obj)
