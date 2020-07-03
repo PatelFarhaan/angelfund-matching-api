@@ -31,7 +31,6 @@ def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=60)
 
-
 login_manager = LoginManager(app)
 login_manager.blueprint_login_views = {
     "startup": "startup.login",
