@@ -1315,7 +1315,7 @@ def change_password():
 #<==================================================================================================>
 #                                  GET JWT TOKEN FOR CONFIRMATION PAGE
 #<==================================================================================================>
-@startup_blueprint.route('/get-jwt-token', methods=['GET'])
+@startup_blueprint.route('/get-jwt-token', methods=['POST'])
 def jwt_for_confirmation_page():
     """
     This is a function to create a user jwt token from email address.

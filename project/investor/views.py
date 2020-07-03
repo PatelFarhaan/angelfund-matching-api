@@ -1143,7 +1143,7 @@ def expired_jwt_token_check():
 #<==================================================================================================>
 #                                  GET JWT TOKEN FOR CONFIRMATION PAGE
 #<==================================================================================================>
-@investor_blueprint.route('/get-jwt-token', methods=['GET'])
+@investor_blueprint.route('/get-jwt-token', methods=['POST'])
 def jwt_for_confirmation_page():
     """
     This is a function to create a user jwt token from email address.
