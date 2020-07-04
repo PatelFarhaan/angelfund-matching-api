@@ -28,7 +28,7 @@ def rev_sector_data():
             'hardtech': 'Moonshots / Hard Tech',
             'robotics': 'Robotics',
             'security': 'Security',
-            'sport': 'Sport / Fitness',
+            'sport': 'Sport/Fitness',
             'transport': 'Transportation',
             'travel': 'Travel',
             'vr': 'Virtual Reality',

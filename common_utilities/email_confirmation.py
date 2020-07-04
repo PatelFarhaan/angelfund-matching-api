@@ -18,7 +18,6 @@ def email_confirmation(user_email, email_confirm_link, first_name):
     SUBJECT = f"{first_name}, please confirm your email address"
     BODY_HTML = """
 
-
 <html>
    <head>
       <link 
@@ -182,7 +181,6 @@ def email_confirmation(user_email, email_confirm_link, first_name):
          margin-left: 0% !important;
          }}
          .footer {{
-         position: fixed;
          font-size: 15px;
          }}
          button {{
@@ -195,7 +193,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
       <div class="logo">
          <img
             src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
-            style="height: 30px;"
+            style="height: 30px; width: 165px;"
             />
       </div>
       <div class="title">
@@ -262,6 +260,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
     </div>
   </div>
 </html>
+                
                 """.format(email_confirm_link=email_confirm_link, first_name=first_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',

@@ -17,6 +17,7 @@ def delete_user_account(user_email):
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Your Angelfund.ai account has been deleted"
     BODY_HTML = """
+
 <html>
    <head>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
@@ -119,7 +120,6 @@ def delete_user_account(user_email):
          margin-left: 0% !important;
          }
          .footer {
-         position: fixed;
          font-size: 15px;
          }
          }
@@ -128,7 +128,7 @@ def delete_user_account(user_email):
    <div class="container">
       <div class="logo">
          <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
-            style="height: 30px;" />
+            style="height: 30px; width: 165px;" />
       </div>
       <div class="title">
          <h1>

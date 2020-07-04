@@ -277,7 +277,7 @@ def register():
 
         input_request["co_founders"] = [
             {
-                "primary": None,
+                "primary": True,
                 "name": f"{input_request['first_name']} {input_request['last_name']}",
                 "position": [None],
                 "bio": None,
@@ -421,7 +421,7 @@ def referral_link():
 
     token = serial.dumps(ref_obj, salt='email_referral')
     link = url_for('startup.referral_verification', token=token, _external=True)
-    thread = threading.Thread(target=email_referral, args=((ref_email, full_name, first_name, link)))
+    thread = threading.Thread(target=email_referral, args=((ref_email, full_name, first_name, link, "startup")))
     thread.start()
 
     return jsonify({"result": True, "message": "mail sent"})

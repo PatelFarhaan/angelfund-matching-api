@@ -17,6 +17,7 @@ def password_reset_email(user_email, password_reset_link):
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Reset your Angelfund.ai password"
     BODY_HTML = """
+
 <html>
   <head>
     <link
@@ -164,7 +165,6 @@ def password_reset_email(user_email, password_reset_link):
         }}
 
         .footer {{
-          position: fixed;
           font-size: 15px;
         }}
 
@@ -178,7 +178,7 @@ def password_reset_email(user_email, password_reset_link):
     <div class="logo">
       <img
         src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
-        style="height: 30px;"
+        style="height: 30px; width: 165px;"
       />
     </div>
     <div class="title">
@@ -241,6 +241,7 @@ def password_reset_email(user_email, password_reset_link):
     </div>
   </div>
 </html>
+
 
     """.format(password_reset_link=password_reset_link)
     CHARSET = "UTF-8"

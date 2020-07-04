@@ -17,6 +17,7 @@ def wait_list_user_str(user_email, first_name):
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "You’re on the waitlist!"
     BODY_HTML = """
+
 <html>
   <head>
     <link
@@ -173,7 +174,6 @@ def wait_list_user_str(user_email, first_name):
         }}
 
         .footer {{
-          position: fixed;
           font-size: 15px;
           text-align: center;
           width: 100%;
@@ -190,7 +190,7 @@ def wait_list_user_str(user_email, first_name):
     <div class="logo">
       <img
         src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
-        style="height: 30px;"
+        style="height: 30px; width: 165px;"
       />
     </div>
     <div class="title">
@@ -292,5 +292,3 @@ def wait_list_user_str(user_email, first_name):
         logger.error(f"common utilities: wait list: failed {user_email}")
     else:
         logger.debug(f"common utilities: wait list: success {user_email}")
-
-# wait_list_user_str("farhaan@angelfund.ai", "Birna")
