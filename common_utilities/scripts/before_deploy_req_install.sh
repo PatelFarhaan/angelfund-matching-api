@@ -1,1 +1,1 @@
-cd /home/ubuntu/flask
+cd /var/flaskapp/flask

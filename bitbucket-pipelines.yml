@@ -2,9 +2,9 @@ image: python:3.7.3
 
 pipelines:
   branches:
-    test_server:
+    master:
     - step:
-        name: Build
+        name: Build for Master branch
         caches:
           - pip
         script:
@@ -12,11 +12,11 @@ pipelines:
           - python3 -m pip install --upgrade --force pip
           - pip3 install -r requirements.txt
           - apt-get install -y zip
-          - zip -r application1.zip .
+          - zip -r mainserver-backend.zip .
         artifacts:
-          - application1.zip
+          - mainserver-backend.zip
     - step:
-        name: Uploading to S3
+        name: Uploading Master branch to S3
         caches:
           - pip
         script:
@@ -24,14 +24,14 @@ pipelines:
             variables:
               COMMAND: 'upload'
               S3_BUCKET: $S3_BUCKET
-              ZIP_FILE: 'application1.zip'
               VERSION_LABEL: 'my-app-1.0.0'
-              APPLICATION_NAME: $APPLICATION_NAME
+              ZIP_FILE: 'mainserver-backend.zip'
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
               AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+              APPLICATION_NAME: 'AWSCodeDeployApplication'
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
-        name: Deploying on Test Server
+        name: Deploying Master branch on Main Server
         deployment: Production
         caches:
           - pip
@@ -43,9 +43,9 @@ pipelines:
               S3_BUCKET: $S3_BUCKET
               VERSION_LABEL: 'my-app-1.0.0'
               FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
-              APPLICATION_NAME: $APPLICATION_NAME
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-              IGNORE_APPLICATION_STOP_FAILURES: 'true'
+              DEPLOYMENT_GROUP: 'MainServer-Backend'
               AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
-              DEPLOYMENT_GROUP: $DEPLOYMENT_GROUP_NAME
+              IGNORE_APPLICATION_STOP_FAILURES: 'true'
+              APPLICATION_NAME: 'AWSCodeDeployApplication
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
