@@ -5,7 +5,7 @@ from common_utilities import CONSTANT
 
 
 def insert_single_obj_in_database(database, collection, data_obj):
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client[database]
     collection = db[collection]
@@ -13,7 +13,7 @@ def insert_single_obj_in_database(database, collection, data_obj):
 
 
 def insert_multiple_obj_in_database(database, collection, data_obj):
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client[database]
     collection = db[collection]

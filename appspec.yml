@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /var/flaskapp/test_cd
+    destination: /home/ubuntu/flask
 hooks:
   BeforeInstall:
     - location: common_utilities/scripts/before_deploy_req_install.sh

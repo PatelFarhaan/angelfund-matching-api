@@ -10,14 +10,15 @@ from common_utilities import CONSTANT
 from flask_login import login_user, login_required
 from project.models import Startup, Investor, Referrals
 from common_utilities.referral_email import email_referral
-from common_utilities.wait_list_email import wait_list_user
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.password_reset import password_reset_email
-from common_utilities.email_confirmation import email_confirmation
 from common_utilities.technical_error_mail import technical_errors
+from common_utilities.email_confirmation import email_confirmation
+from common_utilities.wait_list_email_str import wait_list_user_str
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.account_delete_email import delete_user_account
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, progress_mapping
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
@@ -60,6 +61,8 @@ def google_token():
             if userinfo_response.status_code == 200:
                 if userinfo_response.json().get("email_verified"):
                     email = userinfo_response.json().get("email")
+                    if email:
+                        email = email.lower()
 
                     user = Startup.objects.filter(email=email).first()
                     if user:
@@ -159,17 +162,19 @@ def login():
         email = response["data"]["email"]
         password = response["data"]["password"]
 
+        if email:
+            email = email.lower()
+
         user = Startup.objects.filter(email=email).first()
         if user is None:
             error = "user does not exist"
-            logger.debug(f"startup does not exixt: {email}")
+            logger.debug(f"startup does not exist: {email}")
             return jsonify({"result": False, "error": error})
 
         if user.is_google_signup:
             return_obj = {
-                "status_code": 200,
-                "message": "registered with google account",
-                "redirect_url": "https://127.0.0.1:5000/startup/login/callback"
+                "result": False,
+                "error": "registered with google account",
             }
             return jsonify(return_obj)
 
@@ -225,6 +230,8 @@ def reset_link(token):
     elif request.method == "POST":
         try:
             email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
+            if email:
+                email = email.lower()
         except:
             return redirect("https://www.angelfund.ai", code=302)
 
@@ -256,6 +263,8 @@ def register():
 
     if response["result"]:
         email = response["data"]["email"]
+        if email:
+            email = email.lower()
 
         email_exist = Startup.objects.filter(email=email).first()
 
@@ -268,7 +277,7 @@ def register():
 
         input_request["co_founders"] = [
             {
-                "primary": None,
+                "primary": True,
                 "name": f"{input_request['first_name']} {input_request['last_name']}",
                 "position": [None],
                 "bio": None,
@@ -311,6 +320,8 @@ def register():
 def email_confirmed(token):
     try:
         email = serial.loads(token, salt='email_confirm')
+        if email:
+            email = email.lower()
     except:
         return redirect("https://www.angelfund.ai/login", code=302)
 
@@ -333,8 +344,8 @@ def email_confirmed(token):
         user.passowrd_confirm_meta_data = {}
         user.save()
         session["email"] = email
+
         logger.debug(f"startup logged in: {email}")
-        # Todo: check if both investor and startup signin with the same email it show be multi-tenant like jwt
         return redirect(url_for("startup.confirmation_signup_flow", email=email, code=307))
 
     else:
@@ -345,7 +356,7 @@ def email_confirmed(token):
 #<==================================================================================================>
 #                                  CONFIRMATION SIGNUP FLOW
 #<==================================================================================================>
-@startup_blueprint.route('/confirmation-signup-flow', methods=["GET", "PATCH"])
+@startup_blueprint.route('/confirmation-signup-flow', methods=["GET"])
 @login_required
 def confirmation_signup_flow():
     email = session.get("email")
@@ -353,67 +364,11 @@ def confirmation_signup_flow():
     if not email:
         return jsonify({"reuslt": False, "error": "session expired"})
 
-    if request.method == "GET":
-        return redirect(f"http://{CONSTANT.MAIN_SERVER_IP.value}/startup/signup?confirmed=True"), 302
-
-    user_obj = Investor.objects.filter(email=email).first()
-    if user_obj.is_logged_in:
-        input_data = request.get_json()
-        available_fields = {"location", "sectors", "company_name", "company_link", "co_founders",
-                            "startup_pitch", "bio", "round_size", "raised", "profile_pic_link",
-                            "progress", "position", "num_team_members", "slide_deck", "first_invite",
-                            "first_dashboard_visit"}
-
-        for key in list(input_data.keys()):
-            if key not in available_fields:
-                return jsonify({"result": False, "error": "invalid user field"})
-
-        for field in input_data:
-            if field in available_fields:
-
-                if field == "sectors":
-                    sectors_map = sector_data()
-                    res = [ sectors_map.get(i) for i in input_data[field] if sectors_map.get(i) != None ]
-                    setattr(user_obj, field, res)
-
-                    if not update_into_matching(user_obj.email, {field: res}):
-                        technical_errors("STARTUP: EMAIL CONFIRMED SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
-
-                elif field == "progress":
-                    progress_map = progress_mapping()
-                    res = [ progress_map.get(i) for i in input_data[field] if progress_map.get(i) != None ]
-                    setattr(user_obj, field, res)
-
-                    if not update_into_matching(user_obj.email, {field: res}):
-                        technical_errors("STARTUP: EMAIL CONFIRMED SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
-
-                else:
-                    setattr(user_obj, field, input_data[field])
-                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
-                        technical_errors("STARTUP: EMAIL CONFIRMED SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
-
-                user_obj.save()
-
-            else:
-                jsonify({"result": False, "error": "invalid user field"})
-
-
-        ma_schema = StartupUserSchema()
-        user_objs = ma_schema.dump(user_obj)
-
-        rev_sectors_data = rev_sector_data()
-        rev_progress_data = rev_progress_mapping()
-
-        user_objs["progress"] = [rev_progress_data.get(i) for i in user_objs["progress"] if rev_progress_data.get(i)]
-        user_objs["sectors"] = [rev_sectors_data.get(i) for i in user_objs["sectors"] if rev_sectors_data.get(i)]
-
-        ret_obj = {
-            "result": True,
-            "user": user_objs,
-        }
-        return ret_obj
-    else:
-        jsonify({"result": False, "error": "user is not authenticated"})
+    str_obj = Startup.objects.filter(email=email).first()
+    first_name = (str_obj.first_name).strip().replace(" ", "_")
+    last_name = (str_obj.last_name).strip().replace(" ", "_")
+    query_string = f"confirmed=True&email={str_obj.email}&fn={first_name}&ln={last_name}&investor=false"
+    return redirect(f"http://{CONSTANT.TEST_SERVER_IP.value}/startup/signup?{query_string}"), 302
 
 
 #<==================================================================================================>
@@ -450,6 +405,8 @@ def referral_link():
         return jsonify(response)
 
     ref_email = response["data"]["email"]
+    if ref_email:
+        ref_email = ref_email.lower()
 
     if Investor.objects.filter(email=ref_email).first():
         return jsonify({"result": False, "error": "user exists"})
@@ -464,7 +421,7 @@ def referral_link():
 
     token = serial.dumps(ref_obj, salt='email_referral')
     link = url_for('startup.referral_verification', token=token, _external=True)
-    thread = threading.Thread(target=email_referral, args=((ref_email, full_name, first_name, link)))
+    thread = threading.Thread(target=email_referral, args=((ref_email, full_name, first_name, link, "startup")))
     thread.start()
 
     return jsonify({"result": True, "message": "mail sent"})
@@ -824,7 +781,9 @@ def waitlist_email():
 
     user_obj = jwt_decode["user_obj"]
     email, first_name = user_obj.email, user_obj.first_name
-    thread = threading.Thread(target=wait_list_user, args=(email, first_name,))
+    if email:
+        email = email.lower()
+    thread = threading.Thread(target=wait_list_user_str, args=(email, first_name,))
     thread.start()
     logger.debug(f"startup wait list email sent: {email}")
     return jsonify({"result": True, "message": "email sent if the user exists"})
@@ -1306,6 +1265,10 @@ def delete_account():
                 if not delete_user_ml(str_id):
                     technical_errors("STARTUP: DELETE ACCOUNT UPDATE UNSUCCESSFUL", str_obj.email)
 
+                thread = threading.Thread(target=delete_user_account, args=(str_obj.email))
+                thread.start()
+                logger.debug(f"startup delete account email sent: {str_obj.email}")
+
                 return jsonify({"result": True, "message": "account deleted"})
             return jsonify({"result": False, "message": "wrong credentials"})
         return jsonify(response)
@@ -1320,6 +1283,8 @@ def forgot_password():
     response = validate_email_schema(input_request)
     if response["result"]:
         email = response["data"]["email"]
+        if email:
+            email = email.lower()
         user = Startup.objects.filter(email=email).first()
 
         if user is None:
@@ -1362,3 +1327,38 @@ def change_password():
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify({"result": False, "error": "user does not exists"})
+
+
+#<==================================================================================================>
+#                                  GET JWT TOKEN FOR CONFIRMATION PAGE
+#<==================================================================================================>
+@startup_blueprint.route('/get-jwt-token', methods=['POST'])
+def jwt_for_confirmation_page():
+    """
+    This is a function to create a user jwt token from email address.
+
+    :param: email
+    :return: jwt token
+    """
+    input_request = request.get_json()
+    response = validate_email_schema(input_request)
+    if response["result"]:
+        email = response["data"]["email"]
+        if email:
+            email = email.lower()
+
+        user = Startup.objects.filter(email=email).first()
+        if user is None:
+            error = "user does not exist"
+            logger.debug(f"startup does not exist: {email}")
+            return jsonify({"result": False, "error": error})
+
+        jwt_obj = {"email": email, "model": "Startup"}
+        access_token = create_access_token(identity=jwt_obj)
+        ret_obj = {
+            "result": True,
+            "token": access_token
+        }
+        return jsonify(ret_obj)
+    else:
+        return jsonify(response)

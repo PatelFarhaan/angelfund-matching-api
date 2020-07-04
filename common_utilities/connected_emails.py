@@ -15,147 +15,125 @@ def email_connected(inv_email: str, str_email: str, all_info):
     SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "A New Connection"
+    SUBJECT = f"Angelfund.ai Intro: {all_info['inv_fn']} – {all_info['str_founders']}"
     BODY_HTML = """
-   <HTML>
-<head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  
-     <style>
-        .display_div {{
-            display: flex;
-            margin-top: 5%;
-            margin-bottom: 5%;
+
+    <html>
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      body,
+      html {{
+        margin: 0 !important;
+        padding: 0 !important;
+      }}
+
+      .container {{
+        display: block !important;
+        width: 100% !important;
+        margin: auto !important;
+        font-family: "Roboto", sans-serif !important;
+        margin-top: 5% !important;
+        border-radius: 5px !important;
+      }}
+
+      p,
+      h1,
+      .sizing {{
+        font-family: "Roboto", sans-serif !important;
+      }}
+
+      p {{
+        margin: 30px 0 !important;
+      }}
+
+      .logo {{
+        display: block !important;
+        margin: auto !important;
+        text-align: center !important;
+        padding-top: 10px !important;
+      }}
+
+      .hook {{
+        padding-top: 30px;
+        text-align: left;
+        padding-bottom: 10px;
+        margin: 3%;
+      }}
+
+      h1 {{
+        font-size: 28px !important;
+        font-family: Lato;
+        font-weight: 500;
+        color: #707070;
+      }}
+
+      strong {{
+        font-weight: 600;
+      }}
+
+      .sizing {{
+        font-size: 17px !important;
+      }}
+
+      @media only screen and (max-width: 600px) {{
+        .container {{
+          margin: 0px !important;
+          padding: 0% !important;
+          width: 100% !important;
         }}
 
-        .padding_div {{
-            padding-left: 4%;
-            padding-right: 4%;
+        .hook {{
+          display: block;
+          margin: auto;
+          width: 80%;
         }}
 
-        .angel_fund {{
-            margin-top: 5%;
-            margin-bottom: 5%;
+        h1 {{
+          font-size: 20px !important;
         }}
 
-        .col-lg-4 {{
-
-            flex: 0 0 33.333333%;
-            max-width: 33.333333%;
+        .sizing {{
+          font-size: 15px !important;
         }}
-
-        .col-md-4 {{
-
-            flex: 0 0 33.333333%;
-            max-width: 33.333333%;
-        }}
-
-        .rounded {{
-            border-radius: .25rem !important;
-        }}
-
-        .rounded-circle {{
-            border-radius: 50% !important;
-        }}
-
-        .col-lg-6 {{
-
-            flex: 0 0 40%;
-            max-width: 40%;
-        }}
-
-        .col-md-6 {{
-
-            flex: 0 0 40%;
-            max-width: 40%;
-        }}
+      }}
     </style>
-</head>
-<div style="margin-left: 5%;margin-right: 5%;">
-    <div class="angel_fund" style="text-align: center;">
-        <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/angelfund.png" style="height: 110px;" />
+  </head>
+
+  <div class="container">
+    <div class="hook">
+      <strong class="sizing"> {inv_fn}—meet {str_founders} from {str_fn}. </strong>
+
+      <p class="sizing">
+        <span style="font-style: italic;"> Quick synopsis on {str_fn}:</span
+        ><br />
+        {str_bio}<br />They’re currently raising a ${str_seeking:,} round and would like
+        to coordinate a time to share more about the opportunity.
+      </p>
+      <br />
+      <strong class="sizing"> {str_founders}—meet {inv_fn}. </strong>
+
+      <p class="sizing">
+        {inv_fn} invests in companies within your sector, and is interested in
+        learning more about {str_fn}.
+      </p>
+      <br />
+      <p class="sizing">
+        We’ll let you two take it from here.
+      </p>
+      <p class="sizing">
+        Best,<br />
+        Angelfund.ai
+      </p>
     </div>
-
-    <div style="text-align: center;">
-        <div class="col-md-4 col-lg-4"
-            style="margin: auto;box-shadow: 0 0px 0px 0 rgba(0, 0, 0, 0.2), 0 0px 16px 0 rgba(0, 0, 0, 0.19);">
-
-            <div class="rounded" style="padding: 5%;">
-                <img width="150px" height="150px" class="rounded-circle" src="{inv_img}">
-                <img width="150px" height="150px" class="rounded-circle" src="{str_img}">
-            </div>
-
-        </div>
-    </div>
-    <div class="display_div">
-        <div class="padding_div col-md-6 col-lg-6" style="border-right: 1px solid lightgrey;">
-            <div style="padding-top:7% ;">
-                <p>
-                    {inv_fn}, meet {str_founders} from {str_fn}.
-                </p>
-                <p style="font-weight: 400;font-size: 25px;">
-                    {str_bio}
-                </p>
-                <p style="font-weight: 400;font-size: 20px;">
-                    {str_founders} is the {str_position} at {str_fn}, which has raised{str_raised} out of a seeking
-                    of {str_seeking} round.
-                </p>
-            </div>
-        </div>
-        <div class="padding_div col-md-6 col-lg-6">
-            <div style="padding-top:7% ;"></div>
-            <p>
-                {str_founders}, meet {inv_fn}.
-            </p>
-            <p style="font-weight: 400;font-size: 25px;">
-                {inv_bio}.
-            </p>
-            <p style="font-weight: 400;font-size: 20px;">
-                {inv_fn} is interested in investing in the {inv_deals} range.
-            </p>
-        </div>
-    </div>
-    <div style="text-align: center;">
-
-        <p>
-            Reply to this thread to set up a virtual meeting via Zoom, Hangouts, phone call, or whatever works for you.
-
-        </p>
-        <p>
-            We’re glad you’re connected!
-
-        </p>
-        <p>
-            Sincerely,
-
-
-        </p>
-        <p>
-            The Angelfund.ai Team
-
-        </p>
-
-    </div>
-</div>
-
-
-
-<div style="text-align: center;background-color: lightgrey;opacity: 0.3;padding-top: 2%;padding-bottom: 2%;">
-    <div>
-        <a href="#" class="fa fa-twitter"
-            style="font-size: 25px;text-decoration: none;margin-right: 10px;color: gray;"></a>
-        <a href="#" class="fa fa-linkedin" style="font-size: 25px;text-decoration: none;color: gray;"></a>
-    </div>
-    <p>
-        2375 Zanker Road #250, San Jose, CA 95131
-    </p>
-    <footer>Copyright &copy;2020 Global Angel Fund, Inc. <a style="text-decoration: underline;">Unsubscribe</a>
-    </footer>
-</div>
-</div>
-
-</HTML>
-                """.format(inv_img=all_info['inv_img'], str_img=all_info['str_img'], inv_fn=all_info['inv_fn'], str_founders=all_info['str_founders'], str_fn=all_info['str_fn'], str_bio=all_info['str_bio'], inv_bio=all_info['inv_bio'], str_position=all_info['str_position'], str_raised=all_info['str_raised'], str_seeking=all_info['str_seeking'], inv_deals=all_info['inv_deals'])
+  </div>
+</html>
+               
+                """.format(inv_fn=all_info['inv_fn'], str_founders=all_info['str_founders'], str_fn=all_info['str_fn'], str_bio=all_info['str_bio'],
+                           str_seeking=int(all_info['str_seeking']))
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

@@ -8,7 +8,6 @@ from flask_login import LoginManager
 from common_utilities import CONSTANT
 from flask_marshmallow import Marshmallow
 from flask_mongoengine import MongoEngine
-# import flask_monitoringdashboard as dashboard
 from itsdangerous import URLSafeTimedSerializer
 from common_utilities.flask_jwt_extended import JWTManager
 
@@ -20,11 +19,9 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
 serial = URLSafeTimedSerializer(CONSTANT.SECRET_KEY.value)
 app.config['JWT_SECRET_KEY'] = CONSTANT.JWT_SECRET_KEY.value
-# dashboard.config.init_from(file=CONSTANT.DASHBOARD_CONFIG_FILE.value)
-app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.PRIMARY_DB_CLUSTER.value}
+app.config['MONGODB_SETTINGS'] = {'host': CONSTANT.TEST_DB_CLUSTER.value}
 
 CORS(app)
-# dashboard.bind(app)
 db = MongoEngine(app)
 ma = Marshmallow(app)
 jwt = JWTManager(app)
@@ -33,7 +30,6 @@ jwt = JWTManager(app)
 def make_session_permanent():
     session.permanent = True
     app.permanent_session_lifetime = timedelta(minutes=60)
-
 
 login_manager = LoginManager(app)
 login_manager.blueprint_login_views = {

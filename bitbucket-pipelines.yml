@@ -8,8 +8,9 @@ pipelines:
         caches:
           - pip
         script:
-          - pip3 install -r requirements.txt
           - apt-get update
+          - python3 -m pip install --upgrade --force pip
+          - pip3 install -r requirements.txt
           - apt-get install -y zip
           - zip -r application1.zip .
         artifacts:
@@ -31,7 +32,7 @@ pipelines:
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
         name: Deploying on Test Server
-        deployment: staging_server
+        deployment: Production
         caches:
           - pip
         script:

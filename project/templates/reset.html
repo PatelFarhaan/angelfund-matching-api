@@ -1,105 +1,166 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Reset Password | Angelfund</title>
-      <link
-         href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
-         rel="stylesheet"
-         />
-   </head>
-   <body style="font-family: Roboto;">
-      <div
-         style="
-         padding-left: 1rem;
-         color: white;
-         display: flex;
-         align-items: center;
-         ">
-         <img
-            src="https://media-exp1.licdn.com/dms/image/C560BAQEFfsSZuaRiXQ/company-logo_200_200/0?e=2159024400&v=beta&t=-qiAENtazer90X4wNyIrYL8zEYi6bQeMDi4HTPieDNI"
-            alt="af-logo"
-            style="width: 50px;"/>
-         <h2 style="color: #5e51f4;">Angelfund.ai</h2>
-      </div>
-      <div style="margin: auto; width: 500px;">
-         <h1 style="text-align: center; padding-bottom: 2rem; padding-top: 5rem;">
-            Reset your password
-         </h1>
-         <form method="POST">
-            <div>
-               <label for="password"
-                  >New Password (must be at least 8 characters)</label
-                  ><br />
-               <input
-                       onchange='check_pass();'
-                  type="text"
-                  minlength="8"
-                  name="password"
-                  id="password"
-                  value=""
-                  style="
-                  width: 100%;
-                  font-size: 1.2rem;
-                  padding-top: 0.5rem;
-                  padding-bottom: 0.5rem;
-                  margin-top: 0.3rem;
-                  border: 1px solid lightGrey;
-                  border-radius: 5px;
-                  "
-                  />
-            </div>
-            <div style="padding-top: 1.5rem;">
-               <label for="confirm">Confirm Password</label><br />
-               <input
-                       onchange='check_pass();'
-                  type="text"
-                  minlength="8"
-                  name="confirm"
-                  id="confirm"
-                  value=""
-                  style="
-                  width: 100%;
-                  font-size: 1.2rem;
-                  padding-top: 0.5rem;
-                  padding-bottom: 0.5rem;
-                  margin-top: 0.3rem;
-                  border: 1px solid lightGrey;
-                  border-radius: 5px;
-                  "
-                  />
-            </div>
-            <button
-               style="
-               margin-top: 1rem;
-               width: 100%;
-               padding: 16px 0px;
-               background-color: #5e51f4;
-               color: white;
-               border-radius: 5px;
-               "
-               type="submit"
-               name="submit"
-               value="registration"
-               id="submit"
-               disabled
-               >
-            Reset my password
-            </button>
-         </form>
-      </div>
-   </body>
-
-<script>
-    function check_pass() {
-        if (document.getElementById("password").value == document.getElementById('confirm').value) {
-            document.getElementById('submit').disabled = false;
-        } else {
-            document.getElementById('submit').disabled = true;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reset Password | Angelfund</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="http://fonts.googleapis.com/css?family=Lato:400,700"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      html,
+      body {
+        padding: 0;
+        margin: 9;
+      }
+      input[type="password"] {
+        padding-left: 15px !important;
+      }
+      input[type="password"]:focus {
+        outline: none !important;
+      }
+      #submit {
+        transition: all 0.2s ease-in-out;
+      }
+      #submit:hover {
+        transform: scale(1.05);
+      }
+      @media only screen and (max-width: 520px) {
+        h1 {
+          font-size: 24px !important;
         }
-}
-</script>
-
+        label,
+        button,
+        input[type="password"] {
+          font-size: 14px !important;
+        }
+      }
+    </style>
+  </head>
+  <body style="font-family: Roboto;">
+    <div
+      style="
+        padding-left: 1rem;
+        color: white;
+        display: flex;
+        align-items: center;
+      "
+    >
+      <img
+        src="https://media-exp1.licdn.com/dms/image/C560BAQEFfsSZuaRiXQ/company-logo_200_200/0?e=2159024400&v=beta&t=-qiAENtazer90X4wNyIrYL8zEYi6bQeMDi4HTPieDNI"
+        alt="af-logo"
+        style="width: 50px;"
+      />
+      <h2 style="color: #5e51f4; font-weight: bold;">Angelfund.ai</h2>
+    </div>
+    <div style="display: block; margin: auto; max-width: 500px; width: 90%;">
+      <h1
+        style="
+          text-align: center;
+          padding-bottom: 2rem;
+          padding-top: 5rem;
+          font-family: 'Lato' !important;
+        "
+      >
+        Reset your password
+      </h1>
+      <form method="POST">
+        <div>
+          <label style="margin-left: 25px;" for="password"
+            >New Password (must be at least 8 characters)</label
+          ><br />
+          <input
+            onchange="check_pass();"
+            minlength="8"
+            name="password"
+            id="password"
+            type="password"
+            value=""
+            style="
+              width: 95%;
+              display: block;
+              font-size: 1.2rem;
+              padding: 0.5rem 0;
+              margin: 0.3rem auto;
+              border: 1px solid lightGrey;
+              border-radius: 5px;
+            "
+          />
+        </div>
+        <div style="padding-top: 1.5rem;">
+          <label style="margin-left: 25px;" for="confirm"
+            >Confirm Password
+          </label>
+          <span
+            style="margin-right: 25px; float: right; color: red; display: none;"
+            id="error"
+            >The passwords do not match.</span
+          >
+          <br />
+          <input
+            onchange="check_pass();"
+            minlength="8"
+            name="confirm"
+            id="confirm"
+            type="password"
+            value=""
+            style="
+              width: 95%;
+              display: block;
+              font-size: 1.2rem;
+              padding: 0.5rem 0;
+              margin: 0.3rem auto;
+              border: 1px solid lightGrey;
+              border-radius: 5px;
+            "
+          />
+        </div>
+        <button
+          style="
+            margin-top: 1rem;
+            width: 99%;
+            display: block;
+            padding: 16px 0px;
+            background-color: #5e51f4;
+            margin: 1rem auto;
+            color: white;
+            border-radius: 5px;
+          "
+          type="submit"
+          name="submit"
+          value="registration"
+          id="submit"
+          disabled="false"
+        >
+          Reset my password
+        </button>
+      </form>
+    </div>
+  </body>
+  <script>
+    function check_pass() {
+      if (
+        document.getElementById("password").value ==
+        document.getElementById("confirm").value
+      ) {
+        document.getElementById("submit").disabled = false
+        document.getElementById("confirm").style.borderColor = "lightGrey"
+        document.getElementById("error").style.display = "none"
+      } else {
+        document.getElementById("submit").disabled = true
+        document.getElementById("confirm").style.borderColor = "red"
+        document.getElementById("error").style.display = "block"
+      }
+    }
+  </script>
 </html>
-

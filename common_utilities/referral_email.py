@@ -1,5 +1,6 @@
 import sys
 import boto3
+import string
 import logging
 sys.path.append('../')
 from common_utilities import CONSTANT
@@ -8,91 +9,189 @@ from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
 
-
-def email_referral(user_email, full_name, first_name, link):
-    full_name = full_name.capitalize()
+def email_referral(user_email, full_name, first_name, link, is_investor):
+    full_name = string.capwords(full_name)
     first_name = first_name.capitalize()
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
     SENDER = "hello@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Welcome to AngelFund"
-    BODY_HTML = """
+    SUBJECT = f"{first_name} has invited you to join Angelfund.ai!"
+    BODY_HTML = f"""
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-</head>
-<body style="margin-left: 5%; margin-right: 5%;">
-<div>
-    <div style="text-align: center;">
-        <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/new_header2.png" style="height: 34px; width: 180px;" />
+  <head>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+    />
+    <style>
+      body,
+      html {{
+        margin: 0 !important;
+        padding: 0 !important;
+      }}
+      .container {{
+        display: block !important;
+        width: 600px !important;
+        margin: auto !important;
+        font-family: "Roboto", sans-serif !important;
+        border: 2px solid #f3f3f3 !important;
+        box-shadow: 0px 2px 3px 0px #f2f2ff !important;
+        margin-top: 5% !important;
+        border-radius: 5px !important;
+      }}
+      p,
+      h1,
+      .sizing {{
+        font-family: "Roboto", sans-serif !important;
+      }}
+      p {{
+        margin: 30px 0 !important;
+      }}
+      .logo {{
+        display: block !important;
+        margin: auto !important;
+        text-align: center !important;
+        padding-top: 10px !important;
+      }}
+      .title {{
+        padding-top: 30px;
+        padding-bottom: 10px;
+        padding-left: 10px;
+        border-bottom: 2px solid #e6e6e6;
+      }}
+      .hook {{
+        padding-top: 30px;
+        text-align: left;
+        padding-bottom: 10px;
+        margin: 3%;
+      }}
+      .footer {{
+        margin: 0% !important;
+        left: 0%;
+        bottom: 0%;
+        width: 100%;
+        text-align: center;
+        background-color: lightgrey;
+        opacity: 0.3;
+        padding: 2% 0;
+      }}
+      h1 {{
+        font-size: 28px !important;
+        font-family: Lato;
+        font-weight: 500;
+        color: #707070;
+      }}
+      strong {{
+        font-weight: 500;
+      }}
+      .sizing {{
+        font-size: 17px !important;
+      }}
+      .icon-container {{
+        display: flex !important;
+      }}
+      a {{
+        transition: all 0.5s ease-in-out;
+      }}
+      a:hover {{
+        font-size: 18px;
+      }}
+      @media only screen and (max-width: 600px) {{
+        .logo {{
+          padding-left: 5%;
+          margin: 0px !important;
+          text-align: left !important;
+        }}
+        .container {{
+          margin: 0px !important;
+          padding: 0% !important;
+          border: none !important;
+          box-shadow: none !important;
+          width: 100% !important;
+        }}
+        .hook {{
+          display: block;
+          margin: auto;
+          width: 80%;
+        }}
+        h1 {{
+          font-size: 20px !important;
+        }}
+        .sizing {{
+          font-size: 15px !important;
+        }}
+        .title {{
+          padding-left: 5% !important;
+          margin-left: 0% !important;
+        }}
+      }}
+      </style>
+  </head>
+  <div class="container">
+    <div class="logo">
+        <img
+      src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
+      style="height: 30px; width: 165px;"
+    />
     </div>
-    <br><br>
-    <div style="border-bottom: 2px solid #E6E6E6E6;">
-        <p style="font-family: Lato; font-weight:700; font-size: 30px; color: #707070;">Referral From {full_name}
+    <div class="title">
+        <h1>
+          Referral From {full_name}
+        </h1>
+    </div>
+    <div class="hook">
+        <strong class="sizing">
+        {first_name} is inviting you to join
+        <span style="color: #5e51f4;">Angelfund.ai!</span>
+        </strong>
+        <p class="sizing">
+          Sign up using their link to get early access to the most relevant
+          startups & investors:
+        </p>
+        <p class="sizing" style="text-decoration: none;">
+          <a
+              style="
+              word-wrap: break-word;
+              text-decoration: underline;
+              color: #5e51f4;
+              "
+              href="{link}"
+              >http://***REMOVED***/api/v1/{is_investor}/referral/{first_name}</a
+              >
         </p>
     </div>
-
-
-    <div style="padding-top: 3%; text-align: center;
-             padding-bottom: 3%;border-bottom: 2px solid  #E6E6E6;margin-bottom: 5%;">
-        <p style="margin-bottom: 6%;
-                padding: 1%;
-                margin: 1%;
-                font-weight: 700;
-                font-family: Roboto;
-                font-size: 22px;
-                text-align: left;">
-            <span>{first_name} is inviting you to join <a style="text-decoration: none;" target="_blank" href="https://www.angelfund.ai"><span style="color: #5a51f4">Angelfund.ai!</span></a></span>
-            <br>
-            <br>
-            <span style="font-weight: 400">
-            Sign up using their link to get early access to the most relevant startups & investors:
-            <br>
-            <br>
-        <a href="{link}">{link}</a>
-                </span>
-
-        </p>
-
-        <br>
-    </div>
-    <div>
-
-    </div>
-    <br>
-    <div style="font-family: Roboto;
-             font-size: 14px;
-             color: #919191;
-             text-align: center;
-             background-color: #F8F8F8;
-             border-radius: 4px;
-             padding-top: 2%;
-             padding-bottom: 2%;">
-        <div>
-            <a href="https://mobile.twitter.com/AngelFundAI" class="fa fa-twitter"
-               style="font-size: 25px;text-decoration: none;margin-right: 20px;color: gray;"></a>
-            <a href="https://www.linkedin.com/company/angelfundai/" class="fa fa-linkedin"
-               style="font-size: 25px; margin-left: 20px; text-decoration: none;color: gray;"></a>
+    <div class="footer">
+        <div class="icon-container">
+          <a target="_blank" href="https://twitter.com/angelfundAI">
+          <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
+              height: 25px;
+              width: 25px;
+              text-decoration: none;
+              margin-right: 10px;
+              color: gray; 
+              "></img>
+          </a>
+          <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
+          <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" style="
+              height: 25px;
+              width: 25px;
+              text-decoration: none;
+              color: gray;
+              "></img>
+          </a>
         </div>
         <p>
-            2375 Zanker Road #250, San Jose, CA 95131
+          2375 Zanker Road #250, San Jose, CA 95131
         </p>
-        <footer>Copyright &copy;2020 Global Angel Fund, Inc.
+        <footer>
+          Copyright &copy;2020 Global Angel Fund, Inc.
         </footer>
     </div>
-</div>
-
-</body>
+  </div>
 </html>
-                """.format(full_name=full_name, first_name=first_name, link=link)
+"""
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

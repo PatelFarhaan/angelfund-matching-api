@@ -1,6 +1,3 @@
-#<==================================================================================================>
-#                                        IMPORTS
-#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -9,34 +6,18 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
-#<==================================================================================================>
-#                                        LOGGER
-#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
-#<==================================================================================================>
-#                                 RESET PASSWORD EMAIL TEMPLATE
-#<==================================================================================================>
-def password_reset_email(user_email, password_reset_link):
-    """
-    Sending the user an email to reset their passowrd
-
-    :parameter
-      ==> user_email          :str
-      ==> password_reset_link :str
-
-    :returns
-      ==> None                :None
-
-    """
+def wait_list_user_inv(user_email, first_name):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
     SENDER = "noreply@angelfund.ai"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Reset your Angelfund.ai password"
+    SUBJECT = "You’re on the waitlist!"
     BODY_HTML = """
+
 <html>
   <head>
     <link
@@ -52,7 +33,7 @@ def password_reset_email(user_email, password_reset_link):
 
       .container {{
         display: block !important;
-        width: 600px !important;
+        width: 700px !important;
         margin: auto !important;
         font-family: "Roboto", sans-serif !important;
         border: 2px solid #f3f3f3 !important;
@@ -86,8 +67,8 @@ def password_reset_email(user_email, password_reset_link):
       }}
 
       .hook {{
-        padding-top: 30px;
-        text-align: center;
+        padding-top: 5px;
+        text-align: left;
         padding-bottom: 10px;
         margin: 3%;
       }}
@@ -101,7 +82,7 @@ def password_reset_email(user_email, password_reset_link):
         margin: 0% !important;
         left: 0%;
         bottom: 0%;
-        width: 100%;
+        width: 700px;
         text-align: center;
         background-color: lightgrey;
         opacity: 0.3;
@@ -125,8 +106,7 @@ def password_reset_email(user_email, password_reset_link):
 
       button {{
         height: 50px;
-        margin-top: 10px;
-        /* margin-left: 15%; */
+        margin-top: 30px;
         padding: 10px 30px;
         background-color: #5e51f4;
         color: white;
@@ -149,7 +129,7 @@ def password_reset_email(user_email, password_reset_link):
         margin-top: 35px;
       }}
 
-      @media only screen and (max-width: 600px) {{
+      @media only screen and (max-width: 700px) {{
         .logo {{
           padding-left: 5%;
           margin: 0px !important;
@@ -170,6 +150,16 @@ def password_reset_email(user_email, password_reset_link):
           width: 80%;
         }}
 
+        .bottom-section {{
+          margin: auto;
+        }}
+
+        .bottom-text {{
+          display: block;
+          margin: auto;
+          width: 80%;
+        }}
+
         h1 {{
           font-size: 20px !important;
         }}
@@ -185,10 +175,13 @@ def password_reset_email(user_email, password_reset_link):
 
         .footer {{
           font-size: 15px;
+          text-align: center;
+          width: 100%;
         }}
 
         button {{
           margin-left: 0px !important;
+          margin-bottom: 30px !important;
         }}
       }}
     </style>
@@ -201,39 +194,45 @@ def password_reset_email(user_email, password_reset_link):
       />
     </div>
     <div class="title">
-      <h1>Reset Password</h1>
+      <h1>{first_name}, new startups are waiting for you! ⏱️</h1>
     </div>
     <div class="hook">
-      <strong class="sizing">
-        Resetting your password is simple-we'll have you up and running in no
-        time.
-      </strong>
-      <p style="margin-bottom: 6%;" class="sizing">
-        If you requested a password reset, click here to create a new one:
+      <p class="sizing">
+        Hey {first_name}—
       </p>
-      <div style="text-align: center;">
-  <a style="color: white; text-decoration: none;" target="_blank" href="{password_reset_link}">
-    <button>
-      Reset my Password
-    </button>
-  </a>
-</div>
+      <p class="sizing">
+        You've got new deals waiting for you on Angelfund.ai!
+      </p>
+      <p class="sizing">
+        Every week, our algorithm learns more about your preferences and gets
+        better at finding you the most relevant startups.
+      </p>
+      <strong style="margin-bottom: 6%;" class="sizing">
+        That means every week, Angelfund.ai will show you better deals.
+      </strong>
+      <div style="text-align: left;">
+        <button target="_blank" href="https://www.angelfund.ai/login">
+          <a style="color: white; text-decoration: none;"
+            >See This Week's Deals</a
+          >
+        </button>
+      </div>
     </div>
     <div class="bottom-section">
       <div class="bottom-text">
         <p class="sizing">
           <strong class="sizing">Button not working?</strong><br />
           Just click on the link below or paste it into your browser.
-          {password_reset_link}
+          https://www.angelfund.ai/login
         </p>
         <p class="sizing">
-          You received this email because you requested a password reset. If you
-          did not,
+          You received this email because you requested to be alerted when there
+          are new deals. If you did not,
           <span style="text-decoration: underline;">please contact us.</span>
         </p>
       </div>
     </div>
-     <div class="footer">
+    <div class="footer">
          <div>
             <a target="_blank" href="https://twitter.com/angelfundAI">
             <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
@@ -263,8 +262,9 @@ def password_reset_email(user_email, password_reset_link):
   </div>
 </html>
 
+              
 
-    """.format(password_reset_link=password_reset_link)
+                """.format(first_name=first_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,
@@ -291,6 +291,6 @@ def password_reset_email(user_email, password_reset_link):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: email confirmation: failed {user_email}")
+        logger.error(f"common utilities: wait list: failed {user_email}")
     else:
-        logger.debug(f"common utilities: email confirmation: success {user_email}")
+        logger.debug(f"common utilities: wait list: success {user_email}")
