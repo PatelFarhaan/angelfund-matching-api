@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                        IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -6,10 +9,27 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                        LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
+#<==================================================================================================>
+#                                 RESET PASSWORD EMAIL TEMPLATE
+#<==================================================================================================>
 def password_reset_email(user_email, password_reset_link):
+    """
+    Sending the user an email to reset their passowrd
+
+    :parameter
+      ==> user_email          :str
+      ==> password_reset_link :str
+
+    :returns
+      ==> None                :None
+
+    """
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
     SENDER = "noreply@angelfund.ai"
@@ -17,7 +37,6 @@ def password_reset_email(user_email, password_reset_link):
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Reset your Angelfund.ai password"
     BODY_HTML = """
-
 <html>
   <head>
     <link
@@ -193,10 +212,12 @@ def password_reset_email(user_email, password_reset_link):
         If you requested a password reset, click here to create a new one:
       </p>
       <div style="text-align: center;">
-        <button target="_blank" href="{password_reset_link}">
-          <a style="color: white; text-decoration: none;">Reset my Password</a>
-        </button>
-      </div>
+  <a style="color: white; text-decoration: none;" target="_blank" href="{password_reset_link}">
+    <button>
+      Reset my Password
+    </button>
+  </a>
+</div>
     </div>
     <div class="bottom-section">
       <div class="bottom-text">

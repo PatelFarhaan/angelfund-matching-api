@@ -28,14 +28,15 @@ def send_email_threading(email, name):
     # delete_user_account(email)
     # wait_list_user_inv(email, name)
     # wait_list_user_str(email, name)
-    # password_reset_email(email, link)
+    password_reset_email(email, link)
     # email_confirmation(email, link, name)
     # email_connected(email, "patel.farhaaan@gmail.com", all_info)
-    email_referral(email, "Farhaan Patel", "Farhaan", link)
+    # email_referral(email, "Farhaan Patel", "Farhaan", link, "investor")
 
 
 #<==================================================================================================>
 #                                       MAIN FUNCTION
 #<==================================================================================================>
+# send_email_threading("farhaan@angelfund.ai", "Farhaan")
 send_email_threading("briandam26@yahoo.com", "Birna")
 send_email_threading("birna@angelfund.ai", "Birna")
