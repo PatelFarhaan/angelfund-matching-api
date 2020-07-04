@@ -47,5 +47,5 @@ pipelines:
               DEPLOYMENT_GROUP: 'MainServer-Backend'
               AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
               IGNORE_APPLICATION_STOP_FAILURES: 'true'
-              APPLICATION_NAME: 'AWSCodeDeployApplication
+              APPLICATION_NAME: 'AWSCodeDeployApplication'
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
