@@ -43,12 +43,11 @@ def rev_accreditation_data():
 
 
 def rev_progress_mapping():
-    return  {'mockups': 'Idea/Sketches',
-
+    return  {'ideas': 'Idea/Sketches',
+             'mockups': 'Mockups/Renderings',
              'prototype': 'Prototype/Pre-Launch',
-             'product': 'Product Launched',
              'beta': 'Beta Launched',
              'preorders': 'Taking Preorders',
-             'team': 'Team Built',
+             'product': 'Product Launched',
              'users': 'Early Users Acquired',
              'revenue': 'Early Revenue Generated'}

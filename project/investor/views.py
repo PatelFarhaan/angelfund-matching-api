@@ -66,6 +66,9 @@ def google_token():
                 if userinfo_response.json().get("email_verified"):
                     email = userinfo_response.json().get("email")
 
+                    if email:
+                        email = email.lower()
+
                     user = Investor.objects.filter(email=email).first()
                     if user:
                         if getattr(user, "delete_account"):
@@ -166,6 +169,9 @@ def login():
         email = response["data"]["email"]
         password = response["data"]["password"]
 
+        if email:
+            email = email.lower()
+
         user = Investor.objects.filter(email=email).first()
         if user is None:
             error = "user does not exist"
@@ -229,6 +235,8 @@ def reset_link(token):
     if request.method == "GET":
         try:
             email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
+            if email:
+                email = email.lower()
         except:
             return redirect("https://www.angelfund.ai", code=302)
 
@@ -241,6 +249,8 @@ def reset_link(token):
     elif request.method == "POST":
         try:
             email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
+            if email:
+                email = email.lower()
         except:
             return redirect("https://www.angelfund.ai", code=302)
 
@@ -271,6 +281,8 @@ def forgot_password():
     response = validate_email_schema(input_request)
     if response["result"]:
         email = response["data"]["email"]
+        if email:
+            email = email.lower()
         user = Investor.objects.filter(email=email).first()
 
         if user is None:
@@ -300,6 +312,8 @@ def register():
 
     if response["result"]:
         email = response["data"]["email"]
+        if email:
+            email = email.lower()
 
         email_exist = Investor.objects.filter(email=email).first()
 
@@ -342,6 +356,8 @@ def register():
 def email_confirmed(token):
     try:
         email = serial.loads(token, salt='email_confirm')
+        if email:
+            email = email.lower()
     except:
         return redirect("https://www.angelfund.ai/login", code=302)
 
@@ -379,6 +395,9 @@ def email_confirmed(token):
 @login_required
 def confirmation_signup_flow():
     email = session.get("email")
+
+    if email:
+        email = email.lower()
 
     if not email:
         return jsonify({"reuslt": False, "error": "session expired"})
@@ -424,6 +443,9 @@ def referral_link():
         return jsonify(response)
 
     ref_email = response["data"]["email"]
+
+    if ref_email:
+        ref_email = ref_email.lower()
 
     if Investor.objects.filter(email=ref_email).first():
         return jsonify({"result": False, "error": "user exists"})
@@ -656,6 +678,8 @@ def waitlist_email():
 
     user_obj = jwt_decode["user_obj"]
     email, first_name = user_obj.email, user_obj.first_name
+    if email:
+        email = email.lower()
     thread = threading.Thread(target=wait_list_user_inv, args=(email, first_name,))
     thread.start()
     logger.debug(f"investor wait list email sent: {email}")
@@ -1155,6 +1179,9 @@ def jwt_for_confirmation_page():
     response = validate_email_schema(input_request)
     if response["result"]:
         email = response["data"]["email"]
+
+        if email:
+            email = email.lower()
 
         user = Investor.objects.filter(email=email).first()
         if user is None:

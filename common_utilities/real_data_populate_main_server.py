@@ -39,11 +39,11 @@ def investor_data(investor_path):
             i["accreditation"] = str(int(float(i["accreditation"])))
         except:
             i["accreditation"] = "nothing"
-        i["email_confirmed"] = True
-        i["approved"] =  True
+        i["email_confirmed"] = False
+        i["approved"] =  False
 
 
-        email = i["email"]
+        email = i["email"].lower()
         users_count = collection.estimated_document_count()
         if users_count == 0:
             _id = 0
@@ -90,11 +90,11 @@ def startup_data(startup_path):
         round_size = round_def(int(i["round_size"]))
         i["round_size"] = int(i["round_size"])
         i["raised"] = int(float(i["raised"]))
-        i["email_confirmed"] = True
-        i["approved"] = True
+        i["email_confirmed"] = False
+        i["approved"] = False
 
 
-        email = i["email"]
+        email = i["email"].lower()
         users_count = collection.estimated_document_count()
         if users_count == 0:
             _id = 0
