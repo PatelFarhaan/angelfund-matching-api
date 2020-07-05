@@ -1,1 +1,0 @@
-cd /var/flaskapp/flask
