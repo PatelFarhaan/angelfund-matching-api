@@ -12,9 +12,9 @@ pipelines:
           - python3 -m pip install --upgrade --force pip
           - pip3 install -r requirements.txt
           - apt-get install -y zip
-          - zip -r mainserver-backend.zip .
+          - zip -r backend-master.zip .
         artifacts:
-          - mainserver-backend.zip
+          - backend-master.zip
     - step:
         name: Uploading Master branch to S3
         caches:
@@ -23,12 +23,12 @@ pipelines:
           - pipe: atlassian/aws-code-deploy:0.5.3
             variables:
               COMMAND: 'upload'
-              S3_BUCKET: $S3_BUCKET
               VERSION_LABEL: 'my-app-1.0.0'
-              ZIP_FILE: 'mainserver-backend.zip'
+              ZIP_FILE: 'backend-master.zip'
+              AWS_DEFAULT_REGION: 'us-west-1'
+              S3_BUCKET: 'sample-codebucket-guide'
+              APPLICATION_NAME: 'BackendCodeDeploy'
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
-              APPLICATION_NAME: 'AWSCodeDeployApplication'
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
         name: Deploying Master branch on Main Server
@@ -40,12 +40,12 @@ pipelines:
             variables:
               WAIT: 'true'
               COMMAND: 'deploy'
-              S3_BUCKET: $S3_BUCKET
               VERSION_LABEL: 'my-app-1.0.0'
+              AWS_DEFAULT_REGION: 'us-west-1'
+              DEPLOYMENT_GROUP: 'Master-Branch'
               FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
+              S3_BUCKET: 'sample-codebucket-guide'
+              APPLICATION_NAME: 'BackendCodeDeploy'
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-              DEPLOYMENT_GROUP: 'MainServer-Backend'
-              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
               IGNORE_APPLICATION_STOP_FAILURES: 'true'
-              APPLICATION_NAME: 'AWSCodeDeployApplication'
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
