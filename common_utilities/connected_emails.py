@@ -18,6 +18,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
     SUBJECT = f"Angelfund.ai Intro: {all_info['inv_fn']} – {all_info['str_founders']}"
     BODY_HTML = """
 
+
     <html>
   <head>
     <link
@@ -131,7 +132,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
     </div>
   </div>
 </html>
-               
+                    
                 """.format(inv_fn=all_info['inv_fn'], str_founders=all_info['str_founders'], str_fn=all_info['str_fn'], str_bio=all_info['str_bio'],
                            str_seeking=int(all_info['str_seeking']))
     CHARSET = "UTF-8"

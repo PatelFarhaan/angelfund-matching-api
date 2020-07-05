@@ -12,9 +12,9 @@ pipelines:
           - python3 -m pip install --upgrade --force pip
           - pip3 install -r requirements.txt
           - apt-get install -y zip
-          - zip -r application1.zip .
+          - zip -r backend-test-server.zip .
         artifacts:
-          - application1.zip
+          - backend-test-server.zip
     - step:
         name: Uploading to S3
         caches:
@@ -23,12 +23,12 @@ pipelines:
           - pipe: atlassian/aws-code-deploy:0.5.3
             variables:
               COMMAND: 'upload'
-              S3_BUCKET: $S3_BUCKET
-              ZIP_FILE: 'application1.zip'
               VERSION_LABEL: 'my-app-1.0.0'
-              APPLICATION_NAME: $APPLICATION_NAME
+              AWS_DEFAULT_REGION: 'us-west-1'
+              ZIP_FILE: 'backend-test-server.zip'
+              S3_BUCKET: 'sample-codebucket-guide'
+              APPLICATION_NAME: 'BackendCodeDeploy'
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
-              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
         name: Deploying on Test Server
@@ -40,12 +40,12 @@ pipelines:
             variables:
               WAIT: 'true'
               COMMAND: 'deploy'
-              S3_BUCKET: $S3_BUCKET
               VERSION_LABEL: 'my-app-1.0.0'
+              AWS_DEFAULT_REGION: 'us-west-1'
+              DEPLOYMENT_GROUP: 'Test-Branch'
               FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
-              APPLICATION_NAME: $APPLICATION_NAME
+              S3_BUCKET: 'sample-codebucket-guide'
+              APPLICATION_NAME: 'BackendCodeDeploy'
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
               IGNORE_APPLICATION_STOP_FAILURES: 'true'
-              AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
-              DEPLOYMENT_GROUP: $DEPLOYMENT_GROUP_NAME
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID

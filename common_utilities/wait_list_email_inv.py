@@ -161,7 +161,7 @@ def wait_list_user_inv(user_email, first_name):
         }}
 
         h1 {{
-          font-size: 20px !important;
+          font-size: 16px !important;
         }}
 
         .sizing {{
@@ -211,11 +211,11 @@ def wait_list_user_inv(user_email, first_name):
         That means every week, Angelfund.ai will show you better deals.
       </strong>
       <div style="text-align: left;">
-        <button target="_blank" href="https://www.angelfund.ai/login">
-          <a style="color: white; text-decoration: none;"
-            >See This Week's Deals</a
-          >
-        </button>
+        <a style="color: white; text-decoration: none;" target="_blank" href="https://www.angelfund.ai/login">
+          <button>
+            See This Week's Deals
+          </button>
+        </a>
       </div>
     </div>
     <div class="bottom-section">
@@ -233,36 +233,38 @@ def wait_list_user_inv(user_email, first_name):
       </div>
     </div>
     <div class="footer">
-         <div>
-            <a target="_blank" href="https://twitter.com/angelfundAI">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
-               height: 25px;
-               width: 25px;
-               text-decoration: none;
-               margin-right: 10px;
-               color: gray; 
-               "></img>
-            </a>
-            <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" style="
-               height: 25px;
-               width: 25px;
-               text-decoration: none;
-               color: gray;
-               "></img>
-            </a>
-         </div>
-         <p>
-            2375 Zanker Road #250, San Jose, CA 95131
-         </p>
-         <footer>
+      <div valign="middle" style="display: block; width: 100%; margin: auto; height: 25px;">
+        <a target="_blank" href="https://twitter.com/angelfundAI" style="height: 25px;
+             width: 25px;">
+          <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" valign="middle" style="
+                vertical-align: middle;
+                height: 25px;
+                width: 25px;
+                text-decoration: none;
+                margin-right: 10px;
+                color: gray; 
+                "></img>
+        </a>
+        <a target="_blank" href="https://www.linkedin.com/company/angelfundai" style="height: 25px;
+             width: 25px;">
+          <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" valign="middle" style="
+                vertical-align: middle;
+                height: 25px;
+                width: 25px;
+                text-decoration: none;
+                color: gray;
+                "></img>
+        </a>
+      </div>
+      <p>
+        2375 Zanker Road #250, San Jose, CA 95131
+      </p>
+      <footer>
         Copyright &copy;2020 Global Angel Fund, Inc.
       </footer>
     </div>
   </div>
 </html>
-
-              
 
                 """.format(first_name=first_name)
     CHARSET = "UTF-8"
