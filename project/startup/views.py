@@ -780,10 +780,10 @@ def waitlist_email():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    email, first_name = user_obj.email, user_obj.first_name
+    email, first_name, company_name = user_obj.email, user_obj.first_name, user_obj.company_name
     if email:
         email = email.lower()
-    thread = threading.Thread(target=wait_list_user_str, args=(email, first_name,))
+    thread = threading.Thread(target=wait_list_user_str, args=(email, first_name, company_name))
     thread.start()
     logger.debug(f"startup wait list email sent: {email}")
     return jsonify({"result": True, "message": "email sent if the user exists"})
