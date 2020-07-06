@@ -259,7 +259,6 @@ def reset_link(token):
             password = request.form.get("password")
 
             if user.password_reset_meta_data == {}:
-                # link can only be clicked once
                 return redirect("https://www.angelfund.ai", code=302)
 
             if not user.password_reset_meta_data["is_clicked"]:
@@ -385,7 +384,7 @@ def email_confirmed(token):
 
     else:
         logger.debug(f"investor does not exist {email}")
-        return redirect("http://52.52.127.206/investor/signup")
+        return redirect("http://www.angelfund.ai/investor/signup")
 
 
 #<==================================================================================================>
@@ -406,7 +405,7 @@ def confirmation_signup_flow():
     first_name = (inv_obj.first_name).strip().replace(" ", "_")
     last_name = (inv_obj.last_name).strip().replace(" ", "_")
     query_string = f"confirmed=True&email={inv_obj.email}&fn={first_name}&ln={last_name}&investor=true"
-    return redirect(f"http://{CONSTANT.TEST_SERVER_IP.value}/investor/signup?{query_string}"), 302
+    return redirect(f"http://www.angelfund.ai/investor/signup?{query_string}"), 302
 
 
 #<==================================================================================================>
