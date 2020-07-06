@@ -4,6 +4,10 @@ files:
   - source: /
     destination: /var/flaskapp/flask
 hooks:
+  ApplicationStop:
+    - location: common_utilities/scripts/application_stop_script.sh
+        timeout: 500
+        runas: root
   ApplicationStart:
     - location: common_utilities/scripts/after_deploy_supervisor_restart.sh
       timeout: 500
