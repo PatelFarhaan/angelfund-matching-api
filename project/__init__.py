@@ -16,7 +16,6 @@ from common_utilities.flask_jwt_extended import JWTManager
 #                                         CONFIG
 #<==================================================================================================>
 app = Flask(__name__)
-app.config['SERVER_NAME'] = 'www.angelfund.ai'
 app.config['SECRET_KEY'] = CONSTANT.SECRET_KEY.value
 serial = URLSafeTimedSerializer(CONSTANT.SECRET_KEY.value)
 app.config['JWT_SECRET_KEY'] = CONSTANT.JWT_SECRET_KEY.value
