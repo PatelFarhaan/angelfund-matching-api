@@ -368,7 +368,7 @@ def confirmation_signup_flow():
     first_name = (str_obj.first_name).strip().replace(" ", "_")
     last_name = (str_obj.last_name).strip().replace(" ", "_")
     query_string = f"confirmed=True&email={str_obj.email}&fn={first_name}&ln={last_name}&investor=false"
-    return redirect(f"http://www.angelfund.ai/startup/signup?{query_string}"), 302
+    return redirect(f"https://www.angelfund.ai/startup/signup?{query_string}"), 302
 
 
 #<==================================================================================================>

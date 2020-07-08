@@ -384,7 +384,7 @@ def email_confirmed(token):
 
     else:
         logger.debug(f"investor does not exist {email}")
-        return redirect("http://www.angelfund.ai/investor/signup")
+        return redirect("https://www.angelfund.ai/investor/signup")
 
 
 #<==================================================================================================>
@@ -405,7 +405,7 @@ def confirmation_signup_flow():
     first_name = (inv_obj.first_name).strip().replace(" ", "_")
     last_name = (inv_obj.last_name).strip().replace(" ", "_")
     query_string = f"confirmed=True&email={inv_obj.email}&fn={first_name}&ln={last_name}&investor=true"
-    return redirect(f"http://www.angelfund.ai/investor/signup?{query_string}"), 302
+    return redirect(f"https://www.angelfund.ai/investor/signup?{query_string}"), 302
 
 
 #<==================================================================================================>
@@ -722,7 +722,7 @@ def mime_files():
 
     if file_type == "image":
         if mime_base == "image":
-            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            image_url = profile_pic_upload_to_s3(x_name, mime_extention, file_location, file_name)
             user_obj.profile_pic_link = image_url
             user_obj.save()
             shutil.rmtree(file_location)
