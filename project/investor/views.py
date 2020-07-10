@@ -1197,3 +1197,59 @@ def jwt_for_confirmation_page():
         return jsonify(ret_obj)
     else:
         return jsonify(response)
+
+
+
+#<==================================================================================================>
+#                                       DELETE EMAIL ADDRESSES
+#<==================================================================================================>
+@investor_blueprint.route('/delete-email-address', methods=['POST'])
+def delete_email_address():
+    """
+    This is a function to delete email address from the startup and investor
+    from the main server for testing purpose.
+
+    :param: emails_list
+    :type:  list
+
+    :return: result
+    :type:   dict
+    """
+
+    def db_details(database, collection):
+        from pymongo import MongoClient
+        remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+        mongo_client = MongoClient(remote_mongo_uri)
+        db = mongo_client[database]
+        collection = db[collection]
+        return collection
+
+    input_request = request.get_json()
+    emails_list = input_request.get("emails_list")
+    if not emails_list:
+        return jsonify({"result": False, "error": "emails list not present in the input body"})
+
+    ml_collection = db_details("matching", "users")
+    inv_collection = db_details("admin", "investor")
+    str_collection = db_details("admin", "startup")
+
+    for email in emails_list:
+        my_query = {"email": email}
+
+        ml_query = ml_collection.find_one(my_query)
+        inv_query = inv_collection.find_one(my_query)
+        str_query = str_collection.find_one(my_query)
+
+        if ml_query:
+            ml_collection.delete_many(my_query)
+            print("User Deleted from Machine Learning")
+
+        if str_query:
+            str_collection.delete_one(my_query)
+            print("User Deleted from Startup")
+
+        if inv_query:
+            inv_collection.delete_one(my_query)
+            print("User Deleted from Investors")
+
+    return jsonify({"result": True, "message": "All emails deleted if existed"})
