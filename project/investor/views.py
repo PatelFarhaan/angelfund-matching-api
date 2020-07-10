@@ -1226,6 +1226,11 @@ def delete_email_address():
 
     input_request = request.get_json()
     emails_list = input_request.get("emails_list")
+    api_key = input_request.get("api_key")
+
+    if api_key != "***REMOVED***`NqU":
+        return jsonify({"result": False, "error": "Invalid API key"})
+
     if not emails_list:
         return jsonify({"result": False, "error": "emails list not present in the input body"})
 
