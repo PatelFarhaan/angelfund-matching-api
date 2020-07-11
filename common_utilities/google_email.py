@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                         IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -6,9 +9,15 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                         LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
+#<==================================================================================================>
+#                                 GOOGLE EMAIL CONFIRMATION
+#<==================================================================================================>
 def google_email_confirmation(user_email):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
@@ -17,88 +26,81 @@ def google_email_confirmation(user_email):
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Thank you for signing up for ANGELFUND!!!"
     BODY_HTML = """
-    
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-</head>
-<body style="margin-left: 5%; margin-right: 5%;">
-<div>
-    <div style="text-align: center;">
-        <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/new_header2.png" style="height: 34px; width: 180px;" />
-    </div>
-    <br><br>
-    <div style="border-bottom: 2px solid #E6E6E6E6;">
-        <p style="font-family: Lato; font-weight:700; font-size: 30px; color: #707070;">Account Created</p>
-    </div>
-
-
-    <div style="padding-top: 3%; text-align: center;
-             padding-bottom: 3%;border-bottom: 2px solid  #E6E6E6;margin-bottom: 5%;">
-        <p style="margin-bottom: 6%;
-                padding: 1%;
-                margin: 1%;
-                font-weight: 400;
-                font-family: Roboto;
-                font-size: 20px;
-                text-align: center;">
-            <span style="padding: 2%;">You have successfully signed up for
-                <a style="text-decoration: none;" target="_blank" href="https://www.angelfund.ai">
-                    <span style="color: #5a51f4">Angelfund.ai</span></a>
-            with your Google account.
-                </span>
-            <br>
-            Please login here to get started:
-        </p>
-        <div style="text-align: center;">
-            <a style="color:white; text-decoration: none;" target="_blank"
-               href="https://www.angelfund.ai">
-                <button style="
-                   background-color: #5a51f4;
-                   color: white;
-                   min-height: 6%;
-                   height: auto;
-                   width: 15%;
-                   border: none;
-                   font-weight: 700;
-                   font-size: 18px;
-                   border-radius: 4px;">Login</button></a>
-        </div>
-    </div>
-
-    <br>
-    <br>
-    <div style="font-family: Roboto;
-             font-size: 14px;
-             text-align: center;
-             background-color: #F8F8F8;
-             border-radius: 4px;
-             padding-top: 2%;
-             color: #919191;
-             padding-bottom: 2%;">
-        <div>
-            <a href="https://mobile.twitter.com/AngelFundAI" class="fa fa-twitter"
-               style="font-size: 25px;text-decoration: none;margin-right: 20px;color: gray;"></a>
-            <a href="https://www.linkedin.com/company/angelfundai/" class="fa fa-linkedin"
-               style="font-size: 25px; margin-left: 20px; text-decoration: none;color: gray;"></a>
-        </div>
-        <p>
-            2375 Zanker Road #250, San Jose, CA 95131
-        </p>
-        <footer>Copyright &copy;2020 Global Angel Fund, Inc.
-        </footer>
-    </div>
-</div>
-
-</body>
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport"
+         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+   </head>
+   <body style="margin-left: 5%; margin-right: 5%;">
+      <div>
+         <div style="text-align: center;">
+            <img src="https://angelfund-profile-pics.s3-us-west-1.amazonaws.com/new_header2.png" style="height: 34px; width: 180px;" />
+         </div>
+         <br><br>
+         <div style="border-bottom: 2px solid #E6E6E6E6;">
+            <p style="font-family: Lato; font-weight:700; font-size: 30px; color: #707070;">Account Created</p>
+         </div>
+         <div style="padding-top: 3%; text-align: center;
+            padding-bottom: 3%;border-bottom: 2px solid  #E6E6E6;margin-bottom: 5%;">
+            <p style="margin-bottom: 6%;
+               padding: 1%;
+               margin: 1%;
+               font-weight: 400;
+               font-family: Roboto;
+               font-size: 20px;
+               text-align: center;">
+               <span style="padding: 2%;">You have successfully signed up for
+               <a style="text-decoration: none;" target="_blank" href="https://www.angelfund.ai">
+               <span style="color: #5a51f4">Angelfund.ai</span></a>
+               with your Google account.
+               </span>
+               <br>
+               Please login here to get started:
+            </p>
+            <div style="text-align: center;">
+               <a style="color:white; text-decoration: none;" target="_blank"
+                  href="https://www.angelfund.ai">
+               <button style="
+                  background-color: #5a51f4;
+                  color: white;
+                  min-height: 6%;
+                  height: auto;
+                  width: 15%;
+                  border: none;
+                  font-weight: 700;
+                  font-size: 18px;
+                  border-radius: 4px;">Login</button></a>
+            </div>
+         </div>
+         <br>
+         <br>
+         <div style="font-family: Roboto;
+            font-size: 14px;
+            text-align: center;
+            background-color: #F8F8F8;
+            border-radius: 4px;
+            padding-top: 2%;
+            color: #919191;
+            padding-bottom: 2%;">
+            <div>
+               <a href="https://mobile.twitter.com/AngelFundAI" class="fa fa-twitter"
+                  style="font-size: 25px;text-decoration: none;margin-right: 20px;color: gray;"></a>
+               <a href="https://www.linkedin.com/company/angelfundai/" class="fa fa-linkedin"
+                  style="font-size: 25px; margin-left: 20px; text-decoration: none;color: gray;"></a>
+            </div>
+            <p>
+               2375 Zanker Road #250, San Jose, CA 95131
+            </p>
+            <footer>Copyright &copy;2020 Global Angel Fund, Inc.
+            </footer>
+         </div>
+      </div>
+   </body>
 </html>
-                """
+    """
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

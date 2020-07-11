@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -6,11 +9,16 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                       LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
+#<==================================================================================================>
+#                                TECHNICAL ERRORS
+#<==================================================================================================>
 def technical_errors(subject, user_email):
-    # RECIPIENT = ["patel.farhaaan@gmail.com", "colby@angelfund.ai", "liya@angelfund.ai"]
     RECIPIENT = ["patel.farhaaan@gmail.com"]
     AWS_REGION = "us-east-1"
     SENDER = "technical_errors@angelfund.ai"
@@ -19,20 +27,17 @@ def technical_errors(subject, user_email):
     SUBJECT = f"{subject}: {user_email}"
     BODY_HTML = """
 <html>
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-</head>
-<body style="margin-left: 5%; margin-right: 5%;">
-
-</body>
+   <head>
+      <meta charset="UTF-8">
+      <meta name="viewport"
+         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+   </head>
+   <body style="margin-left: 5%; margin-right: 5%;">
+   </body>
 </html>
-                """.format()
+    """.format()
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

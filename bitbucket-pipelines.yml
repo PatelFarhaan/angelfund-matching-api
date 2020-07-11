@@ -31,7 +31,7 @@ pipelines:
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
-        name: Deploying on Test Server
+        name: Deploying
         deployment: Production
         caches:
           - pip

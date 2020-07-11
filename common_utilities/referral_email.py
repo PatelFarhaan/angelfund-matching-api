@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import string
@@ -7,8 +10,15 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                       LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
+
+#<==================================================================================================>
+#                                   EMAIL REFERRAL
+#<==================================================================================================>
 def email_referral(user_email, full_name, first_name, link, is_investor):
     full_name = string.capwords(full_name)
     first_name = first_name.capitalize()
@@ -89,8 +99,14 @@ def email_referral(user_email, full_name, first_name, link, is_investor):
          .sizing {{
          font-size: 17px !important;
          }}
+         .icon-container {{
+         display: flex !important;
+         }}
          a {{
          transition: all 0.5s ease-in-out;
+         }}
+         a:hover {{
+         font-size: 18px;
          }}
          @media only screen and (max-width: 600px) {{
          .logo {{
@@ -126,9 +142,9 @@ def email_referral(user_email, full_name, first_name, link, is_investor):
    <div class="container">
       <div class="logo">
          <img
-        src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
-        style="height: 30px; width: 165px;"
-      />
+            src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
+            style="height: 30px; width: 165px;"
+            />
       </div>
       <div class="title">
          <h1>
@@ -152,18 +168,14 @@ def email_referral(user_email, full_name, first_name, link, is_investor):
                color: #5e51f4;
                "
                href="{link}"
-               >http://***REMOVED***/api/v1/investor/referral/{first_name}</a
+               >http://***REMOVED***/api/v1/{is_investor}/referral/{first_name}</a
                >
          </p>
       </div>
       <div class="footer">
-         <div valign="middle" style="display: block; width: 100%; margin: auto; height: 25px;">
-            <a target="_blank" href="https://twitter.com/angelfundAI" style="height: 25px;
-            width: 25px;">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" 
-            valign="middle"
-            style="
-               vertical-align: middle;
+         <div class="icon-container">
+            <a target="_blank" href="https://twitter.com/angelfundAI">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
                height: 25px;
                width: 25px;
                text-decoration: none;
@@ -171,12 +183,8 @@ def email_referral(user_email, full_name, first_name, link, is_investor):
                color: gray; 
                "></img>
             </a>
-            <a target="_blank" href="https://www.linkedin.com/company/angelfundai" style="height: 25px;
-            width: 25px;">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" 
-            valign="middle"
-            style="
-               vertical-align: middle;
+            <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" style="
                height: 25px;
                width: 25px;
                text-decoration: none;

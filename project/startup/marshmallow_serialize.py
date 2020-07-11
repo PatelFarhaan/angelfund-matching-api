@@ -1,7 +1,13 @@
+#<==================================================================================================>
+#                                     IMPORTS
+#<==================================================================================================>
 from project import ma
 from flask_marshmallow import fields as fd
 
 
+#<==================================================================================================>
+#                                     STARTUP USER SCHEMA
+#<==================================================================================================>
 class StartupUserSchema(ma.Schema):
     id = fd.fields.String()
 
@@ -13,6 +19,9 @@ class StartupUserSchema(ma.Schema):
                   "first_dashboard_visit", "show_profile", "monday_notification")
 
 
+#<==================================================================================================>
+#                                  STARTUP DASHBOARD SCHEMA
+#<==================================================================================================>
 class StartupDashboardSchema(ma.Schema):
     id = fd.fields.String()
 
@@ -21,6 +30,9 @@ class StartupDashboardSchema(ma.Schema):
                   "slide_deck", "co_founders", "company_link", "profile_pic_link", "company_name")
 
 
+#<==================================================================================================>
+#                                     STARTUP CONNECTED SCHEMA
+#<==================================================================================================>
 class StartupConnectedSchema(ma.Schema):
     action = fd.fields.String(default="Invite Sent")
     status = fd.fields.String(default="Connected")
@@ -30,6 +42,9 @@ class StartupConnectedSchema(ma.Schema):
         fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "status", "id")
 
 
+#<==================================================================================================>
+#                                     STARTUP PASSED SCHEMA
+#<==================================================================================================>
 class StartupPassedSchema(ma.Schema):
     status = fd.fields.String(default="Revisit Deal")
     action = fd.fields.String(default="Passed")
@@ -39,6 +54,9 @@ class StartupPassedSchema(ma.Schema):
         fields = ("location", "round_size", "company_name", "profile_pic_link", "action", "status", "id")
 
 
+#<==================================================================================================>
+#                                     STARTUP ML SCHEMA
+#<==================================================================================================>
 class StartupMLSchema(ma.Schema):
     class Meta:
         fields = ("slide_deck", "round_size", "company_link", "company_name", "num_team_members",

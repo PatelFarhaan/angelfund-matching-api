@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                            IMPORTS
+#<==================================================================================================>
 import os
 import uuid
 import magic
@@ -32,7 +35,7 @@ from common_utilities.flask_jwt_extended import jwt_required, create_access_toke
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
-from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_inv_monday_notification_schema,
+from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
                                                              validate_referrer_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
                                                              validate_email_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
 
@@ -368,7 +371,7 @@ def confirmation_signup_flow():
     first_name = (str_obj.first_name).strip().replace(" ", "_")
     last_name = (str_obj.last_name).strip().replace(" ", "_")
     query_string = f"confirmed=True&email={str_obj.email}&fn={first_name}&ln={last_name}&investor=false"
-    return redirect(f"http://{CONSTANT.TEST_SERVER_IP.value}/startup/signup?{query_string}"), 302
+    return redirect(f"https://www.angelfund.ai/startup/signup?{query_string}"), 302
 
 
 #<==================================================================================================>
@@ -576,7 +579,7 @@ def monday_notifications():
     str_obj = jwt_decode["user_obj"]
 
     if request.method == "POST":
-        response = validate_inv_monday_notification_schema(request.get_json())
+        response = validate_str_monday_notification_schema(request.get_json())
         if response["result"]:
             setattr(str_obj,"monday_notification", response["data"]["monday_notification"])
             str_obj.save()
@@ -780,10 +783,10 @@ def waitlist_email():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    email, first_name = user_obj.email, user_obj.first_name
+    email, first_name, company_name = user_obj.email, user_obj.first_name, user_obj.company_name
     if email:
         email = email.lower()
-    thread = threading.Thread(target=wait_list_user_str, args=(email, first_name,))
+    thread = threading.Thread(target=wait_list_user_str, args=(email, first_name, company_name))
     thread.start()
     logger.debug(f"startup wait list email sent: {email}")
     return jsonify({"result": True, "message": "email sent if the user exists"})

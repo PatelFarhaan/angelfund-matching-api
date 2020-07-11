@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -6,10 +9,16 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                       LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
-def wait_list_user_str(user_email, first_name):
+#<==================================================================================================>
+#                                 WAIT LIST USER STARTUP
+#<==================================================================================================>
+def wait_list_user_str(user_email, first_name, company_name):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
     SENDER = "noreply@angelfund.ai"
@@ -32,12 +41,12 @@ def wait_list_user_str(user_email, first_name):
 
       .container {{
         display: block !important;
-        width: 700px !important;
+        width: 600px !important;
         margin: auto !important;
         font-family: "Roboto", sans-serif !important;
         border: 2px solid #f3f3f3 !important;
         box-shadow: 0px 2px 3px 0px #f2f2ff !important;
-        margin-top: 2% !important;
+        margin-top: 5% !important;
         border-radius: 5px !important;
       }}
 
@@ -72,16 +81,11 @@ def wait_list_user_str(user_email, first_name):
         margin: 3%;
       }}
 
-      .bottom-text {{
-        margin: 3%;
-        padding-bottom: 10px;
-      }}
-
       .footer {{
         margin: 0% !important;
         left: 0%;
         bottom: 0%;
-        width: 700px;
+        width: 100%;
         text-align: center;
         background-color: lightgrey;
         opacity: 0.3;
@@ -103,32 +107,15 @@ def wait_list_user_str(user_email, first_name):
         font-size: 17px !important;
       }}
 
-      button {{
-        height: 50px;
-        margin-top: 30px;
-        padding: 10px 30px;
-        background-color: #5e51f4;
-        color: white;
-        font-size: 16px;
-        font-weight: bold;
-        border-radius: 5px;
-        box-shadow: none;
-        border: none;
+      a {{
         transition: all 0.5s ease-in-out;
       }}
 
-      button:hover {{
-        transform: scale(1.1);
+      a:hover {{
+        font-size: 18px;
       }}
 
-      .bottom-section {{
-        text-align: left !important;
-        color: #707070 !important;
-        border-top: 2px solid #e6e6e6;
-        margin-top: 35px;
-      }}
-
-      @media only screen and (max-width: 700px) {{
+      @media only screen and (max-width: 600px) {{
         .logo {{
           padding-left: 5%;
           margin: 0px !important;
@@ -149,18 +136,8 @@ def wait_list_user_str(user_email, first_name):
           width: 80%;
         }}
 
-        .bottom-section {{
-          margin: auto;
-        }}
-
-        .bottom-text {{
-          display: block;
-          margin: auto;
-          width: 80%;
-        }}
-
         h1 {{
-          font-size: 16px !important;
+          font-size: 20px !important;
         }}
 
         .sizing {{
@@ -174,13 +151,6 @@ def wait_list_user_str(user_email, first_name):
 
         .footer {{
           font-size: 15px;
-          text-align: center;
-          width: 100%;
-        }}
-
-        button {{
-          margin-left: 0px !important;
-          margin-bottom: 30px !important;
         }}
       }}
     </style>
@@ -193,78 +163,71 @@ def wait_list_user_str(user_email, first_name):
       />
     </div>
     <div class="title">
-      <h1>{first_name}, new investors are waiting for you! ⏱️</h1>
+      <h1>
+        You're on the waitlist!
+      </h1>
     </div>
     <div class="hook">
       <p class="sizing">
-        Hey {first_name}—
+        Hey {first_name}!
+      </p>
+
+      <p class="sizing">
+        We’re looking forward to seeing {company_name} on Angelfund.ai, and
+        are incredibly excited to start introducing you to relevant investors.
       </p>
       <p class="sizing">
-        You've got new investors waiting for you on Angelfund.ai!
+        When you’re off the waitlist and your profile’s been approved, we’ll let
+        you know. We’re in the early stages of growing our community and are
+        onboarding new companies as fast as we can.
       </p>
       <p class="sizing">
-        Every week, our algorithm learns more about your preferences and gets
-        better at finding you the most relevant investors.
+        All the best!
       </p>
-      <strong style="margin-bottom: 6%;" class="sizing">
-        That means every week, Angelfund.ai will show you better investors.
-      </strong>
-      <div style="text-align: left;">
-        <a style="color: white; text-decoration: none;" target="_blank" href="https://www.angelfund.ai/login">
-          <button>
-            See This Week's Investors
-          </button>
-        </a>
-      </div>
+      <p class="sizing">
+        Liya Jin <br />
+        Head of Product at <span style="color: #5e51f4;">Angelfund.ai</span>
+      </p>
     </div>
-    <div class="bottom-section">
-      <div class="bottom-text">
-        <p class="sizing">
-          <strong class="sizing">Button not working?</strong><br />
-          Just click on the link below or paste it into your browser.
-          https://www.angelfund.ai/login
-        </p>
-        <p class="sizing">
-          You received this email because you requested to be alerted when there
-          are new deals. If you did not,
-          <span style="text-decoration: underline;">please contact us.</span>
-        </p>
-      </div>
-    </div>
+
     <div class="footer">
       <div valign="middle" style="display: block; width: 100%; margin: auto; height: 25px;">
-        <a target="_blank" href="https://twitter.com/angelfundAI" style="height: 25px;
-             width: 25px;">
-          <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" valign="middle" style="
-                vertical-align: middle;
-                height: 25px;
-                width: 25px;
-                text-decoration: none;
-                margin-right: 10px;
-                color: gray; 
-                "></img>
-        </a>
-        <a target="_blank" href="https://www.linkedin.com/company/angelfundai" style="height: 25px;
-             width: 25px;">
-          <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" valign="middle" style="
-                vertical-align: middle;
-                height: 25px;
-                width: 25px;
-                text-decoration: none;
-                color: gray;
-                "></img>
-        </a>
+         <a target="_blank" href="https://twitter.com/angelfundAI" style="height: 25px;
+         width: 25px;">
+         <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" 
+         valign="middle"
+         style="
+            vertical-align: middle;
+            height: 25px;
+            width: 25px;
+            text-decoration: none;
+            margin-right: 10px;
+            color: gray; 
+            "></img>
+         </a>
+         <a target="_blank" href="https://www.linkedin.com/company/angelfundai" style="height: 25px;
+         width: 25px;">
+         <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" 
+         valign="middle"
+         style="
+            vertical-align: middle;
+            height: 25px;
+            width: 25px;
+            text-decoration: none;
+            color: gray;
+            "></img>
+         </a>
       </div>
       <p>
-        2375 Zanker Road #250, San Jose, CA 95131
+         2375 Zanker Road #250, San Jose, CA 95131
       </p>
       <footer>
-        Copyright &copy;2020 Global Angel Fund, Inc.
+         Copyright &copy;2020 Global Angel Fund, Inc.
       </footer>
-    </div>
+   </div>
   </div>
 </html>
-                """.format(first_name=first_name)
+    """.format(first_name=first_name, company_name=company_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

@@ -16,11 +16,11 @@ from common_utilities.referral_email import email_referral
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.connected_emails import email_connected
 from common_utilities.company_images import company_images_api
-from common_utilities.wait_list_email_inv import wait_list_user_inv
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.technical_error_mail import technical_errors
 from common_utilities.google_email import google_email_confirmation
+from common_utilities.wait_list_email_inv import wait_list_user_inv
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
@@ -37,8 +37,8 @@ from common_utilities.investor_matching_db import (insert_into_matching, update_
                                                    inv_mutual_updates)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
-                                                              validate_google_schema, validate_inv_login_schema,
-                                                              validate_inv_monday_notification_schema, validate_delete_acc_schema, validate_profile_vis_schema)
+                                                              validate_google_schema, validate_inv_login_schema, validate_delete_acc_schema,
+                                                              validate_inv_monday_notification_schema, validate_profile_vis_schema)
 
 
 #<==================================================================================================>
@@ -259,7 +259,6 @@ def reset_link(token):
             password = request.form.get("password")
 
             if user.password_reset_meta_data == {}:
-                # link can only be clicked once
                 return redirect("https://www.angelfund.ai", code=302)
 
             if not user.password_reset_meta_data["is_clicked"]:
@@ -385,7 +384,7 @@ def email_confirmed(token):
 
     else:
         logger.debug(f"investor does not exist {email}")
-        return redirect("http://52.52.127.206/investor/signup")
+        return redirect("https://www.angelfund.ai/investor/signup")
 
 
 #<==================================================================================================>
@@ -406,7 +405,7 @@ def confirmation_signup_flow():
     first_name = (inv_obj.first_name).strip().replace(" ", "_")
     last_name = (inv_obj.last_name).strip().replace(" ", "_")
     query_string = f"confirmed=True&email={inv_obj.email}&fn={first_name}&ln={last_name}&investor=true"
-    return redirect(f"http://{CONSTANT.TEST_SERVER_IP.value}/investor/signup?{query_string}"), 302
+    return redirect(f"https://www.angelfund.ai/investor/signup?{query_string}"), 302
 
 
 #<==================================================================================================>
@@ -723,7 +722,7 @@ def mime_files():
 
     if file_type == "image":
         if mime_base == "image":
-            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            image_url = profile_pic_upload_to_s3(x_name, mime_extention, file_location, file_name)
             user_obj.profile_pic_link = image_url
             user_obj.save()
             shutil.rmtree(file_location)
@@ -1198,3 +1197,64 @@ def jwt_for_confirmation_page():
         return jsonify(ret_obj)
     else:
         return jsonify(response)
+
+
+
+#<==================================================================================================>
+#                                       DELETE EMAIL ADDRESSES
+#<==================================================================================================>
+@investor_blueprint.route('/delete-email-address', methods=['POST'])
+def delete_email_address():
+    """
+    This is a function to delete email address from the startup and investor
+    from the main server for testing purpose.
+
+    :param: emails_list
+    :type:  list
+
+    :return: result
+    :type:   dict
+    """
+
+    def db_details(database, collection):
+        from pymongo import MongoClient
+        remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+        mongo_client = MongoClient(remote_mongo_uri)
+        db = mongo_client[database]
+        collection = db[collection]
+        return collection
+
+    input_request = request.get_json()
+    emails_list = input_request.get("emails_list")
+    api_key = input_request.get("api_key")
+
+    if api_key != "***REMOVED***`NqU":
+        return jsonify({"result": False, "error": "Invalid API key"})
+
+    if not emails_list:
+        return jsonify({"result": False, "error": "emails list not present in the input body"})
+
+    ml_collection = db_details("matching", "users")
+    inv_collection = db_details("admin", "investor")
+    str_collection = db_details("admin", "startup")
+
+    for email in emails_list:
+        my_query = {"email": email}
+
+        ml_query = ml_collection.find_one(my_query)
+        inv_query = inv_collection.find_one(my_query)
+        str_query = str_collection.find_one(my_query)
+
+        if ml_query:
+            ml_collection.delete_many(my_query)
+            print("User Deleted from Machine Learning")
+
+        if str_query:
+            str_collection.delete_one(my_query)
+            print("User Deleted from Startup")
+
+        if inv_query:
+            inv_collection.delete_one(my_query)
+            print("User Deleted from Investors")
+
+    return jsonify({"result": True, "message": "All emails deleted if existed"})

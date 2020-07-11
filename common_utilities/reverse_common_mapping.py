@@ -1,7 +1,13 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import sys
 sys.path.append('../')
 
 
+#<==================================================================================================>
+#                                   REVERSE SECTORS MAPPING
+#<==================================================================================================>
 def rev_sector_data():
     return {'agtech': 'Agriculture / Agtech',
             'ai': 'Artificial Intelligence',
@@ -35,6 +41,9 @@ def rev_sector_data():
             'other': 'Other'}
 
 
+#<==================================================================================================>
+#                              REVERSE ACCREDITATIONS MAPPING
+#<==================================================================================================>
 def rev_accreditation_data():
     return {'1000000': 'I have a net worth of $1 million or more, excluding my primary home.',
             '200000': 'I have an individual annual income that has exceeded $200,000 for the last 2 years, and expect it to be the same or higher this year.',
@@ -42,6 +51,9 @@ def rev_accreditation_data():
             'nothing': 'None of the above'}
 
 
+#<==================================================================================================>
+#                                REVERSE PROGRESS MAPPING
+#<==================================================================================================>
 def rev_progress_mapping():
     return  {'ideas': 'Idea/Sketches',
              'mockups': 'Mockups/Renderings',

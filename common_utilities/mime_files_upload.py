@@ -1,9 +1,15 @@
+#<==================================================================================================>
+#                                      IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 sys.path.append("../")
 from common_utilities import CONSTANT
 
 
+#<==================================================================================================>
+#                               PROFILE PIC UPLOAD TO S3
+#<==================================================================================================>
 def profile_pic_upload_to_s3(object_name, extention, file_location, file_obj_name):
     bucket = 'angelfund-profile-pics'
     s3_client = boto3.client('s3',
@@ -17,6 +23,9 @@ def profile_pic_upload_to_s3(object_name, extention, file_location, file_obj_nam
     return public_url
 
 
+#<==================================================================================================>
+#                                  PDF UPLOAD TO S3
+#<==================================================================================================>
 def pdf_upload_to_s3(object_name, extention, file_location, file_obj_name):
     bucket = 'angelfund-client-pdf-bucket'
     s3_client = boto3.client('s3',

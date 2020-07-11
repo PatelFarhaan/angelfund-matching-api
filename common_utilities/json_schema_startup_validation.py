@@ -1,9 +1,14 @@
+#<==================================================================================================>
+#                                      IMPORTS
+#<==================================================================================================>
 from jsonschema import validate
 from jsonschema.exceptions import SchemaError
 from jsonschema.exceptions import ValidationError
 
-#############################################################################################################################################
 
+#<==================================================================================================>
+#                                   STARTUP FIRST PAGE SCHEMA
+#<==================================================================================================>
 str_first_page_schema = {
     "type": "object",
     "properties": {
@@ -35,8 +40,10 @@ def validate_str_first_page_schema(data):
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
-#############################################################################################################################################
 
+#<==================================================================================================>
+#                                   STARTUP LOGIN SCHEMA
+#<==================================================================================================>
 str_login_schema = {
     "type": "object",
     "properties": {
@@ -62,8 +69,10 @@ def validate_str_login_schema(data):
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
-#############################################################################################################################################
 
+#<==================================================================================================>
+#                                   STARTUP PASSWORD RESET SCHEMA
+#<==================================================================================================>
 str_password_reset_schema = {
     "type": "object",
     "properties": {
@@ -85,8 +94,10 @@ def validate_str_password_reset_schema(data):
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
-#############################################################################################################################################
 
+#<==================================================================================================>
+#                                   STARTUP EMAIL SCHEMA
+#<==================================================================================================>
 str_email_schema = {
     "type": "object",
     "properties": {
@@ -99,7 +110,6 @@ str_email_schema = {
     "additionalProperties": False
 }
 
-
 def validate_email_schema(data):
     try:
         validate(instance=data, schema= str_email_schema)
@@ -109,9 +119,11 @@ def validate_email_schema(data):
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
-#############################################################################################################################################
 
-inv_google_schema = {
+#<==================================================================================================>
+#                                   STARTUP GOOGLE SCHEMA
+#<==================================================================================================>
+str_google_schema = {
     "type": "object",
     "properties": {
         "token": {
@@ -122,19 +134,20 @@ inv_google_schema = {
     "additionalProperties": False
 }
 
-
 def validate_google_schema(data):
     try:
-        validate(instance=data, schema= inv_google_schema)
+        validate(instance=data, schema= str_google_schema)
     except ValidationError as e:
         return {'result': False, 'error': e.message}
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
-#############################################################################################################################################
 
-inv_dashboard_schema = {
+#<==================================================================================================>
+#                                   STARTUP DASHBOARD SCHEMA
+#<==================================================================================================>
+str_dashboard_schema = {
     "type": "object",
     "properties": {
         "user_id": {
@@ -149,19 +162,20 @@ inv_dashboard_schema = {
     "required": ["user_id", "invite"],
 }
 
-
 def validate_dashboard_schema(data):
     try:
-        validate(instance=data, schema= inv_dashboard_schema)
+        validate(instance=data, schema=str_dashboard_schema)
     except ValidationError as e:
         return {'result': False, 'error': e.message}
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
-#############################################################################################################################################
 
-inv_referrer_schema = {
+#<==================================================================================================>
+#                                   STARTUP REFERRAL SCHEMA
+#<==================================================================================================>
+str_referrer_schema = {
     "type": "object",
     "properties": {
         "email": {
@@ -173,19 +187,20 @@ inv_referrer_schema = {
     "additionalProperties": False
 }
 
-
 def validate_referrer_schema(data):
     try:
-        validate(instance=data, schema= inv_referrer_schema)
+        validate(instance=data, schema=str_referrer_schema)
     except ValidationError as e:
         return {'result': False, 'error': e.message}
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
 
-#############################################################################################################################################
 
-inv_monday_notification_schema = {
+#<==================================================================================================>
+#                               STARTUP MONDAY NOTIFICATION SCHEMA
+#<==================================================================================================>
+str_monday_notification_schema = {
     "type": "object",
     "properties": {
         "monday_notification": {
@@ -196,17 +211,20 @@ inv_monday_notification_schema = {
     "additionalProperties": False
 }
 
-
-def validate_inv_monday_notification_schema(data):
+def validate_str_monday_notification_schema(data):
     try:
-        validate(instance=data, schema= inv_monday_notification_schema)
+        validate(instance=data, schema=str_monday_notification_schema)
     except ValidationError as e:
         return {'result': False, 'error': e.message}
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
-#############################################################################################################################################
-inv_delete_acc_schema = {
+
+
+#<==================================================================================================>
+#                                   STARTUP DELETE ACCOUNT SCHEMA
+#<==================================================================================================>
+str_delete_acc_schema = {
     "type": "object",
     "properties": {
         "password": {
@@ -217,18 +235,20 @@ inv_delete_acc_schema = {
     "additionalProperties": False
 }
 
-
 def validate_delete_acc_schema(data):
     try:
-        validate(instance=data, schema= inv_delete_acc_schema)
+        validate(instance=data, schema=str_delete_acc_schema)
     except ValidationError as e:
         return {'result': False, 'error': e.message}
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
-#############################################################################################################################################
 
-inv_invite_accepted_notification_schema = {
+
+#<==================================================================================================>
+#                               STARTUP INVITE ACCEPT NOTIFICATION SCHEMA
+#<==================================================================================================>
+str_invite_accepted_notification_schema = {
     "type": "object",
     "properties": {
         "invite_notification": {
@@ -239,17 +259,20 @@ inv_invite_accepted_notification_schema = {
     "additionalProperties": False
 }
 
-
 def validate_invite_acc_notify_schema(data):
     try:
-        validate(instance=data, schema= inv_invite_accepted_notification_schema)
+        validate(instance=data, schema=str_invite_accepted_notification_schema)
     except ValidationError as e:
         return {'result': False, 'error': e.message}
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
-#############################################################################################################################################
-inv_profile_vis_schema = {
+
+
+#<==================================================================================================>
+#                                 STARTUP PROFILE VISIBILITY SCHEMA
+#<==================================================================================================>
+str_profile_vis_schema = {
     "type": "object",
     "properties": {
         "visible": {
@@ -260,16 +283,19 @@ inv_profile_vis_schema = {
     "additionalProperties": False
 }
 
-
 def validate_profile_vis_schema(data):
     try:
-        validate(instance=data, schema= inv_profile_vis_schema)
+        validate(instance=data, schema= str_profile_vis_schema)
     except ValidationError as e:
         return {'result': False, 'error': e.message}
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
-#############################################################################################################################################
+
+
+#<==================================================================================================>
+#                                STARTUP REMOVE SLIDE DECK SCHEMA
+#<==================================================================================================>
 str_rmeove_slide_deck_schema = {
     "type": "object",
     "properties": {
@@ -281,7 +307,6 @@ str_rmeove_slide_deck_schema = {
     "additionalProperties": False
 }
 
-
 def validate_remove_slide_deck_schema(data):
     try:
         validate(instance=data, schema= str_rmeove_slide_deck_schema)
@@ -290,4 +315,3 @@ def validate_remove_slide_deck_schema(data):
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
-#############################################################################################################################################

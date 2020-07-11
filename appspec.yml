@@ -2,7 +2,8 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /home/ubuntu/flask
+    destination: /var/flaskapp/flask
+
 hooks:
   ApplicationStart:
     - location: common_utilities/scripts/after_deploy_supervisor_restart.sh

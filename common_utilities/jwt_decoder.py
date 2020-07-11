@@ -1,8 +1,14 @@
+#<==================================================================================================>
+#                                      IMPORTS
+#<==================================================================================================>
 import sys
 sys.path.append("../")
 from project.models import Startup, Investor
 
 
+#<==================================================================================================>
+#                                 INVESTOR JWT DECODER
+#<==================================================================================================>
 def investor_jwt_decoder(encoded_identifier):
     email = encoded_identifier["email"]
     model = encoded_identifier["model"]
@@ -22,6 +28,9 @@ def investor_jwt_decoder(encoded_identifier):
     }
 
 
+#<==================================================================================================>
+#                                 STARTUP JWT DECODER
+#<==================================================================================================>
 def startup_jwt_decoder(encoded_identifier):
     email = encoded_identifier["email"]
     model = encoded_identifier["model"]

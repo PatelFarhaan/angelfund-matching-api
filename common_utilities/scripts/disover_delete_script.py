@@ -1,19 +1,28 @@
+#<==================================================================================================>
+#                                         IMPORTS
+#<==================================================================================================>
+import sys
 import logging
+sys.path.append("../../")
 from pymongo import MongoClient
+from common_utilities import CONSTANT
 
 
+#<==================================================================================================>
+#                                         LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
-# Todo: send a mail to the team when this fails
 
+#<==================================================================================================>
+#                                 DELETE DISCOVER COLLECTION
+#<==================================================================================================>
 def delete_discover_collection():
-    remote_mongo_uri = "mongodb://***REMOVED***:***REMOVED***@***REMOVED***/admin"
+    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.discover
-
-    data_chunk = list(collection.find())
-    print(data_chunk)
+    collection.delete_many({})
 
 
 delete_discover_collection()

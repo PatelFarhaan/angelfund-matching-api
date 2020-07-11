@@ -12,5 +12,6 @@ lambda*
 /angelfund_v1.log*
 README-Template.md*
 venv/
+.idea/
 .vscode/
 .DS_Store

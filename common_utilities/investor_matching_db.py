@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                         IMPORTS
+#<==================================================================================================>
 import sys
 sys.path.append("../")
 from pymongo import MongoClient
@@ -7,8 +10,11 @@ from common_utilities.company_images import company_images_api
 from project.startup.marshmallow_serialize import StartupDashboardSchema
 
 
+#<==================================================================================================>
+#                                   DATABASE DETAILS
+#<==================================================================================================>
 def db_details(**kwargs):
-    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     if kwargs.get("collection"):
@@ -19,6 +25,9 @@ def db_details(**kwargs):
     return collection
 
 
+#<==================================================================================================>
+#                                INSERTING INTO MATCHING
+#<==================================================================================================>
 def insert_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
     my_query = {"email": email, "investor": True}
@@ -42,6 +51,9 @@ def insert_into_matching(email: str, user_obj: dict) -> bool:
         return False
 
 
+#<==================================================================================================>
+#                                 UPDATE INTO MATCHING
+#<==================================================================================================>
 def update_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
     my_query = {"email": email, "investor": True}
@@ -54,6 +66,9 @@ def update_into_matching(email: str, user_obj: dict) -> bool:
     return True
 
 
+#<==================================================================================================>
+#                                GET INVESTORS MATCHING DATA
+#<==================================================================================================>
 def get_inv_matching_data(email: str) -> object:
     collection = db_details()
     my_query = {"email": email, "investor": True}
@@ -65,6 +80,9 @@ def get_inv_matching_data(email: str) -> object:
         return doc
 
 
+#<==================================================================================================>
+#                                   GET STARTUP DETAILS
+#<==================================================================================================>
 def get_str_details(id: int) -> dict:
     collection = db_details()
     my_query = {"_id": id}
@@ -75,6 +93,9 @@ def get_str_details(id: int) -> dict:
     return {"result": True, "email": em}
 
 
+#<==================================================================================================>
+#                                    PROCESSING HELPER
+#<==================================================================================================>
 def processing_helper(email: str) -> dict:
     str_obj = Startup.objects.filter(email=email).first()
     if not str_obj:
@@ -95,6 +116,9 @@ def processing_helper(email: str) -> dict:
     return {"result": True, "data":res}
 
 
+#<==================================================================================================>
+#                                PROCESS ALL STARTUP DATA
+#<==================================================================================================>
 def process_all_str_data(data: list) -> list:
     res = []
     for str in data:
@@ -110,6 +134,9 @@ def process_all_str_data(data: list) -> list:
     return res
 
 
+#<==================================================================================================>
+#                                  INVESTOR MUTUAL UPDATES
+#<==================================================================================================>
 def inv_mutual_updates(inv_obj):
     all_passed = True
     email = inv_obj.email
