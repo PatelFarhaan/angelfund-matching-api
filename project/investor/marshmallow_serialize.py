@@ -1,7 +1,13 @@
+#<==================================================================================================>
+#                                     IMPORTS
+#<==================================================================================================>
 from project import ma
 from flask_marshmallow import fields as fd
 
 
+#<==================================================================================================>
+#                                     INVESTOR USER SCHEMA
+#<==================================================================================================>
 class InvestorUserSchema(ma.Schema):
     id = fd.fields.String()
 
@@ -12,6 +18,9 @@ class InvestorUserSchema(ma.Schema):
                   "show_profile", "first_invite")
 
 
+#<==================================================================================================>
+#                                     INVESTOR ML SCHEMA
+#<==================================================================================================>
 class InvestorMLSchema(ma.Schema):
     class Meta:
         fields = ("count_invited", "count_passed", "invite_accepted_notify", "all_transaction_fields",
@@ -22,6 +31,9 @@ class InvestorMLSchema(ma.Schema):
                   "first_name", "is_logged_in", "email_confirmed", "is_google_signup", "email", "show_limit")
 
 
+#<==================================================================================================>
+#                                     INVESTOR DASHBOARD SCHEMA
+#<==================================================================================================>
 class InvestorDashboardSchema(ma.Schema):
     id = fd.fields.String()
 
@@ -30,6 +42,9 @@ class InvestorDashboardSchema(ma.Schema):
                   "deals", "syndicate", "id")
 
 
+#<==================================================================================================>
+#                                     INVESTOR CONNECTED SCHEMA
+#<==================================================================================================>
 class InvestorConnectedSchema(ma.Schema):
     action = fd.fields.String(default="Invite Sent")
     status = fd.fields.String(default="Connected")
@@ -39,6 +54,9 @@ class InvestorConnectedSchema(ma.Schema):
         fields = ("location", "deals", "first_name", "last_name", "profile_pic_link", "action", "status", "id")
 
 
+#<==================================================================================================>
+#                                     INVESTOR FEEDBACK SCHEMA
+#<==================================================================================================>
 class InvestorFeedbackSchema(ma.Schema):
     action = fd.fields.String(default="Passed")
 

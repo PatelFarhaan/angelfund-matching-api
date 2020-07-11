@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -6,9 +9,15 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                       LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
+#<==================================================================================================>
+#                                 WAIT LIST USER INVESTOR
+#<==================================================================================================>
 def wait_list_user_inv(user_email, first_name):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
@@ -218,7 +227,7 @@ def wait_list_user_inv(user_email, first_name):
    </div>
   </div>
 </html>
-                """.format(first_name=first_name)
+    """.format(first_name=first_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

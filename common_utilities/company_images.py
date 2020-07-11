@@ -1,32 +1,42 @@
+# <==================================================================================================>
+#                                         IMPORTS
+# <==================================================================================================>
 import os
 import sys
 import boto3
 import shutil
 import requests
-from pymongo import MongoClient
 sys.path.append("../")
+from pymongo import MongoClient
 from common_utilities import CONSTANT
 
 
-
+#<==================================================================================================>
+#                                  SEARCH IN DATABASE
+#<==================================================================================================>
 def search_in_database(company_name):
-    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.images
     collection = db.companies
     return collection.find_one({"company_name": company_name})
 
 
+#<==================================================================================================>
+#                                 INSERTING IN MONGO
+#<==================================================================================================>
 def insert_in_mongo(company_url, company_name):
-    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.images
     collection = db.companies
     collection.insert_one({"company_name": company_name,
-                           "logo_url": company_url
-                           })
+                           "logo_url": company_url})
 
 
+#<==================================================================================================>
+#                                 FILE UPLOAD TO S3
+#<==================================================================================================>
 def file_upload_to_s3(file, object_name):
     object_name = object_name.split('.')[0]
     base_location = f"/{os.getcwd()}/company_images/"
@@ -50,6 +60,9 @@ def file_upload_to_s3(file, object_name):
     return public_url
 
 
+#<==================================================================================================>
+#                                 GET COMPANY IMAGES
+#<==================================================================================================>
 def get_company_images(company_name):
     client_id = CONSTANT.RITEKIT_KEY.value
     url = "https://api.ritekit.com/v1/images/logo?domain={0}&client_id={1}".format(company_name, client_id)
@@ -67,6 +80,9 @@ def get_company_images(company_name):
         return {"result": False}
 
 
+#<==================================================================================================>
+#                                COMPANY IMAGES API
+#<==================================================================================================>
 def company_images_api(company_name):
     company_name = company_name.replace("https://www.", "")
     company_name = company_name.replace("www.", "")

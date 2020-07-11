@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                         IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -6,9 +9,15 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                         LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
+#<==================================================================================================>
+#                                   EMAIL CONFIRMATION
+#<==================================================================================================>
 def email_confirmation(user_email, email_confirm_link, first_name):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
@@ -17,7 +26,6 @@ def email_confirmation(user_email, email_confirm_link, first_name):
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = f"{first_name}, please confirm your email address"
     BODY_HTML = """
-
 <html>
    <head>
       <link 
@@ -231,7 +239,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
             </p>
          </div>
       </div>
-       <div class="footer">
+      <div class="footer">
          <div>
             <a target="_blank" href="https://twitter.com/angelfundAI">
             <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
@@ -255,13 +263,12 @@ def email_confirmation(user_email, email_confirm_link, first_name):
             2375 Zanker Road #250, San Jose, CA 95131
          </p>
          <footer>
-        Copyright &copy;2020 Global Angel Fund, Inc.
-      </footer>
-    </div>
-  </div>
+            Copyright &copy;2020 Global Angel Fund, Inc.
+         </footer>
+      </div>
+   </div>
 </html>
-                
-                """.format(email_confirm_link=email_confirm_link, first_name=first_name)
+    """.format(email_confirm_link=email_confirm_link, first_name=first_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

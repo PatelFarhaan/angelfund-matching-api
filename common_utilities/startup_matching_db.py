@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                       IMPORTS
+#<==================================================================================================>
 import sys
 sys.path.append("../")
 from pymongo import MongoClient
@@ -5,14 +8,21 @@ from project.models import Investor
 from common_utilities import CONSTANT
 from project.investor.marshmallow_serialize import InvestorDashboardSchema
 
+
+#<==================================================================================================>
+#                                       DB DETAILS
+#<==================================================================================================>
 def db_details():
-    remote_mongo_uri = CONSTANT.TEST_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.users
     return collection
 
 
+#<==================================================================================================>
+#                                 INSERT INTO MATCHING
+#<==================================================================================================>
 def insert_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
     my_query = {"email": email, "investor": False}
@@ -36,6 +46,9 @@ def insert_into_matching(email: str, user_obj: dict) -> bool:
         return False
 
 
+#<==================================================================================================>
+#                                UPDATE INTO MATCHING
+#<==================================================================================================>
 def update_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
     my_query = {"email": email, "investor": False}
@@ -48,6 +61,9 @@ def update_into_matching(email: str, user_obj: dict) -> bool:
     return True
 
 
+#<==================================================================================================>
+#                              GET STARTUP MATCHING DATA
+#<==================================================================================================>
 def get_str_matching_data(email: str) -> object:
     collection = db_details()
     my_query = {"email": email, "investor": False}
@@ -59,6 +75,9 @@ def get_str_matching_data(email: str) -> object:
         return doc
 
 
+#<==================================================================================================>
+#                                   GET STARTUP DETAILS
+#<==================================================================================================>
 def get_str_details(id: int) -> dict:
     collection = db_details()
     my_query = {"_id": id}
@@ -69,6 +88,9 @@ def get_str_details(id: int) -> dict:
     return {"result": True, "email": em}
 
 
+#<==================================================================================================>
+#                                PROCESSING HELPER
+#<==================================================================================================>
 def processing_helper(email: str) -> dict:
     inv_obj = Investor.objects.filter(email=email).first()
     if not inv_obj:
@@ -79,6 +101,9 @@ def processing_helper(email: str) -> dict:
     return {"result": True, "data":res}
 
 
+#<==================================================================================================>
+#                              PROCESS ALL STARTUP DATA
+#<==================================================================================================>
 def process_all_str_data(data: list) -> list:
     res = []
     for str in data:
@@ -94,6 +119,9 @@ def process_all_str_data(data: list) -> list:
     return res
 
 
+#<==================================================================================================>
+#                              STARTUP MUTUAL UPDATES
+#<==================================================================================================>
 def str_mutual_updates(str_obj):
     all_passed = True
     email = str_obj.email

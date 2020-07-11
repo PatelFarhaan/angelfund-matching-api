@@ -4,7 +4,7 @@ pipelines:
   branches:
     master:
     - step:
-        name: Build for Master branch
+        name: Build
         caches:
           - pip
         script:
@@ -16,7 +16,7 @@ pipelines:
         artifacts:
           - backend-master.zip
     - step:
-        name: Uploading Master branch to S3
+        name: Uploading to S3
         caches:
           - pip
         script:
@@ -31,7 +31,7 @@ pipelines:
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
               AWS_SECRET_ACCESS_KEY: $AWS_ACCESS_SECRET_KEY_ID
     - step:
-        name: Deploying Master branch on Main Server
+        name: Deploying
         deployment: Production
         caches:
           - pip

@@ -1,3 +1,6 @@
+#<==================================================================================================>
+#                                         IMPORTS
+#<==================================================================================================>
 import sys
 import boto3
 import logging
@@ -6,9 +9,15 @@ from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
+#<==================================================================================================>
+#                                         LOGGER
+#<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
+#<==================================================================================================>
+#                                   DELETE USER ACCOUNT
+#<==================================================================================================>
 def delete_user_account(user_email):
     RECIPIENT = [user_email]
     AWS_REGION = "us-east-1"
@@ -17,7 +26,6 @@ def delete_user_account(user_email):
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Your Angelfund.ai account has been deleted"
     BODY_HTML = """
-
 <html>
    <head>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
@@ -177,7 +185,7 @@ def delete_user_account(user_email):
       </div>
    </div>
 </html>
-                """
+    """
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,
