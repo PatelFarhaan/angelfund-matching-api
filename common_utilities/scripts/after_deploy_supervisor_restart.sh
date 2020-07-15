@@ -3,4 +3,6 @@
 cd /var/flaskapp/flask
 sudo bash compiled_files_cleanup.sh
 sudo chmod +x start.sh
+cd  /var/flaskapp/flask/common_utilities/scripts
+sudo chmod +x secondary_db.sh
 sudo systemctl restart supervisor.service
