@@ -1259,7 +1259,7 @@ def delete_email_address():
 
 
 #<==================================================================================================>
-#                                       DELETE EMAIL ADDRESSES
+#                                    STRING TO EMAIL MAPPING
 #<==================================================================================================>
 @investor_blueprint.route('/ste-mapping', methods=['POST'])
 def string_to_email_mapping():
