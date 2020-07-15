@@ -2,7 +2,7 @@ version: 0.0
 os: linux
 files:
   - source: /
-    destination: /var/flaskapp/flask
+    destination: /home/ubuntu/flask
 
 hooks:
   ApplicationStart:
