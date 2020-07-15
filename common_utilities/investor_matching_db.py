@@ -14,7 +14,7 @@ from project.startup.marshmallow_serialize import StartupDashboardSchema
 #                                   DATABASE DETAILS
 #<==================================================================================================>
 def db_details(**kwargs):
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     if kwargs.get("collection"):

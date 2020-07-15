@@ -157,9 +157,13 @@ def delete_user_account(user_email):
          </p>
       </div>
       <div class="footer">
-         <div>
-            <a target="_blank" href="https://twitter.com/angelfundAI">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
+         <div valign="middle" style="display: block; width: 100%; margin: auto; height: 25px;">
+            <a target="_blank" href="https://twitter.com/angelfundAI" style="height: 25px;
+            width: 25px;">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" 
+            valign="middle"
+            style="
+               vertical-align: middle;
                height: 25px;
                width: 25px;
                text-decoration: none;
@@ -167,8 +171,12 @@ def delete_user_account(user_email):
                color: gray; 
                "></img>
             </a>
-            <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" style="
+            <a target="_blank" href="https://www.linkedin.com/company/angelfundai" style="height: 25px;
+            width: 25px;">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" 
+            valign="middle"
+            style="
+               vertical-align: middle;
                height: 25px;
                width: 25px;
                text-decoration: none;

@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 #                                 DELETE DISCOVER COLLECTION
 #<==================================================================================================>
 def delete_discover_collection():
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.discover

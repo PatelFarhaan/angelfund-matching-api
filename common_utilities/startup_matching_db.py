@@ -13,7 +13,7 @@ from project.investor.marshmallow_serialize import InvestorDashboardSchema
 #                                       DB DETAILS
 #<==================================================================================================>
 def db_details():
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.users

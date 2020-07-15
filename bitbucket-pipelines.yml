@@ -2,7 +2,7 @@ image: python:3.7.3
 
 pipelines:
   branches:
-    master:
+    test_server:
     - step:
         name: Build
         caches:
@@ -12,9 +12,9 @@ pipelines:
           - python3 -m pip install --upgrade --force pip
           - pip3 install -r requirements.txt
           - apt-get install -y zip
-          - zip -r backend-master.zip .
+          - zip -r backend-test-server.zip .
         artifacts:
-          - backend-master.zip
+          - backend-test-server.zip
     - step:
         name: Uploading to S3
         caches:
@@ -24,8 +24,8 @@ pipelines:
             variables:
               COMMAND: 'upload'
               VERSION_LABEL: 'my-app-1.0.0'
-              ZIP_FILE: 'backend-master.zip'
               AWS_DEFAULT_REGION: 'us-west-1'
+              ZIP_FILE: 'backend-test-server.zip'
               S3_BUCKET: 'sample-codebucket-guide'
               APPLICATION_NAME: 'BackendCodeDeploy'
               AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
@@ -42,7 +42,7 @@ pipelines:
               COMMAND: 'deploy'
               VERSION_LABEL: 'my-app-1.0.0'
               AWS_DEFAULT_REGION: 'us-west-1'
-              DEPLOYMENT_GROUP: 'Master-Branch'
+              DEPLOYMENT_GROUP: 'Test-Branch'
               FILE_EXISTS_BEHAVIOR: 'OVERWRITE'
               S3_BUCKET: 'sample-codebucket-guide'
               APPLICATION_NAME: 'BackendCodeDeploy'
