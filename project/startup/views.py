@@ -1365,3 +1365,31 @@ def jwt_for_confirmation_page():
         return jsonify(ret_obj)
     else:
         return jsonify(response)
+
+
+#<==================================================================================================>
+#                                       DELETE EMAIL ADDRESSES
+#<==================================================================================================>
+@startup_blueprint.route('/ste-mapping', methods=['POST'])
+def string_to_email_mapping():
+    """
+    This is a function to return the respective emails from the string values
+
+    :param: string_id
+    :type:  string
+
+    :return: email
+    :type:   string
+    """
+    input_req = request.get_json()
+    response = validate_inv_passed_recvisit_schema(input_req)
+
+    if response["result"]:
+        user_id = response["data"]["user_id"]
+        str_obj = Investor.objects.filter(id=user_id).first()
+        if not str_obj:
+            return jsonify({"result": False, "error": "user does not exist"})
+        else:
+            email = str_obj.email
+            return jsonify({"result": True, "email": email})
+    return response

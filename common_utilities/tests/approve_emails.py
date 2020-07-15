@@ -27,22 +27,23 @@ def delete_email_address(email: str) -> None:
     str_collection = db_details("admin", "startup")
 
     my_query = {"email": email}
+    updated_value = { "$set": {"approved": True} }
 
     ml_query = ml_collection.find_one(my_query)
     inv_query = inv_collection.find_one(my_query)
     str_query = str_collection.find_one(my_query)
 
     if ml_query:
-        ml_collection.delete_many(my_query)
-        print("User Deleted from Machine Learning")
+        ml_collection.update_one(my_query, updated_value)
+        print("User Approved from Machine Learning")
 
     if str_query:
-        str_collection.delete_one(my_query)
-        print("User Deleted from Startup")
+        str_collection.update_one(my_query, updated_value)
+        print("User Approved from Startup")
 
     if inv_query:
-        inv_collection.delete_one(my_query)
-        print("User Deleted from Investors")
+        inv_collection.update_one(my_query, updated_value)
+        print("User Approved from Investors")
 
 
 #<==================================================================================================>

@@ -119,7 +119,7 @@ def startup_data(startup_path):
 #                                   DATABASE CONNECTION DETAILS
 #<==================================================================================================>
 def db_connection_details():
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.users

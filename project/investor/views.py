@@ -1048,21 +1048,20 @@ def passed():
 @investor_blueprint.route('/history-profile-view', methods=["POST"])
 @jwt_required
 def passed_revisit():
-    if request.method == "POST":
-        input_req = request.get_json()
-        response = validate_inv_passed_recvisit_schema(input_req)
+    input_req = request.get_json()
+    response = validate_inv_passed_recvisit_schema(input_req)
 
-        if response["result"]:
-            user_id = response["data"]["user_id"]
-            str_obj = Startup.objects.filter(id=user_id).first()
-            if not str_obj:
-                return jsonify({"result": False, "error": "user does not exist"})
+    if response["result"]:
+        user_id = response["data"]["user_id"]
+        str_obj = Startup.objects.filter(id=user_id).first()
+        if not str_obj:
+            return jsonify({"result": False, "error": "user does not exist"})
 
-            ma_schema = StartupDashboardSchema()
-            data = ma_schema.dump(str_obj)
-            return jsonify({"result": True, "data": data})
-        else:
-            return jsonify(response)
+        ma_schema = StartupDashboardSchema()
+        data = ma_schema.dump(str_obj)
+        return jsonify({"result": True, "data": data})
+    else:
+        return jsonify(response)
 
 
 #<==================================================================================================>
@@ -1117,31 +1116,30 @@ def general_company_images():
 @investor_blueprint.route('/delete-account', methods=["POST"])
 @jwt_required
 def delete_account():
-    if request.method == "POST":
-        jwt_decode = investor_jwt_decoder(get_jwt_identity())
-        if not jwt_decode["result"]:
-            return jsonify(jwt_decode)
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
 
-        inv_obj = jwt_decode["user_obj"]
-        response = validate_delete_acc_schema(request.get_json())
-        if response["result"]:
-            password = response["data"]["password"]
-            if check_password_hash(inv_obj.password, password):
-                setattr(inv_obj, "delete_account", True)
-                inv_obj.save()
+    inv_obj = jwt_decode["user_obj"]
+    response = validate_delete_acc_schema(request.get_json())
+    if response["result"]:
+        password = response["data"]["password"]
+        if check_password_hash(inv_obj.password, password):
+            setattr(inv_obj, "delete_account", True)
+            inv_obj.save()
 
-                matching_obj = get_inv_matching_data(inv_obj.email)
-                str_id = matching_obj.get("_id")
-                if not delete_user_ml(str_id):
-                    technical_errors("INVESTOR: DELETE API UNSUCCESSFUL", inv_obj.email)
+            matching_obj = get_inv_matching_data(inv_obj.email)
+            str_id = matching_obj.get("_id")
+            if not delete_user_ml(str_id):
+                technical_errors("INVESTOR: DELETE API UNSUCCESSFUL", inv_obj.email)
 
-                thread = threading.Thread(target=delete_user_account, args=(inv_obj.email))
-                thread.start()
-                logger.debug(f"investor delete account email sent: {inv_obj.email}")
+            thread = threading.Thread(target=delete_user_account, args=(inv_obj.email))
+            thread.start()
+            logger.debug(f"investor delete account email sent: {inv_obj.email}")
 
-                return jsonify({"result": True, "message": "account deleted"})
-            return jsonify({"result": False, "message": "wrong credentials"})
-        return jsonify(response)
+            return jsonify({"result": True, "message": "account deleted"})
+        return jsonify({"result": False, "message": "wrong credentials"})
+    return jsonify(response)
 
 
 #<==================================================================================================>
@@ -1218,7 +1216,7 @@ def delete_email_address():
 
     def db_details(database, collection):
         from pymongo import MongoClient
-        remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+        remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
         mongo_client = MongoClient(remote_mongo_uri)
         db = mongo_client[database]
         collection = db[collection]
@@ -1258,3 +1256,31 @@ def delete_email_address():
             print("User Deleted from Investors")
 
     return jsonify({"result": True, "message": "All emails deleted if existed"})
+
+
+#<==================================================================================================>
+#                                       DELETE EMAIL ADDRESSES
+#<==================================================================================================>
+@investor_blueprint.route('/ste-mapping', methods=['POST'])
+def string_to_email_mapping():
+    """
+    This is a function to return the respective emails from the string values
+
+    :param: string_id
+    :type:  string
+
+    :return: email
+    :type:   string
+    """
+    input_req = request.get_json()
+    response = validate_inv_passed_recvisit_schema(input_req)
+
+    if response["result"]:
+        user_id = response["data"]["user_id"]
+        str_obj = Startup.objects.filter(id=user_id).first()
+        if not str_obj:
+            return jsonify({"result": False, "error": "user does not exist"})
+        else:
+            email = str_obj.email
+            return jsonify({"result": True, "email": email})
+    return response

@@ -209,7 +209,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
       </div>
       <div class="hook">
          <p class="sizing">
-            Hey {first_name}!—thanks for signing up for
+            Hey {first_name}—thanks for signing up for
             <span style="color: #5e51f4;">Angelfund.ai!</span> <br />Click here to
             confirm your email address and get started:
          </p>

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 #                                MONDAY NOTIFICATIONS LOGIC
 #<==================================================================================================>
 def monday_notofication():
-    remote_mongo_uri = CONSTANT.PRIMARY_DB_CLUSTER.value
+    remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
     mongo_client = MongoClient(remote_mongo_uri)
     db = mongo_client.matching
     collection = db.users
