@@ -1,1 +1,4 @@
 bitbucket-pipelines.yml merge=ours
+common_utilities/__init__.py merge=ours
+appspec.yml merge=ours
+common_utilities/scripts/after_deploy_supervisor_restart.sh merge=ours
