@@ -68,5 +68,3 @@ def insert_into_matching():
 #                                   MAIN CALLING FUNCTION
 #<==================================================================================================>
 insert_into_matching()
-
-# * * * * * cd /Users/farhaan/projects && source venv/bin/activate && cd /Users/farhaan/projects/angelfund/flask/common_utilities/scripts && python3 monday_notifications_script.py
