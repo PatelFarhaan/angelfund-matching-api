@@ -4,6 +4,7 @@ files:
   - source: /
     destination: /home/ubuntu/flask
 
+
 hooks:
   ApplicationStart:
     - location: common_utilities/scripts/after_deploy_supervisor_restart.sh
