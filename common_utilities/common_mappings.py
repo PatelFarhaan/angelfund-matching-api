@@ -66,3 +66,23 @@ def progress_mapping():
         'Early Users Acquired': 'users',
         'Early Revenue Generated': 'revenue'
     }
+
+
+#<==================================================================================================>
+#                               ROUND SIZE TO DEALS COMMON MAPPING
+#<==================================================================================================>
+def round_def(number):
+    if 0 <= number <= 10000:
+        return "0"
+    elif 10000 <= number <= 25000:
+        return "10"
+    elif 25000 <= number <= 50000:
+        return "25"
+    elif 50000 <= number <= 100000:
+        return "50"
+    elif 100000 <= number <= 250000:
+        return "100"
+    elif 250000 <= number <= 500000:
+        return "250"
+    elif number > 500000:
+        return "500"

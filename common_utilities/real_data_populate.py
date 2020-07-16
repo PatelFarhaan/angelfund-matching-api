@@ -92,6 +92,7 @@ def startup_data(startup_path):
         i["password"] = generate_password_hash("Angelfund1!")
         round_size = round_def(int(i["round_size"]))
         i["round_size"] = int(i["round_size"])
+        i["deals"] = [round_size]
         i["raised"] = int(float(i["raised"]))
         i["email_confirmed"] = True
         i["approved"] = True

@@ -23,8 +23,8 @@ from common_utilities.google_email import google_email_confirmation
 from common_utilities.hide_user_profile import hide_user, unhide_user
 from common_utilities.account_delete_email import delete_user_account
 from werkzeug.security import generate_password_hash, check_password_hash
-from common_utilities.common_mappings import sector_data, progress_mapping
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
+from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
@@ -526,6 +526,12 @@ def update_info():
 
                     if not update_into_matching(user_obj.email, {field: res}):
                         technical_errors("STARTUP: PROGRESS DATA UPDATE UNSUCCESSFUL", user_obj.email)
+
+                elif field == "round_size":
+                    setattr(user_obj, field, input_data[field])
+                    setattr(user_obj, "deals", [round_def(input_data[field])])
+                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
+                        technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
 
                 else:
                     setattr(user_obj, field, input_data[field])
