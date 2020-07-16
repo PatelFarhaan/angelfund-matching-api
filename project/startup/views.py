@@ -185,7 +185,7 @@ def login():
             error = "please confirm your email address"
             token = serial.dumps(email, salt='email_confirm')
             link = url_for('startup.email_confirmed', token=token, _external=True)
-            thread = threading.Thread(target=email_confirmation, args=(email, link,))
+            thread = threading.Thread(target=email_confirmation, args=(email, link, user.first_name))
             thread.start()
             return jsonify({"result": False, "error": error})
 
