@@ -10,6 +10,7 @@ sys.path.append("../")
 from pymongo import MongoClient
 from common_utilities import CONSTANT
 from project.models import Startup, Investor
+from werkzeug.security import generate_password_hash
 from project.startup.marshmallow_serialize import StartupMLSchema
 from project.investor.marshmallow_serialize import InvestorMLSchema
 
@@ -39,9 +40,10 @@ def investor_data(investor_path):
             i["accreditation"] = str(int(float(i["accreditation"])))
         except:
             i["accreditation"] = "nothing"
-        i["email_confirmed"] = False
-        i["approved"] =  False
 
+        i["approved"] =  True
+        i["email_confirmed"] = True
+        i["password"] = generate_password_hash("Angelfund1!")
 
         email = i["email"].lower()
         users_count = collection.estimated_document_count()
@@ -49,6 +51,9 @@ def investor_data(investor_path):
             _id = 0
         else:
             _id = (((users_count - 1) * 100) + 100)
+
+        if not i.get("email"):
+            continue
 
         new_obj = Investor(**i)
         new_obj.save()
@@ -87,12 +92,12 @@ def startup_data(startup_path):
         else:
             i["num_team_members"] = int(float(i["num_team_members"]))
 
+        i["password"] = generate_password_hash("Angelfund1!")
         round_size = round_def(int(i["round_size"]))
         i["round_size"] = int(i["round_size"])
         i["raised"] = int(float(i["raised"]))
-        i["email_confirmed"] = False
-        i["approved"] = False
-
+        i["email_confirmed"] = True
+        i["approved"] = True
 
         email = i["email"].lower()
         users_count = collection.estimated_document_count()

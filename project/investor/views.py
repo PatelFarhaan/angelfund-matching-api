@@ -238,12 +238,12 @@ def reset_link(token):
             if email:
                 email = email.lower()
         except:
-            return redirect("https://www.angelfund.ai", code=302)
+            return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
         user = Investor.objects.filter(email=email).first()
         if user:
             if user.password_reset_meta_data == {}:
-                return redirect("https://www.angelfund.ai", code=302)
+                return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
         return render_template("reset.html")
 
     elif request.method == "POST":
@@ -252,14 +252,14 @@ def reset_link(token):
             if email:
                 email = email.lower()
         except:
-            return redirect("https://www.angelfund.ai", code=302)
+            return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
         user = Investor.objects.filter(email=email).first()
         if user:
             password = request.form.get("password")
 
             if user.password_reset_meta_data == {}:
-                return redirect("https://www.angelfund.ai", code=302)
+                return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
             if not user.password_reset_meta_data["is_clicked"]:
                 user.password = generate_password_hash(password)
@@ -268,7 +268,7 @@ def reset_link(token):
                 logger.debug(f"investor password changed: {email}")
                 return render_template("reset-success-inv.html")
         else:
-            return redirect("https://www.angelfund.ai", code=302)
+            return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
 
 #<==================================================================================================>
@@ -358,13 +358,13 @@ def email_confirmed(token):
         if email:
             email = email.lower()
     except:
-        return redirect("https://www.angelfund.ai/login", code=302)
+        return redirect(f"{CONSTANT.CURRENT_SERVER.value}/login", code=302)
 
     user = Investor.objects.filter(email=email).first()
 
     if user:
         if user.passowrd_confirm_meta_data == {}:
-            return redirect("https://www.angelfund.ai/login", code=302)
+            return redirect(f"{CONSTANT.CURRENT_SERVER.value}/login", code=302)
         else:
             user.email_confirmed = True
             user.save()
@@ -384,7 +384,7 @@ def email_confirmed(token):
 
     else:
         logger.debug(f"investor does not exist {email}")
-        return redirect("https://www.angelfund.ai/investor/signup")
+        return redirect(f"{CONSTANT.CURRENT_SERVER.value}/investor/signup")
 
 
 #<==================================================================================================>
@@ -405,7 +405,7 @@ def confirmation_signup_flow():
     first_name = (inv_obj.first_name).strip().replace(" ", "_")
     last_name = (inv_obj.last_name).strip().replace(" ", "_")
     query_string = f"confirmed=True&email={inv_obj.email}&fn={first_name}&ln={last_name}&investor=true"
-    return redirect(f"https://www.angelfund.ai/investor/signup?{query_string}"), 302
+    return redirect(f"{CONSTANT.CURRENT_SERVER.value}/investor/signup?{query_string}"), 302
 
 
 #<==================================================================================================>
@@ -475,7 +475,7 @@ def referral_verification(token):
         referred_by = ref_obj.get("referred_by")
         referred = ref_obj.get("referred")
     except:
-        return redirect("https://www.angelfund.ai", code=302)
+        return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
     user = Investor.objects.filter(email=referred_by).first()
 
@@ -487,7 +487,7 @@ def referral_verification(token):
             referred_to = list(details.get("referred_to"))
             if referred in referred_to:
                 logger.debug(f"{referred} is already referred by {referred_by}")
-                return redirect("https://www.angelfund.ai", code=302)
+                return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
             referred_to.append(referred)
             details["referred_to"] = referred_to
@@ -505,7 +505,7 @@ def referral_verification(token):
         ref_to_obj = Referrals.objects.filter(email=referred).first()
         if ref_to_obj:
             logger.debug(f"{referred} is already referred by {referred_by}")
-            return redirect("https://www.angelfund.ai", code=302)
+            return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
         details = {
             "referred_by": referred_by,
@@ -515,10 +515,10 @@ def referral_verification(token):
         new_ref_obj.save()
 
         logger.debug(f"{referred} is referred by {referred_by}")
-        return redirect("https://www.angelfund.ai", code=302)
+        return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
     else:
         logger.debug(f"investor does not exist {referred_by} :=> referral verification")
-        return redirect("https://www.angelfund.ai", code=302)
+        return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
 
 #<==================================================================================================>
@@ -722,7 +722,7 @@ def mime_files():
 
     if file_type == "image":
         if mime_base == "image":
-            image_url = profile_pic_upload_to_s3(x_name, mime_extention, file_location, file_name)
+            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
             user_obj.profile_pic_link = image_url
             user_obj.save()
             shutil.rmtree(file_location)
