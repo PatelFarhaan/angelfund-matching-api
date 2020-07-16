@@ -52,9 +52,6 @@ def investor_data(investor_path):
         else:
             _id = (((users_count - 1) * 100) + 100)
 
-        if not i.get("email"):
-            continue
-
         new_obj = Investor(**i)
         new_obj.save()
 
