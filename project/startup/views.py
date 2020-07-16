@@ -532,6 +532,8 @@ def update_info():
                     setattr(user_obj, "deals", [round_def(input_data[field])])
                     if not update_into_matching(user_obj.email, {field: input_data[field]}):
                         technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
+                    if not update_into_matching(user_obj.email, {"deals": [round_def(input_data[field])]}):
+                        technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
 
                 else:
                     setattr(user_obj, field, input_data[field])
