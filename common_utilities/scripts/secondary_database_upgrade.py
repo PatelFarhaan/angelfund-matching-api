@@ -2,6 +2,8 @@
 #                                        IMPORTS
 #<==================================================================================================>
 import sys
+import time
+import threading
 sys.path.append("../../")
 from pymongo import MongoClient
 from common_utilities import CONSTANT
@@ -49,19 +51,28 @@ def insert_into_matching():
 
     main_db = from_db_details()
     secondary_collection = to_db_details()
-    main_count = main_db.estimated_document_count()
-    skip_count = secondary_collection.estimated_document_count()
+    total_count = main_db.estimated_document_count()
 
-    docs = list(main_db.find().skip(skip_count).limit(doc_limit))
-    if docs != []:
-        for i in docs:
-            try:
-                secondary_collection.insert(dict(i), check_keys=False)
-            except:
-                print("Exception occoured")
-    users_count = secondary_collection.estimated_document_count()
-    if users_count != main_count:
-        return insert_into_matching()
+    for offset in range(0, total_count, doc_limit):
+        data_chunk = list(main_db.find({}).skip(offset).limit(doc_limit))
+
+        for doc in data_chunk:
+            def helper(email):
+
+                if secondary_collection.find({"email": email}):
+                    print(email)
+                    for k, v in doc.items():
+                        if k == "_id":
+                            continue
+                        try:
+                            secondary_collection.update_one({"email": email}, {"$set": {k: v}})
+                        except:
+                            print("Exception occoured in updating", doc.get("email"))
+
+            email = doc.get("email")
+            thread = threading.Thread(target=helper, args=(email, ))
+            thread.start()
+        time.sleep(2)
 
 
 #<==================================================================================================>

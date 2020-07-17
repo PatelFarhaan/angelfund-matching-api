@@ -65,4 +65,5 @@ class StartupMLSchema(ma.Schema):
                   "count_invited", "count_passed", "show_limit", "invite_accepted_notify", "all_transaction_fields",
                   "first_dashboard_visit", "created", "investor", "feedback", "connected", "passed", "matched_week",
                   "startup_pitch", "profile_pic_link", "raised_capital_desc", "password_reset_meta_data", "approved",
-                  "pending", "co_founders", "show_slide_deck", "delete_account", "show_profile", "monday_notification")
+                  "pending", "co_founders", "show_slide_deck", "delete_account", "show_profile", "monday_notification",
+                  "deals")

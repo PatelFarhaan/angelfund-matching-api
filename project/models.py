@@ -71,6 +71,7 @@ class Investor(db.Document, UserMixin):
 class Startup(db.Document, UserMixin):
     raised = db.IntField()
     bio = db.StringField()
+    deals = db.ListField()
     passed = db.DictField()
     pending = db.DictField()
     sectors = db.ListField()
@@ -129,12 +130,3 @@ class Referrals(db.Document):
     details = db.DictField()
 
     meta = dict(indexes=['email'])
-
-
-#<==================================================================================================>
-#                                   NOT USED IN PHASE 1
-#<==================================================================================================>
-class SignUpMappings(db.Document):
-    deals_data = db.DictField()
-    sector_data = db.DictField()
-    accreditation_data = db.DictField()
