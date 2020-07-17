@@ -25,4 +25,4 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(__name__)
     logger.info(f"flask reserver started at {datetime.datetime.utcnow()}")
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    app.run(host='127.0.0.1', port=5000)
