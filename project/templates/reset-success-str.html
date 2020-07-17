@@ -1,72 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
-   <head>
-      <meta charset="UTF-8" />
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <title>Reset Password | Angelfund</title>
-      <link
-         href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
-         rel="stylesheet"
-         />
-   </head>
-   <body style="font-family: Roboto;">
-      <div
-         style="
-         padding-left: 1rem;
-         color: white;
-         display: flex;
-         align-items: center;
-         "
-         >
-         <img
-            src="https://media-exp1.licdn.com/dms/image/C560BAQEFfsSZuaRiXQ/company-logo_200_200/0?e=2159024400&v=beta&t=-qiAENtazer90X4wNyIrYL8zEYi6bQeMDi4HTPieDNI"
-            alt="af-logo"
-            style="width: 50px;"
-            />
-         <h2 style="color: #5e51f4;">Angelfund.ai</h2>
-      </div>
-      <div style="margin: auto; width: 500px;">
-         <h1
-            style="
-            text-align: center;
-            padding-bottom: 2rem;
-            padding-top: 5rem;
-            color: #5e51f4;
-            "
-            >
-            Your password has been reset!
-         </h1>
-         <div style="text-align: center; display: flex; flex-direction: column;">
 
-            <button
-                    onclick="location.href='https://angelfund.ai/login'"
-               style="
+<head>
+   <meta charset="UTF-8" />
+   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+   <title>Reset Password | Angelfund</title>
+   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+   <link href="http://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet" type="text/css" />
+   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+   <style>
+      html,
+      body {
+         padding: 0;
+         margin: 9;
+      }
+
+      button {
+         font-family: roboto;
+         border: 2px solid #f2f2ff;
+         font-size: 16px !important;
+      }
+
+      @media only screen and (max-width: 520px) {
+         h1 {
+            font-size: 24px !important;
+         }
+
+         button {
+            font-size: 14px !important;
+         }
+      }
+   </style>
+</head>
+
+<body style="font-family: Roboto;">
+   <div style="
+          padding-left: 1rem;
+          color: white;
+          display: flex;
+          align-items: center;
+        ">
+      <img
+         src="https://media-exp1.licdn.com/dms/image/C560BAQEFfsSZuaRiXQ/company-logo_200_200/0?e=2159024400&v=beta&t=-qiAENtazer90X4wNyIrYL8zEYi6bQeMDi4HTPieDNI"
+         alt="af-logo" style="width: 50px;" />
+      <h2 style="color: #5e51f4;">Angelfund.ai</h2>
+   </div>
+   <div style="display: block; margin: auto; max-width: 500px; width: 90%;">
+      <h1 style="
+         text-align: center;
+         padding-bottom: 2rem;
+         padding-top: 5rem;
+         font-family: 'Lato' !important;
+       ">
+         Your password has been reset!
+      </h1>
+      <div style="text-align: center; display: flex; flex-direction: column;">
+
+         <button onclick="location.href='https://angelfund.ai/login'" style="
                margin-top: 1rem;
                padding: 16px;
                background-color: #5e51f4;
                color: white;
                border-radius: 5px;
-               "
-               type="button"
-               >
+               font-weight: bold;
+               " type="button">
             Return to Login
-            </button>
+         </button>
 
-            <button
-                    onclick="location.href='https://angelfund.ai/'"
-               style="
+         <button onclick="location.href='https://angelfund.ai/'" style="
                margin-top: 1rem;
                padding: 16px;
                background-color: white;
                color: #5e51f4;
                border-radius: 5px;
-               "
-               type="button"
-               >
+               " type="button">
             Return to Homepage
-            </button>
-         </div>
+         </button>
       </div>
-   </body>
-</html>
+   </div>
+</body>
 
+</html>

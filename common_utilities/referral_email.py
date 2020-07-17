@@ -20,11 +20,11 @@ logger = logging.getLogger(__name__)
 #                                   EMAIL REFERRAL
 #<==================================================================================================>
 def email_referral(user_email, full_name, first_name, link, is_investor):
-    full_name = string.capwords(full_name)
-    first_name = first_name.capitalize()
     RECIPIENT = [user_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "hello@angelfund.ai"
+    first_name = first_name.capitalize()
+    full_name = string.capwords(full_name)
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
+    SENDER = "Angelfund.ai <hello@angelfund.ai>"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = f"{first_name} has invited you to join Angelfund.ai!"

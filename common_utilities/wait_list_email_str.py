@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 #<==================================================================================================>
 def wait_list_user_str(user_email, first_name, company_name):
     RECIPIENT = [user_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = CONSTANT.EMAIL_SENDER.value
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "You’re on the waitlist!"
