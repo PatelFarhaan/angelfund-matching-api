@@ -34,7 +34,7 @@ def delete_email_address(email: str) -> None:
     str_query = str_collection.find_one(my_query)
 
     if ml_query:
-        ml_collection.update_one(my_query, updated_value)
+        ml_collection.update_many(my_query, updated_value)
         print("User Approved from Machine Learning")
 
     if str_query:

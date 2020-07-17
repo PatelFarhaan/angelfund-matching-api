@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 #<==================================================================================================>
 def delete_user_account(user_email):
     RECIPIENT = [user_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = CONSTANT.EMAIL_SENDER.value
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = "Your Angelfund.ai account has been deleted"
