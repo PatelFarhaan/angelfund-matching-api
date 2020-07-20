@@ -24,7 +24,7 @@ def wait_list_user_inv(user_email, first_name):
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Youâ€™re on the waitlist!"
+    SUBJECT = "You’re on the waitlist!"
     BODY_HTML = """
 <html>
   <head>
@@ -178,8 +178,8 @@ def wait_list_user_inv(user_email, first_name):
       </p>
       <p class="sizing">
         Weâ€™re in the early stages of growing our community and are onboarding
-        new investors as fast as we can. When youâ€™re off the waitlist and your
-        profileâ€™s been approved, weâ€™ll let you know.
+        new investors as fast as we can. When you're off the waitlist and your
+        profile's been approved, we'll let you know.
       </p>
       <p class="sizing">
         All the best!
