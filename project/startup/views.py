@@ -20,15 +20,15 @@ from common_utilities.technical_error_mail import technical_errors
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.wait_list_email_str import wait_list_user_str
 from common_utilities.google_email import google_email_confirmation
-from common_utilities.hide_user_profile import hide_user, unhide_user
 from common_utilities.account_delete_email import delete_user_account
+from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
-from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
@@ -695,8 +695,12 @@ def mime_files():
     if os._exists(file_location):
         shutil.rmtree(file_location)
 
+    os.mkdir(file_location)
+    with open(f"{file_location}/{file_name}", 'wb') as f:
+        f.write(file_obj.read())
+
     from common_utilities.startup_file_upload import str_file_upload
-    file_upload_thread = threading.Thread(target=str_file_upload, args=(file_location, file_name, file_obj, file_type, user_obj, ))
+    file_upload_thread = threading.Thread(target=str_file_upload, args=(file_location, file_name, file_type, user_obj, ))
     file_upload_thread.start()
     return jsonify({"result": True, "url": None})
 

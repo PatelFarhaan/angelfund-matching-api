@@ -1,15 +1,9 @@
-import os
 import magic
 import shutil
-from flask import jsonify
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 
 
-def str_file_upload(file_location, file_name, file_obj, file_type, user_obj):
-    os.mkdir(file_location)
-    with open(f"{file_location}/{file_name}", 'wb') as f:
-        f.write(file_obj.read())
-
+def str_file_upload(file_location, file_name, file_type, user_obj):
     mime = magic.Magic(mime=True)
     mime_type = mime.from_file(f"{file_location}/{file_name}")
     mime_base = mime_type.split('/', 1)[0]  # base mime type :=> application (for pdf) or image (for image)
@@ -21,10 +15,10 @@ def str_file_upload(file_location, file_name, file_obj, file_type, user_obj):
             user_obj.slide_deck = pdf_url
             user_obj.save()
             shutil.rmtree(file_location)
-            return jsonify({"result": True, "url": pdf_url})
+            return
         else:
             shutil.rmtree(file_location)
-            return jsonify({"result": False, "error": "pdf file required"})
+            return
 
     elif file_type == "image":
         if mime_base == "image":
@@ -32,11 +26,11 @@ def str_file_upload(file_location, file_name, file_obj, file_type, user_obj):
             user_obj.profile_pic_link = image_url
             user_obj.save()
             shutil.rmtree(file_location)
-            return jsonify({"result": True, "url": image_url})
+            return
         else:
             shutil.rmtree(file_location)
-            return jsonify({"result": False, "error": "image file required"})
+            return
 
     else:
         shutil.rmtree(file_location)
-        return jsonify({"result": False, "error": "invalid file type"})
+        return
