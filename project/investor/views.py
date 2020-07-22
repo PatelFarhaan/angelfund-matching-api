@@ -895,9 +895,10 @@ def investors_dashboard():
                     "3": "$250,000 to $500,000"
                 }
 
+                # import ipdb; ipdb.set_trace()
+
                 temp_dict = {}
                 temp_dict["inv_bio"] = inv_obj.bio
-                temp_dict["inv_deals"] = list(deals.get(inv_obj.deals))[0]
                 temp_dict["inv_fn"] = inv_obj.first_name
 
                 if inv_obj.profile_pic_link:

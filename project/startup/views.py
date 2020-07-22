@@ -15,6 +15,7 @@ from project.models import Startup, Investor, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.connected_emails import email_connected
+from common_utilities.startup_file_upload import str_file_upload
 from common_utilities.password_reset import password_reset_email
 from common_utilities.technical_error_mail import technical_errors
 from common_utilities.email_confirmation import email_confirmation
@@ -699,10 +700,7 @@ def mime_files():
     with open(f"{file_location}/{file_name}", 'wb') as f:
         f.write(file_obj.read())
 
-    from common_utilities.startup_file_upload import str_file_upload
-    file_upload_thread = threading.Thread(target=str_file_upload, args=(file_location, file_name, file_type, user_obj, ))
-    file_upload_thread.start()
-    return jsonify({"result": True, "url": None})
+    str_file_upload(file_location, file_name, file_type, user_obj)
 
 
 #<==================================================================================================>
