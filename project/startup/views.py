@@ -15,7 +15,6 @@ from project.models import Startup, Investor, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.connected_emails import email_connected
-from common_utilities.startup_file_upload import str_file_upload
 from common_utilities.password_reset import password_reset_email
 from common_utilities.technical_error_mail import technical_errors
 from common_utilities.email_confirmation import email_confirmation
@@ -23,11 +22,11 @@ from common_utilities.wait_list_email_str import wait_list_user_str
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
-from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
+from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
 from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
@@ -700,7 +699,36 @@ def mime_files():
     with open(f"{file_location}/{file_name}", 'wb') as f:
         f.write(file_obj.read())
 
-    str_file_upload(file_location, file_name, file_type, user_obj)
+    mime = magic.Magic(mime=True)
+    mime_type = mime.from_file(f"{file_location}/{file_name}")
+    mime_base = mime_type.split('/', 1)[0]  # base mime type :=> application (for pdf) or image (for image)
+    mime_extention = mime_type.split('/', 1)[1]  # pdf or jpeg
+
+    if file_type == "application":
+        if mime_extention == "pdf":
+            pdf_url = pdf_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            user_obj.slide_deck = pdf_url
+            user_obj.save()
+            shutil.rmtree(file_location)
+            return jsonify({"result": True, "url": pdf_url})
+        else:
+            shutil.rmtree(file_location)
+            return jsonify({"result": False, "error": "pdf file required"})
+
+    elif file_type == "image":
+        if mime_base == "image":
+            image_url = profile_pic_upload_to_s3(file_name, mime_extention, file_location, file_name)
+            user_obj.profile_pic_link = image_url
+            user_obj.save()
+            shutil.rmtree(file_location)
+            return jsonify({"result": True, "url": image_url})
+        else:
+            shutil.rmtree(file_location)
+            return jsonify({"result": False, "error": "image file required"})
+
+    else:
+        shutil.rmtree(file_location)
+        return jsonify({"result": False, "error": "invalid file type"})
 
 
 #<==================================================================================================>
