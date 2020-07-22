@@ -1,5 +1,6 @@
 import magic
 import shutil
+from flask import jsonify
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 
 
@@ -15,10 +16,10 @@ def str_file_upload(file_location, file_name, file_type, user_obj):
             user_obj.slide_deck = pdf_url
             user_obj.save()
             shutil.rmtree(file_location)
-            return
+            return jsonify({"result": True, "url": pdf_url})
         else:
             shutil.rmtree(file_location)
-            return
+            return jsonify({"result": False, "error": "pdf file required"})
 
     elif file_type == "image":
         if mime_base == "image":
@@ -26,11 +27,11 @@ def str_file_upload(file_location, file_name, file_type, user_obj):
             user_obj.profile_pic_link = image_url
             user_obj.save()
             shutil.rmtree(file_location)
-            return
+            return jsonify({"result": True, "url": image_url})
         else:
             shutil.rmtree(file_location)
-            return
+            return jsonify({"result": False, "error": "image file required"})
 
     else:
         shutil.rmtree(file_location)
-        return
+        return jsonify({"result": False, "error": "invalid file type"})
