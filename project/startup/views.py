@@ -700,7 +700,7 @@ def mime_files():
     with open(f"{file_location}/{file_name}", 'wb') as f:
         f.write(file_obj.read())
 
-    return str_file_upload(file_location, file_name, file_type, user_obj)
+    str_file_upload(file_location, file_name, file_type, user_obj)
 
 
 #<==================================================================================================>
