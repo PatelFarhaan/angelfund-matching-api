@@ -378,9 +378,9 @@ def email_confirmed(token):
         user.is_logged_in = True
         user.passowrd_confirm_meta_data = {}
         user.save()
-        session["email"] = email   # Todo: check this code with current_user module
+        session["email"] = email
         logger.debug(f"investor logged in: {email}")
-        return redirect(url_for("investor.confirmation_signup_flow", email=email, code=307))
+        return redirect(url_for("investor.confirmation_signup_flow", email=email, code=302))
 
     else:
         logger.debug(f"investor does not exist {email}")
