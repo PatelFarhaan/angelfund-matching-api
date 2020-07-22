@@ -55,7 +55,7 @@ class Investor(db.Document, UserMixin):
     monday_notification = db.BooleanField(default=True)
     first_dashboard_visit = db.BooleanField(default=True)
     invite_accepted_notify = db.BooleanField(default=True)
-    created = db.DateTimeField(default=datetime.datetime.utcnow())
+    created = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['email', '-created', 'is_google_signup', 'is_logged_in'])
 
@@ -112,7 +112,7 @@ class Startup(db.Document, UserMixin):
     monday_notification = db.BooleanField(default=True)
     first_dashboard_visit = db.BooleanField(default=True)
     invite_accepted_notify = db.BooleanField(default=True)
-    created = db.DateTimeField(default=datetime.datetime.utcnow())
+    created = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['email', '-created', 'is_google_signup', 'is_logged_in'])
 
