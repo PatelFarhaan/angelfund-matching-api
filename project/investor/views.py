@@ -11,7 +11,6 @@ import threading
 from project import serial
 from common_utilities import CONSTANT
 from flask_login import login_required, login_user
-from project.models import Investor, Startup, Referrals
 from common_utilities.referral_email import email_referral
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.connected_emails import email_connected
@@ -19,10 +18,12 @@ from common_utilities.company_images import company_images_api
 from common_utilities.password_reset import password_reset_email
 from common_utilities.email_confirmation import email_confirmation
 from common_utilities.technical_error_mail import technical_errors
+from project.models import Investor, Startup, Referrals, AngelGroup
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.wait_list_email_inv import wait_list_user_inv
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.login_analytics import user_login_data_processing
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
@@ -38,7 +39,8 @@ from common_utilities.investor_matching_db import (insert_into_matching, update_
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_delete_acc_schema,
-                                                              validate_inv_monday_notification_schema, validate_profile_vis_schema)
+                                                              validate_inv_monday_notification_schema, validate_profile_vis_schema,
+                                                              validate_inv_angel_group_name_schema)
 
 
 #<==================================================================================================>
@@ -79,6 +81,9 @@ def google_token():
                         user.save()
                         logger.debug(f"investor logged in: {email}")
 
+                        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
+                        analytics_thread.start()
+
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
 
@@ -112,6 +117,9 @@ def google_token():
                         # noinspection PyArgumentList
                         new_user = Investor(**user_dict)
                         new_user.save()
+
+                        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
+                        analytics_thread.start()
 
                         ml_schema = InvestorMLSchema()
                         user = Investor.objects.filter(email=email).first()
@@ -201,6 +209,9 @@ def login():
             user.is_logged_in = True
             user.save()
             logger.debug(f"investor logged in: {email}")
+
+            analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
+            analytics_thread.start()
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
@@ -338,6 +349,9 @@ def register():
         link = url_for('investor.email_confirmed', token=token, _external=True)
         thread = threading.Thread(target=email_confirmation, args=(email, link, input_request.get("first_name")))
         thread.start()
+
+        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
+        analytics_thread.start()
 
         user.passowrd_confirm_meta_data = {"is_clicked": False}
         user.save()
@@ -1273,6 +1287,7 @@ def string_to_email_mapping():
     :return: email
     :type:   string
     """
+
     input_req = request.get_json()
     response = validate_inv_passed_recvisit_schema(input_req)
 
@@ -1284,4 +1299,35 @@ def string_to_email_mapping():
         else:
             email = str_obj.email
             return jsonify({"result": True, "email": email})
+    return response
+
+
+#<==================================================================================================>
+#                                    ANGEL GROUP NAME SEARCH
+#<==================================================================================================>
+@investor_blueprint.route('/angelgroup-name-search', methods=['POST'])
+def angel_group_name_search():
+    """
+    This is a test function to return the matching values of angel group from the AG database
+
+    :param: name
+    :type:  string
+
+    :return: complete matching name
+    :type:   string
+    """
+
+    input_req = request.get_json()
+    response = validate_inv_angel_group_name_schema(input_req)
+    if response["result"]:
+        import re
+        regex_obj = re.compile(f".*{response['data']['angel_group_name']}.*")
+        matching_objs = AngelGroup.objects(name=regex_obj)
+        if matching_objs:
+            final_resp = {
+                "result": True,
+                "data": [i.name for i in matching_objs]
+            }
+            return jsonify(final_resp)
+        return jsonify({"result": False, "data": None})
     return response

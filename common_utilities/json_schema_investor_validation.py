@@ -341,3 +341,27 @@ def validate_profile_vis_schema(data):
     except SchemaError as e:
         return {'result': False, 'error': e.message}
     return {'result': True, 'data': data}
+
+
+#<==================================================================================================>
+#                                      ANGEL FUND NAME SCHEMA
+#<==================================================================================================>
+inv_angel_group_name_schema = {
+    "type": "object",
+    "properties": {
+        "angel_group_name": {
+            "type": "string",
+        },
+    },
+    "required": ["angel_group_name"],
+    "additionalProperties": False
+}
+
+def validate_inv_angel_group_name_schema(data):
+    try:
+        validate(instance=data, schema= inv_angel_group_name_schema)
+    except ValidationError as e:
+        return {'result': False, 'error': e.message}
+    except SchemaError as e:
+        return {'result': False, 'error': e.message}
+    return {'result': True, 'data': data}

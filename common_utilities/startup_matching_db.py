@@ -102,7 +102,7 @@ def processing_helper(email: str) -> dict:
 
 
 #<==================================================================================================>
-#                              PROCESS ALL STARTUP DATA
+#                              PROCESS ALL INVESTOR DATA
 #<==================================================================================================>
 def process_all_str_data(data: list) -> list:
     res = []
@@ -113,9 +113,6 @@ def process_all_str_data(data: list) -> list:
             str_details = processing_helper(str_data["email"])
             if str_details["result"]:
                 res.append(str_details["data"])
-
-        if len(res) == 3:
-            return res
     return res
 
 
