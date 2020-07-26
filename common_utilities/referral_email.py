@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 #<==================================================================================================>
 #                                   EMAIL REFERRAL
 #<==================================================================================================>
-def email_referral(user_email, full_name, first_name, link, is_investor):
+def email_referral(user_email, full_name, first_name, link, is_investor, domain):
     RECIPIENT = [user_email]
     first_name = first_name.capitalize()
     full_name = string.capwords(full_name)
@@ -168,7 +168,7 @@ def email_referral(user_email, full_name, first_name, link, is_investor):
                color: #5e51f4;
                "
                href="{link}"
-               >http://***REMOVED***/api/v1/{is_investor}/referral/{first_name}</a
+               >{domain}/api/v1/{is_investor}/referral/{first_name}</a
                >
          </p>
       </div>
