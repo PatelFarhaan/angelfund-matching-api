@@ -473,7 +473,9 @@ def referral_link():
 
     token = serial.dumps(ref_obj, salt='email_referral')
     link = url_for('investor.referral_verification', token=token, _external=True)
-    thread = threading.Thread(target=email_referral, args=((ref_email, full_name, first_name, link, "investor")))
+    thread = threading.Thread(target=email_referral,
+                              args=((ref_email, full_name, first_name, link, "investor",
+                                     CONSTANT.CURRENT_SERVER.value)))
     thread.start()
 
     return jsonify({"result": True, "message": "mail sent"})
