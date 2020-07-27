@@ -33,6 +33,7 @@ from common_utilities.startup_matching_db import get_str_matching_data, str_mutu
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
+from common_utilities.new_user_count_analytics import daily_new_users_count, weekly_new_users_count, monthly_new_users_count
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
                                                    inv_mutual_updates)
@@ -141,6 +142,11 @@ def google_token():
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
 
+                        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+                        for i in user_count_analytics:
+                            login_cnt_thread = threading.Thread(target=i, args=())
+                            login_cnt_thread.start()
+
                         rev_acc_data = rev_accreditation_data()
                         rev_sectors_data = rev_sector_data()
 
@@ -165,6 +171,7 @@ def google_token():
             return jsonify({"result": False, "error": "token not validated"}), 400
     else:
         return jsonify(response)
+
 
 #<==================================================================================================>
 #                                            LOGIN
@@ -350,8 +357,10 @@ def register():
         thread = threading.Thread(target=email_confirmation, args=(email, link, input_request.get("first_name")))
         thread.start()
 
-        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
-        analytics_thread.start()
+        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+        for i in user_count_analytics:
+            login_cnt_thread = threading.Thread(target=i, args=())
+            login_cnt_thread.start()
 
         user.passowrd_confirm_meta_data = {"is_clicked": False}
         user.save()

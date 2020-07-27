@@ -33,6 +33,7 @@ from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_ma
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
+from common_utilities.new_user_count_analytics import daily_new_users_count, weekly_new_users_count, monthly_new_users_count
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
@@ -127,6 +128,11 @@ def google_token():
 
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
+
+                        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+                        for i in user_count_analytics:
+                            login_cnt_thread = threading.Thread(target=i, args=())
+                            login_cnt_thread.start()
 
                         rev_sectors_data = rev_sector_data()
                         rev_progress_data = rev_progress_mapping()
@@ -305,6 +311,11 @@ def register():
         link = url_for('startup.email_confirmed', token=token, _external=True)
         thread = threading.Thread(target=email_confirmation, args=(email, link, user.first_name))
         thread.start()
+
+        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+        for i in user_count_analytics:
+            login_cnt_thread = threading.Thread(target=i, args=())
+            login_cnt_thread.start()
 
         # New Added
         user.passowrd_confirm_meta_data = {"is_clicked": False}

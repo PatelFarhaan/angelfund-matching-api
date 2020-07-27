@@ -148,6 +148,38 @@ class UserAnalytics(db.Document):
 
 
 #<==================================================================================================>
+#                                       NEW USERS DAILY
+#<==================================================================================================>
+class DailyNewUsers(db.Document):
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt'])
+
+
+#<==================================================================================================>
+#                                       NEW USERS WEEKLY
+#<==================================================================================================>
+class WeeklyNewUsers(db.Document):
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt'])
+
+
+
+#<==================================================================================================>
+#                                       NEW USERS MONTHLY
+#<==================================================================================================>
+class MonthlyNewUsers(db.Document):
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt'])
+
+
+
+#<==================================================================================================>
 #                                     ANGEL GROUP
 #<==================================================================================================>
 class AngelGroup(db.Document):
