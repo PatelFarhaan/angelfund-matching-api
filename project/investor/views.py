@@ -33,6 +33,7 @@ from common_utilities.startup_matching_db import get_str_matching_data, str_mutu
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
+from common_utilities.new_user_count_analytics import daily_new_users_count, weekly_new_users_count, monthly_new_users_count
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
                                                    inv_mutual_updates)
@@ -40,7 +41,7 @@ from common_utilities.json_schema_investor_validation import (validate_inv_first
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_delete_acc_schema,
                                                               validate_inv_monday_notification_schema, validate_profile_vis_schema,
-                                                              validate_inv_angel_group_name_schema)
+                                                              validate_inv_angel_group_name_schema, validate_delete_acc_conf_schema)
 
 
 #<==================================================================================================>
@@ -141,6 +142,11 @@ def google_token():
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
 
+                        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+                        for i in user_count_analytics:
+                            login_cnt_thread = threading.Thread(target=i, args=())
+                            login_cnt_thread.start()
+
                         rev_acc_data = rev_accreditation_data()
                         rev_sectors_data = rev_sector_data()
 
@@ -165,6 +171,7 @@ def google_token():
             return jsonify({"result": False, "error": "token not validated"}), 400
     else:
         return jsonify(response)
+
 
 #<==================================================================================================>
 #                                            LOGIN
@@ -350,8 +357,10 @@ def register():
         thread = threading.Thread(target=email_confirmation, args=(email, link, input_request.get("first_name")))
         thread.start()
 
-        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
-        analytics_thread.start()
+        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+        for i in user_count_analytics:
+            login_cnt_thread = threading.Thread(target=i, args=())
+            login_cnt_thread.start()
 
         user.passowrd_confirm_meta_data = {"is_clicked": False}
         user.save()
@@ -1128,11 +1137,11 @@ def general_company_images():
 
 
 #<==================================================================================================>
-#                                          DELETE ACCOUNT
+#                                    VERIFY PASSOWRD :=> DELETE ACCOUNT
 #<==================================================================================================>
-@investor_blueprint.route('/delete-account', methods=["POST"])
+@investor_blueprint.route('/verify-passowrd', methods=["POST"])
 @jwt_required
-def delete_account():
+def verify_password():
     jwt_decode = investor_jwt_decoder(get_jwt_identity())
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
@@ -1142,6 +1151,26 @@ def delete_account():
     if response["result"]:
         password = response["data"]["password"]
         if check_password_hash(inv_obj.password, password):
+            return jsonify({"result": True, "message": "correct credentials"})
+        return jsonify({"result": False, "message": "wrong credentials"})
+    return jsonify(response)
+
+
+#<==================================================================================================>
+#                                    FINAL DELETE :=> DELETE ACCOUNT
+#<==================================================================================================>
+@investor_blueprint.route('/delete-account', methods=["POST"])
+@jwt_required
+def delete_account():
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+    response = validate_delete_acc_conf_schema(request.get_json())
+    if response["result"]:
+        delete = response["data"]["delete"]
+        if delete:
             setattr(inv_obj, "delete_account", True)
             inv_obj.save()
 
@@ -1155,7 +1184,7 @@ def delete_account():
             logger.debug(f"investor delete account email sent: {inv_obj.email}")
 
             return jsonify({"result": True, "message": "account deleted"})
-        return jsonify({"result": False, "message": "wrong credentials"})
+        return jsonify({"result": False, "message": "account not deleted"})
     return jsonify(response)
 
 
@@ -1212,7 +1241,6 @@ def jwt_for_confirmation_page():
         return jsonify(ret_obj)
     else:
         return jsonify(response)
-
 
 
 #<==================================================================================================>

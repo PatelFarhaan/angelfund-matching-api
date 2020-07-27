@@ -295,6 +295,30 @@ def validate_delete_acc_schema(data):
     return {'result': True, 'data': data}
 
 
+
+#<==================================================================================================>
+#                             INVESTOR DELETE ACCOUNT CONFIRMATION SCHEMA
+#<==================================================================================================>
+inv_delete_acc_conf_schema = {
+    "type": "object",
+    "properties": {
+        "delete": {
+            "type": "boolean",
+        },
+    },
+    "required": ["delete"],
+    "additionalProperties": False
+}
+
+def validate_delete_acc_conf_schema(data):
+    try:
+        validate(instance=data, schema= inv_delete_acc_conf_schema)
+    except ValidationError as e:
+        return {'result': False, 'error': e.message}
+    except SchemaError as e:
+        return {'result': False, 'error': e.message}
+    return {'result': True, 'data': data}
+
 #<==================================================================================================>
 #                             INVESTOR INVITE ACCEPTED NOTIFICATION SCHEMA
 #<==================================================================================================>
