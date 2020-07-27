@@ -99,9 +99,6 @@ def email_referral(user_email, full_name, first_name, link, is_investor, domain)
          .sizing {{
          font-size: 17px !important;
          }}
-         .icon-container {{
-         display: flex !important;
-         }}
          a {{
          transition: all 0.5s ease-in-out;
          }}
@@ -173,7 +170,7 @@ def email_referral(user_email, full_name, first_name, link, is_investor, domain)
          </p>
       </div>
       <div class="footer">
-         <div class="icon-container">
+         <div>
             <a target="_blank" href="https://twitter.com/angelfundAI">
             <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
                height: 25px;

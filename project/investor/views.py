@@ -40,7 +40,7 @@ from common_utilities.json_schema_investor_validation import (validate_inv_first
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_delete_acc_schema,
                                                               validate_inv_monday_notification_schema, validate_profile_vis_schema,
-                                                              validate_inv_angel_group_name_schema)
+                                                              validate_inv_angel_group_name_schema, validate_delete_acc_conf_schema)
 
 
 #<==================================================================================================>
@@ -1128,11 +1128,11 @@ def general_company_images():
 
 
 #<==================================================================================================>
-#                                          DELETE ACCOUNT
+#                                    VERIFY PASSOWRD :=> DELETE ACCOUNT
 #<==================================================================================================>
-@investor_blueprint.route('/delete-account', methods=["POST"])
+@investor_blueprint.route('/verify-passowrd', methods=["POST"])
 @jwt_required
-def delete_account():
+def verify_password():
     jwt_decode = investor_jwt_decoder(get_jwt_identity())
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
@@ -1142,6 +1142,26 @@ def delete_account():
     if response["result"]:
         password = response["data"]["password"]
         if check_password_hash(inv_obj.password, password):
+            return jsonify({"result": True, "message": "correct credentials"})
+        return jsonify({"result": False, "message": "wrong credentials"})
+    return jsonify(response)
+
+
+#<==================================================================================================>
+#                                    FINAL DELETE :=> DELETE ACCOUNT
+#<==================================================================================================>
+@investor_blueprint.route('/delete-account', methods=["POST"])
+@jwt_required
+def delete_account():
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    inv_obj = jwt_decode["user_obj"]
+    response = validate_delete_acc_conf_schema(request.get_json())
+    if response["result"]:
+        delete = response["data"]["delete"]
+        if delete:
             setattr(inv_obj, "delete_account", True)
             inv_obj.save()
 
@@ -1155,7 +1175,7 @@ def delete_account():
             logger.debug(f"investor delete account email sent: {inv_obj.email}")
 
             return jsonify({"result": True, "message": "account deleted"})
-        return jsonify({"result": False, "message": "wrong credentials"})
+        return jsonify({"result": False, "message": "account not deleted"})
     return jsonify(response)
 
 
@@ -1212,7 +1232,6 @@ def jwt_for_confirmation_page():
         return jsonify(ret_obj)
     else:
         return jsonify(response)
-
 
 
 #<==================================================================================================>

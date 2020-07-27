@@ -30,10 +30,10 @@ from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upl
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
 from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
-from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
+from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
+from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
                                                              validate_referrer_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
@@ -1255,11 +1255,11 @@ def passed_revisit():
 
 
 #<==================================================================================================>
-#                                       DELETE ACCOUNT
+#                                    VERIFY PASSOWRD :=> DELETE ACCOUNT
 #<==================================================================================================>
-@startup_blueprint.route('/delete-account', methods=["POST"])
+@startup_blueprint.route('/verify-passowrd', methods=["POST"])
 @jwt_required
-def delete_account():
+def verify_password():
     if request.method == "POST":
         jwt_decode = startup_jwt_decoder(get_jwt_identity())
         if not jwt_decode["result"]:
@@ -1270,6 +1270,27 @@ def delete_account():
         if response["result"]:
             password = response["data"]["password"]
             if check_password_hash(str_obj.password, password):
+                return jsonify({"result": True, "message": "correct credentials"})
+            return jsonify({"result": False, "message": "wrong credentials"})
+        return jsonify(response)
+
+
+#<==================================================================================================>
+#                                    FINAL DELETE :=> DELETE ACCOUNT
+#<==================================================================================================>
+@startup_blueprint.route('/delete-account', methods=["POST"])
+@jwt_required
+def delete_account():
+    if request.method == "POST":
+        jwt_decode = startup_jwt_decoder(get_jwt_identity())
+        if not jwt_decode["result"]:
+            return jsonify(jwt_decode)
+
+        str_obj = jwt_decode["user_obj"]
+        response = validate_delete_acc_conf_schema(request.get_json())
+        if response["result"]:
+            delete = response["data"]["delete"]
+            if delete:
                 setattr(str_obj, "delete_account", True)
                 str_obj.save()
 
@@ -1283,8 +1304,9 @@ def delete_account():
                 logger.debug(f"startup delete account email sent: {str_obj.email}")
 
                 return jsonify({"result": True, "message": "account deleted"})
-            return jsonify({"result": False, "message": "wrong credentials"})
+            return jsonify({"result": False, "message": "account not deleted"})
         return jsonify(response)
+
 
 
 #<==================================================================================================>
