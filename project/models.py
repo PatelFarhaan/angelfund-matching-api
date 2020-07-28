@@ -150,7 +150,14 @@ class UserAnalytics(db.Document):
 #<==================================================================================================>
 #                                       NEW USERS DAILY
 #<==================================================================================================>
-class DailyNewUsers(db.Document):
+class InvDailyNewUsers(db.Document):
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt'])
+
+
+class StrDailyNewUsers(db.Document):
     count = db.IntField(default=0)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
@@ -160,23 +167,73 @@ class DailyNewUsers(db.Document):
 #<==================================================================================================>
 #                                       NEW USERS WEEKLY
 #<==================================================================================================>
-class WeeklyNewUsers(db.Document):
+class InvWeeklyNewUsers(db.Document):
     count = db.IntField(default=0)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
 
+
+class StrWeeklyNewUsers(db.Document):
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt'])
 
 
 #<==================================================================================================>
 #                                       NEW USERS MONTHLY
 #<==================================================================================================>
-class MonthlyNewUsers(db.Document):
+class InvMonthlyNewUsers(db.Document):
     count = db.IntField(default=0)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
 
+
+class StrMonthlyNewUsers(db.Document):
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt'])
+
+
+#<==================================================================================================>
+#                                      DAILY UNIQUE USERS
+#<==================================================================================================>
+class InvUniqueUsersDaily(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+
+
+class StrUniqueUsersDaily(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+
+
+#<==================================================================================================>
+#                                      MONTHLY UNIQUE USERS
+#<==================================================================================================>
+class InvUniqueUsersMonthly(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+
+
+class StrUniqueUsersMonthly(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
 
 
 #<==================================================================================================>

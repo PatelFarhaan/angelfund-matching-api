@@ -60,10 +60,10 @@ def data_preprocessing(user_obj: UserAnalytics):
 
         current_dt = datetime.now()
         target_dt = datetime.now() - timedelta(days=30)
-        first_week = timedelta(days=21) - timedelta(days=30)
-        third_week = timedelta(days=7) - timedelta(days=14)
-        second_week = timedelta(days=14) - timedelta(days=21)
         fourth_week = datetime.now() - timedelta(days=7)
+        first_week = timedelta(days=28) - timedelta(days=21)
+        third_week = timedelta(days=21) - timedelta(days=14)
+        second_week = timedelta(days=14) - timedelta(days=7)
 
         for index, dt_obj in enumerate(arr):
             if dt_obj < target_dt:

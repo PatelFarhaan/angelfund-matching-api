@@ -30,11 +30,12 @@ from common_utilities.common_mappings import sector_data, accreditation_data
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from flask import url_for, request, Blueprint, jsonify, redirect, session, render_template
 from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
+from common_utilities.unique_login import inv_unique_users_daily, inv_unique_users_monthly
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
-from common_utilities.new_user_count_analytics import daily_new_users_count, weekly_new_users_count, monthly_new_users_count
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
+from common_utilities.new_user_count_analytics import inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count
 from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
                                                    inv_mutual_updates)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
@@ -85,6 +86,11 @@ def google_token():
                         analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
                         analytics_thread.start()
 
+                        unique_user_list = [inv_unique_users_daily, inv_unique_users_monthly]
+                        for i in unique_user_list:
+                            unique_user_thread = threading.Thread(target=i, args=(email,))
+                            unique_user_thread.start()
+
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
 
@@ -119,9 +125,6 @@ def google_token():
                         new_user = Investor(**user_dict)
                         new_user.save()
 
-                        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
-                        analytics_thread.start()
-
                         ml_schema = InvestorMLSchema()
                         user = Investor.objects.filter(email=email).first()
                         ml_schema_resp = ml_schema.dump(user)
@@ -142,7 +145,7 @@ def google_token():
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
 
-                        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+                        user_count_analytics = [inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count]
                         for i in user_count_analytics:
                             login_cnt_thread = threading.Thread(target=i, args=())
                             login_cnt_thread.start()
@@ -219,6 +222,11 @@ def login():
 
             analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
             analytics_thread.start()
+
+            unique_user_list = [inv_unique_users_daily, inv_unique_users_monthly]
+            for i in unique_user_list:
+                unique_user_thread = threading.Thread(target=i, args=(email,))
+                unique_user_thread.start()
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
@@ -357,7 +365,7 @@ def register():
         thread = threading.Thread(target=email_confirmation, args=(email, link, input_request.get("first_name")))
         thread.start()
 
-        user_count_analytics = [daily_new_users_count, weekly_new_users_count, monthly_new_users_count]
+        user_count_analytics = [inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count]
         for i in user_count_analytics:
             login_cnt_thread = threading.Thread(target=i, args=())
             login_cnt_thread.start()
