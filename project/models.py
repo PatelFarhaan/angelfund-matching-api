@@ -199,6 +199,44 @@ class StrMonthlyNewUsers(db.Document):
 
 
 #<==================================================================================================>
+#                                      DAILY UNIQUE USERS
+#<==================================================================================================>
+class InvUniqueUsersDaily(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+
+
+class StrUniqueUsersDaily(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+
+
+#<==================================================================================================>
+#                                      MONTHLY UNIQUE USERS
+#<==================================================================================================>
+class InvUniqueUsersMonthly(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+
+
+class StrUniqueUsersMonthly(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+
+
+#<==================================================================================================>
 #                                     ANGEL GROUP
 #<==================================================================================================>
 class AngelGroup(db.Document):

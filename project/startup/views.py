@@ -22,6 +22,7 @@ from common_utilities.wait_list_email_str import wait_list_user_str
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.login_analytics import user_login_data_processing
 from werkzeug.security import generate_password_hash, check_password_hash
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
@@ -29,6 +30,7 @@ from common_utilities.json_schema_investor_validation import validate_referrer_s
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
+from common_utilities.unique_login import str_unique_users_daily, str_unique_users_monthly
 from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
@@ -77,6 +79,14 @@ def google_token():
 
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
+
+                        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, False))
+                        analytics_thread.start()
+
+                        unique_user_list = [str_unique_users_daily, str_unique_users_monthly]
+                        for i in unique_user_list:
+                            unique_user_thread = threading.Thread(target=i, args=(email,))
+                            unique_user_thread.start()
 
                         rev_sectors_data = rev_sector_data()
                         rev_progress_data = rev_progress_mapping()
@@ -204,6 +214,14 @@ def login():
             user.save()
             logger.debug(f"startup logged in: {email}")
 
+            analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, False))
+            analytics_thread.start()
+
+            unique_user_list = [str_unique_users_daily, str_unique_users_monthly]
+            for i in unique_user_list:
+                unique_user_thread = threading.Thread(target=i, args=(email,))
+                unique_user_thread.start()
+
             ma_schema = StartupUserSchema()
             user_objs = ma_schema.dump(user)
 
@@ -263,7 +281,7 @@ def reset_link(token):
 
 
 #<==================================================================================================>
-#                                            REGISTER
+#                                         REGISTER
 #<==================================================================================================>
 @startup_blueprint.route('/register', methods=['POST'])
 def register():
@@ -317,7 +335,6 @@ def register():
             login_cnt_thread = threading.Thread(target=i, args=())
             login_cnt_thread.start()
 
-        # New Added
         user.passowrd_confirm_meta_data = {"is_clicked": False}
         user.save()
 
