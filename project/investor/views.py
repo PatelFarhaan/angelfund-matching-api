@@ -1147,7 +1147,7 @@ def general_company_images():
 #<==================================================================================================>
 #                                    VERIFY PASSOWRD :=> DELETE ACCOUNT
 #<==================================================================================================>
-@investor_blueprint.route('/verify-passowrd', methods=["POST"])
+@investor_blueprint.route('/verify-password', methods=["POST"])
 @jwt_required
 def verify_password():
     jwt_decode = investor_jwt_decoder(get_jwt_identity())
