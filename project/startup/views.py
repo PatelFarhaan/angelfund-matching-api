@@ -1285,7 +1285,7 @@ def passed_revisit():
 #<==================================================================================================>
 #                                    VERIFY PASSOWRD :=> DELETE ACCOUNT
 #<==================================================================================================>
-@startup_blueprint.route('/verify-passowrd', methods=["POST"])
+@startup_blueprint.route('/verify-password', methods=["POST"])
 @jwt_required
 def verify_password():
     if request.method == "POST":
@@ -1319,7 +1319,7 @@ def delete_account():
         if response["result"]:
             delete = response["data"]["delete"]
             if delete:
-                setattr(str_obj, "delete_account", True)
+                setattr(str_obj, "delete_account", delete)
                 str_obj.save()
 
                 matching_obj = get_str_matching_data(str_obj.email)
