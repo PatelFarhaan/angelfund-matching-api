@@ -1179,7 +1179,7 @@ def delete_account():
     if response["result"]:
         delete = response["data"]["delete"]
         if delete:
-            setattr(inv_obj, "delete_account", True)
+            setattr(inv_obj, "delete_account", delete)
             inv_obj.save()
 
             matching_obj = get_inv_matching_data(inv_obj.email)
