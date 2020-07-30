@@ -19,34 +19,46 @@ def db_details(database, collection):
     return collection
 
 
-@click.command()
-@click.option('--email', '-e', type=str, help="Enter the email address")
-def delete_email_address(email: str) -> None:
+# @click.command()
+# @click.option('--email', '-e', type=str, help="Enter the email address")
+def delete_email_address(emails: list) -> None:
     ml_collection = db_details("matching", "users")
     inv_collection = db_details("admin", "investor")
     str_collection = db_details("admin", "startup")
 
-    my_query = {"email": email}
+    for email in emails:
 
-    ml_query = ml_collection.find_one(my_query)
-    inv_query = inv_collection.find_one(my_query)
-    str_query = str_collection.find_one(my_query)
+        my_query = {"email": email}
 
-    if ml_query:
-        ml_collection.delete_many(my_query)
-        print("User Deleted from Machine Learning")
+        ml_query = ml_collection.find_one(my_query)
+        inv_query = inv_collection.find_one(my_query)
+        str_query = str_collection.find_one(my_query)
 
-    if str_query:
-        str_collection.delete_one(my_query)
-        print("User Deleted from Startup")
+        if ml_query:
+            ml_collection.delete_many(my_query)
+            print("User Deleted from Machine Learning")
 
-    if inv_query:
-        inv_collection.delete_one(my_query)
-        print("User Deleted from Investors")
+        if str_query:
+            str_collection.delete_one(my_query)
+            print("User Deleted from Startup")
+
+        if inv_query:
+            inv_collection.delete_one(my_query)
+            print("User Deleted from Investors")
 
 
 #<==================================================================================================>
 #                                   MAIN FUNCTION
 #<==================================================================================================>
 if __name__ == '__main__':
-    delete_email_address()
+    emails = [
+"tomaszewski.ben@gmail.com",
+"chrismoreno13@gmail.com",
+"emrah@indestro.com",
+"elibcole@gmail.com",
+"t@saola.ventures",
+"zann@2048.vc",
+"gyan@bayes.vc",
+"cassandra@upheavalinv.com",
+"bob.rosin@gmail.com"]
+    # delete_email_address(emails)

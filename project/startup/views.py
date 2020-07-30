@@ -1327,7 +1327,7 @@ def delete_account():
                 if not delete_user_ml(str_id):
                     technical_errors("STARTUP: DELETE ACCOUNT UPDATE UNSUCCESSFUL", str_obj.email)
 
-                thread = threading.Thread(target=delete_user_account, args=(str_obj.email))
+                thread = threading.Thread(target=delete_user_account, args=(str_obj.email, ))
                 thread.start()
                 logger.debug(f"startup delete account email sent: {str_obj.email}")
 

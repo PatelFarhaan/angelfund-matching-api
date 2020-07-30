@@ -1174,6 +1174,7 @@ def delete_account():
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
 
+
     inv_obj = jwt_decode["user_obj"]
     response = validate_delete_acc_conf_schema(request.get_json())
     if response["result"]:
@@ -1187,7 +1188,7 @@ def delete_account():
             if not delete_user_ml(str_id):
                 technical_errors("INVESTOR: DELETE API UNSUCCESSFUL", inv_obj.email)
 
-            thread = threading.Thread(target=delete_user_account, args=(inv_obj.email))
+            thread = threading.Thread(target=delete_user_account, args=(inv_obj.email, ))
             thread.start()
             logger.debug(f"investor delete account email sent: {inv_obj.email}")
 
