@@ -23,7 +23,6 @@ from common_utilities.google_email import google_email_confirmation
 from common_utilities.wait_list_email_inv import wait_list_user_inv
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
-from common_utilities.login_analytics import user_login_data_processing
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
@@ -82,9 +81,6 @@ def google_token():
                         user.is_logged_in = True
                         user.save()
                         logger.debug(f"investor logged in: {email}")
-
-                        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
-                        analytics_thread.start()
 
                         unique_user_list = [inv_unique_users_daily, inv_unique_users_monthly]
                         for i in unique_user_list:
@@ -219,9 +215,6 @@ def login():
             user.is_logged_in = True
             user.save()
             logger.debug(f"investor logged in: {email}")
-
-            analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
-            analytics_thread.start()
 
             unique_user_list = [inv_unique_users_daily, inv_unique_users_monthly]
             for i in unique_user_list:

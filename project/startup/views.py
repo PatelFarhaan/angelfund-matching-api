@@ -22,7 +22,6 @@ from common_utilities.wait_list_email_str import wait_list_user_str
 from common_utilities.google_email import google_email_confirmation
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
-from common_utilities.login_analytics import user_login_data_processing
 from werkzeug.security import generate_password_hash, check_password_hash
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
@@ -79,9 +78,6 @@ def google_token():
 
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
-
-                        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, False))
-                        analytics_thread.start()
 
                         unique_user_list = [str_unique_users_daily, str_unique_users_monthly]
                         for i in unique_user_list:
@@ -213,9 +209,6 @@ def login():
             user.is_logged_in = True
             user.save()
             logger.debug(f"startup logged in: {email}")
-
-            analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, False))
-            analytics_thread.start()
 
             unique_user_list = [str_unique_users_daily, str_unique_users_monthly]
             for i in unique_user_list:
