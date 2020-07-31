@@ -204,6 +204,7 @@ class StrMonthlyNewUsers(db.Document):
 class InvUniqueUsersDaily(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict'])
@@ -212,6 +213,7 @@ class InvUniqueUsersDaily(db.Document):
 class StrUniqueUsersDaily(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict'])
@@ -223,6 +225,7 @@ class StrUniqueUsersDaily(db.Document):
 class InvUniqueUsersMonthly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict'])
@@ -231,6 +234,7 @@ class InvUniqueUsersMonthly(db.Document):
 class StrUniqueUsersMonthly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict'])
