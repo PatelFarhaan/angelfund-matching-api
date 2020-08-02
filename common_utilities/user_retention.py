@@ -21,7 +21,7 @@ def helper(days: int, collection: (InvRetention, StrRetention),
         last_retention = retention_list[-1]
         unique_login_cnt = model.objects.filter(current=True).first()
         last_retention_date = datetime.strptime(last_retention.get("date"), '%Y-%m-%d').date()
-        if date.today() > last_retention_date + (datetime.now() + timedelta(days=days)).date():
+        if date.today() > last_retention_date + timedelta(days=days):
             obj = {"date": str(date.today()),
                    "unique_login": unique_login_cnt.count if unique_login_cnt else 0}
             retention_list.append(obj)
@@ -66,30 +66,30 @@ def helper(days: int, collection: (InvRetention, StrRetention),
 #<==================================================================================================>
 #                                         DAILY RETENTION
 #<==================================================================================================>
-def inv_daily_new_users_count():
+def inv_daily_retention():
     helper(1, InvRetention, InvUniqueUsersDaily, InvUniqueUsersWeekly, InvUniqueUsersMonthly)
 
 
-def str_daily_new_users_count():
+def str_daily_retention():
     helper(1, StrRetention, StrUniqueUsersDaily, StrUniqueUsersWeekly, StrUniqueUsersMonthly)
 
 #<==================================================================================================>
 #                                         WEEKLY RETENTION
 #<==================================================================================================>
-def inv_weekly_new_users_count():
+def inv_weekly_retention():
     helper(7, InvRetention, InvUniqueUsersDaily, InvUniqueUsersWeekly, InvUniqueUsersMonthly)
 
 
-def str_weekly_new_users_count():
+def str_weekly_retention():
     helper(7, StrRetention, StrUniqueUsersDaily, StrUniqueUsersWeekly, StrUniqueUsersMonthly)
 
 
 #<==================================================================================================>
 #                                         MONTHLY RETENTION
 #<==================================================================================================>
-def inv_monthly_new_users_count():
+def inv_monthly_retention():
     helper(30, InvRetention, InvUniqueUsersDaily, InvUniqueUsersWeekly, InvUniqueUsersMonthly)
 
 
-def str_monthly_new_users_count():
+def str_monthly_retention():
     helper(30, StrRetention, StrUniqueUsersDaily, StrUniqueUsersWeekly, StrUniqueUsersMonthly)

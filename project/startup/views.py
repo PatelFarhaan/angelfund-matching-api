@@ -31,10 +31,10 @@ from common_utilities.reverse_common_mapping import rev_sector_data, rev_progres
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
 from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.user_retention import str_daily_retention, str_weekly_retention, str_monthly_retention
 from common_utilities.unique_login import str_unique_users_daily, str_unique_users_monthly, str_unique_users_weekly
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
-from common_utilities.user_retention import str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
 from common_utilities.new_user_count_analytics import str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
@@ -85,10 +85,13 @@ def google_token():
                             unique_user_thread = threading.Thread(target=i, args=(email,))
                             unique_user_thread.start()
 
-                        user_retention_list = [str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count]
-                        for i in user_retention_list:
-                            user_retention_thread = threading.Thread(target=i, args=())
-                            user_retention_thread.start()
+                        def retention_single_thread():
+                            user_retention_list = [str_daily_retention, str_weekly_retention, str_monthly_retention]
+                            for retention_modules in user_retention_list:
+                                retention_modules()
+
+                        retention_thread = threading.Thread(target=retention_single_thread, args=())
+                        retention_thread.start()
 
                         rev_sectors_data = rev_sector_data()
                         rev_progress_data = rev_progress_mapping()
@@ -221,10 +224,13 @@ def login():
                 unique_user_thread = threading.Thread(target=i, args=(email,))
                 unique_user_thread.start()
 
-            user_retention_list = [str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count]
-            for i in user_retention_list:
-                user_retention_thread = threading.Thread(target=i, args=())
-                user_retention_thread.start()
+            def retention_single_thread():
+                user_retention_list = [str_daily_retention, str_weekly_retention, str_monthly_retention]
+                for retention_modules in user_retention_list:
+                    retention_modules()
+
+            retention_thread = threading.Thread(target=retention_single_thread, args=())
+            retention_thread.start()
 
             ma_schema = StartupUserSchema()
             user_objs = ma_schema.dump(user)
