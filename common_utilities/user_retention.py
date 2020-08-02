@@ -64,26 +64,28 @@ def helper(days: int, collection: (InvRetention, StrRetention),
 
 
 #<==================================================================================================>
-#                                         DAILY NEW USERS
+#                                         DAILY RETENTION
 #<==================================================================================================>
 def inv_daily_new_users_count():
     helper(1, InvRetention, InvUniqueUsersDaily, InvUniqueUsersWeekly, InvUniqueUsersMonthly)
+
 
 def str_daily_new_users_count():
     helper(1, StrRetention, StrUniqueUsersDaily, StrUniqueUsersWeekly, StrUniqueUsersMonthly)
 
 #<==================================================================================================>
-#                                         DAILY NEW USERS
+#                                         WEEKLY RETENTION
 #<==================================================================================================>
 def inv_weekly_new_users_count():
     helper(7, InvRetention, InvUniqueUsersDaily, InvUniqueUsersWeekly, InvUniqueUsersMonthly)
+
 
 def str_weekly_new_users_count():
     helper(7, StrRetention, StrUniqueUsersDaily, StrUniqueUsersWeekly, StrUniqueUsersMonthly)
 
 
 #<==================================================================================================>
-#                                         DAILY NEW USERS
+#                                         MONTHLY RETENTION
 #<==================================================================================================>
 def inv_monthly_new_users_count():
     helper(30, InvRetention, InvUniqueUsersDaily, InvUniqueUsersWeekly, InvUniqueUsersMonthly)

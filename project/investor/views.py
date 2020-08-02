@@ -34,6 +34,7 @@ from common_utilities.flask_jwt_extended import jwt_required, create_access_toke
 from common_utilities.unique_login import inv_unique_users_daily, inv_unique_users_monthly, inv_unique_users_weekly
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
+from common_utilities.user_retention import inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count
 from common_utilities.new_user_count_analytics import inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count
 from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
                                                    inv_mutual_updates)
@@ -86,6 +87,11 @@ def google_token():
                         for i in unique_user_list:
                             unique_user_thread = threading.Thread(target=i, args=(email,))
                             unique_user_thread.start()
+
+                        user_retention_list = [inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count]
+                        for i in user_retention_list:
+                            user_retention_thread = threading.Thread(target=i, args=())
+                            user_retention_thread.start()
 
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
@@ -220,6 +226,11 @@ def login():
             for i in unique_user_list:
                 unique_user_thread = threading.Thread(target=i, args=(email,))
                 unique_user_thread.start()
+
+            user_retention_list = [inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count]
+            for i in user_retention_list:
+                user_retention_thread = threading.Thread(target=i, args=())
+                user_retention_thread.start()
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
