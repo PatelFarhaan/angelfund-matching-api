@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 #<==================================================================================================>
 def email_connected(inv_email: str, str_email: str, all_info):
     RECIPIENT = [inv_email, str_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = CONSTANT.EMAIL_SENDER.value
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = f"Angelfund.ai Intro: {all_info['inv_fn']} – {all_info['str_founders']}"
@@ -100,11 +100,11 @@ def email_connected(inv_email: str, str_email: str, all_info):
    </head>
    <div class="container">
       <div class="hook">
-         <strong class="sizing"> {inv_fn}—meet {str_founders} from {str_fn}. </strong>
+         <strong class="sizing"> {inv_fn}—meet {str_fn} from {str_cn}. </strong>
          <p class="sizing">
             <span style="font-style: italic;"> Quick synopsis on {str_fn}:</span
                ><br />
-            {str_bio}<br />They’re currently raising a ${str_seeking:,} round and would like
+            {str_pitch}<br />They’re currently raising a ${str_seeking:,} round and would like
             to coordinate a time to share more about the opportunity.
          </p>
          <br />
@@ -124,8 +124,10 @@ def email_connected(inv_email: str, str_email: str, all_info):
       </div>
    </div>
 </html>
-    """.format(inv_fn=all_info['inv_fn'], str_founders=all_info['str_founders'], str_fn=all_info['str_fn'], str_bio=all_info['str_bio'],
-                           str_seeking=int(all_info['str_seeking']))
+    """.format(inv_fn=all_info['inv_fn'], str_founders=all_info['str_founders'],
+               str_pitch=all_info['str_pitch'], str_cn=all_info['str_cn'],
+               str_fn=all_info['str_fn'], str_bio=all_info['str_bio'],
+               str_seeking=int(all_info['str_seeking']))
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

@@ -5,18 +5,24 @@ import sys
 sys.path.append("../")
 from datetime import datetime, timedelta, date
 from project.models import (InvUniqueUsersDaily, StrUniqueUsersDaily, InvUniqueUsersMonthly,
-                           StrUniqueUsersMonthly)
+                            StrUniqueUsersMonthly, InvUniqueUsersWeekly, StrUniqueUsersWeekly)
 
 
 # <==================================================================================================>
 #                                   GENERAL HELPER FUCNTION
 # <==================================================================================================>
 def helper(email : str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUsersDaily)):
+    def untrue_current():
+        current_obj = collection.objects.filter(current=True).first()
+        current_obj.current = False
+        current_obj.save()
+
     user_obj = collection.objects.filter(date=date.today()).first()
     if user_obj:
         if datetime.now() > user_obj.current_dt + timedelta(days=day):
-            new_obj = collection(count=1, date=date.today(),
-                                          users_dict={email: True}, current_dt=datetime.now())
+            untrue_current()
+            new_obj = collection(count=1, date=date.today(), current=True,
+                                 users_dict={email: True}, current_dt=datetime.now())
             new_obj.save()
         else:
             temp_dict = dict(user_obj.users_dict)
@@ -25,10 +31,11 @@ def helper(email : str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUs
             user_obj.count = len(temp_dict)
             user_obj.save()
     else:
+        untrue_current()
         new_dict = dict()
         new_dict[email] = True
-        new_user = collection(count=1, date=date.today(),
-                                       users_dict=new_dict, current_dt=datetime.now())
+        new_user = collection(count=1, date=date.today(), current=True,
+                              users_dict=new_dict, current_dt=datetime.now())
         new_user.save()
 
 
@@ -43,6 +50,19 @@ def inv_unique_users_daily(email: str):
 def str_unique_users_daily(email: str):
     email = email.replace(".", "-")
     helper(email, 1, StrUniqueUsersDaily)
+
+
+#<==================================================================================================>
+#                                  WEEKLY UNIQUE USER
+#<==================================================================================================>
+def inv_unique_users_weekly(email: str):
+    email = email.replace(".", "-")
+    helper(email, 7, InvUniqueUsersWeekly)
+
+
+def str_unique_users_weekly(email: str):
+    email = email.replace(".", "-")
+    helper(email, 7, StrUniqueUsersWeekly)
 
 
 # <==================================================================================================>

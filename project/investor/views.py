@@ -914,44 +914,18 @@ def investors_dashboard():
                 if not str_transactional_replicas:
                     technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
-                deals = {
-                    "0": "$25,000 to $50,000",
-                    "1": "$50,000 to $100,000",
-                    "2": "$100,000 to $250,000",
-                    "3": "$250,000 to $500,000"
-                }
-
-                # import ipdb; ipdb.set_trace()
-
-                temp_dict = {}
-                temp_dict["inv_bio"] = inv_obj.bio
-                temp_dict["inv_fn"] = inv_obj.first_name
-
-                if inv_obj.profile_pic_link:
-                    temp_dict["inv_img"] = inv_obj.profile_pic_link
-                else:
-                    temp_dict["inv_img"] = CONSTANT.ANONYMOUS_PP.value
-
-                temp_dict["str_bio"] = str_obj.bio
-                temp_dict["str_fn"] = str_obj.first_name
-                if str_obj.co_founders != []:
+                def all_info():
+                    temp_dict = {}
+                    temp_dict["str_bio"] = str_obj.bio
+                    temp_dict["inv_fn"] = inv_obj.first_name
+                    temp_dict["str_fn"] = str_obj.first_name
+                    temp_dict["str_cn"] = str_obj.company_name
+                    temp_dict["str_seeking"] = str_obj.round_size
+                    temp_dict["str_pitch"] = str_obj.startup_pitch
                     temp_dict["str_founders"] = str_obj.co_founders[0].get("name")
-                    if str_obj.co_founders[0].get("position") != []:
-                        temp_dict["str_position"] = str_obj.co_founders[0].get("position")[0]
-                    else:
-                        temp_dict["str_founders"] = None
-                else:
-                    temp_dict["str_founders"] = None
-                    temp_dict["str_position"] = None
+                    return temp_dict
 
-                temp_dict["str_seeking"] = str_obj.round_size
-                temp_dict["str_raised"] = str_obj.raised
-                if str_obj.profile_pic_link:
-                    temp_dict["str_img"] = str_obj.profile_pic_link
-                else:
-                    temp_dict["str_img"] = CONSTANT.ANONYMOUS_PP.value
-
-                email_connected(inv_email, str_email, temp_dict)
+                email_connected(inv_email, str_email, all_info())
 
                 str_matching_obj = get_str_matching_data(str_email)
                 str_id = str_matching_obj.get("_id")

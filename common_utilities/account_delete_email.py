@@ -149,11 +149,11 @@ def delete_user_account(user_email):
             see you go!
          </p>
          <p class="sizing">
-            If you didn't request an account deletion, please contact us immediately
+            If you didn't request an account deletion, please contact us immediately.
          </p>
          <p class="sizing">
             We wish you all the best! <br />
-            <span style="color: #5e51f4;">Angelfund.ai!</span>
+            <span style="color: #5e51f4;">Angelfund.ai</span>
          </p>
       </div>
       <div class="footer">
