@@ -70,8 +70,6 @@ def helper(days: int, collection: (InvRetention, StrRetention), user_model: (Inv
 def inv_daily_new_users_count():
     helper(1, InvRetention, Investor, InvUniqueUsersDaily, InvUniqueUsersWeekly, InvUniqueUsersMonthly)
 
-inv_daily_new_users_count()
-
 
 def str_daily_new_users_count():
     helper(1, StrRetention, Startup, StrUniqueUsersDaily, StrUniqueUsersWeekly, StrUniqueUsersMonthly)
