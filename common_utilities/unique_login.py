@@ -14,8 +14,9 @@ from project.models import (InvUniqueUsersDaily, StrUniqueUsersDaily, InvUniqueU
 def helper(email : str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUsersDaily)):
     def untrue_current():
         current_obj = collection.objects.filter(current=True).first()
-        current_obj.current = False
-        current_obj.save()
+        if current_obj:
+            current_obj.current = False
+            current_obj.save()
 
     user_obj = collection.objects.filter(date=date.today()).first()
     if user_obj:

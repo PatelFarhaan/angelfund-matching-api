@@ -29,9 +29,9 @@ from common_utilities.json_schema_investor_validation import validate_referrer_s
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
-from common_utilities.unique_login import str_unique_users_daily, str_unique_users_monthly
 from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.unique_login import str_unique_users_daily, str_unique_users_monthly, str_unique_users_weekly
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
@@ -79,7 +79,7 @@ def google_token():
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
 
-                        unique_user_list = [str_unique_users_daily, str_unique_users_monthly]
+                        unique_user_list = [str_unique_users_daily, str_unique_users_weekly, str_unique_users_monthly]
                         for i in unique_user_list:
                             unique_user_thread = threading.Thread(target=i, args=(email,))
                             unique_user_thread.start()
@@ -210,7 +210,7 @@ def login():
             user.save()
             logger.debug(f"startup logged in: {email}")
 
-            unique_user_list = [str_unique_users_daily, str_unique_users_monthly]
+            unique_user_list = [str_unique_users_daily, str_unique_users_weekly, str_unique_users_monthly]
             for i in unique_user_list:
                 unique_user_thread = threading.Thread(target=i, args=(email,))
                 unique_user_thread.start()
