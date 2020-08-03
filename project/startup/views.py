@@ -23,6 +23,7 @@ from common_utilities.google_email import google_email_confirmation
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from common_utilities.user_retention_individual import individual_user_retention
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
@@ -92,6 +93,10 @@ def google_token():
 
                         retention_thread = threading.Thread(target=retention_single_thread, args=())
                         retention_thread.start()
+
+                        individual_user_retention_thread = threading.Thread(target=individual_user_retention,
+                                                                            args=(email, False,))
+                        individual_user_retention_thread.start()
 
                         rev_sectors_data = rev_sector_data()
                         rev_progress_data = rev_progress_mapping()
@@ -231,6 +236,10 @@ def login():
 
             retention_thread = threading.Thread(target=retention_single_thread, args=())
             retention_thread.start()
+
+            individual_user_retention_thread = threading.Thread(target=individual_user_retention,
+                                                                args=(email, False,))
+            individual_user_retention_thread.start()
 
             ma_schema = StartupUserSchema()
             user_objs = ma_schema.dump(user)

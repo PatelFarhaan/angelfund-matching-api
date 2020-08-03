@@ -26,6 +26,7 @@ from common_utilities.hide_user_profile import hide_user, unhide_user
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
+from common_utilities.user_retention_individual import individual_user_retention
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from flask import url_for, request, Blueprint, jsonify, redirect, session, render_template
 from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
@@ -95,6 +96,10 @@ def google_token():
 
                         retention_thread = threading.Thread(target=retention_single_thread, args=())
                         retention_thread.start()
+
+                        individual_user_retention_thread = threading.Thread(target=individual_user_retention,
+                                                                            args=(email, True,))
+                        individual_user_retention_thread.start()
 
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
@@ -238,6 +243,10 @@ def login():
 
             retention_thread = threading.Thread(target=retention_single_thread, args=())
             retention_thread.start()
+
+            individual_user_retention_thread = threading.Thread(target=individual_user_retention,
+                                                                args=(email, True,))
+            individual_user_retention_thread.start()
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
@@ -524,7 +533,6 @@ def referral_verification(token):
     user = Investor.objects.filter(email=referred_by).first()
 
     if user:
-        # For referred_by user
         ref_by_obj = Referrals.objects.filter(email=user.email).first()
         if ref_by_obj:
             details = dict(ref_by_obj.details)
