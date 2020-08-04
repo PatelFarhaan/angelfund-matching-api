@@ -102,7 +102,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
       <div class="hook">
          <strong class="sizing"> {inv_fn}—meet {str_fn} from {str_cn}. </strong>
          <p class="sizing">
-            <span style="font-style: italic;"> Quick synopsis on {str_fn}:</span
+            <span style="font-style: italic;"> Quick synopsis of {str_cn}:</span
                ><br />
             {str_pitch}<br />They’re currently raising a ${str_seeking:,} round and would like
             to coordinate a time to share more about the opportunity.

@@ -11,7 +11,7 @@ from project.models import (InvUniqueUsersDaily, StrUniqueUsersDaily, InvUniqueU
 # <==================================================================================================>
 #                                   GENERAL HELPER FUCNTION
 # <==================================================================================================>
-def helper(email : str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUsersDaily)):
+def helper(email: str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUsersDaily)):
     def untrue_current():
         current_obj = collection.objects.filter(current=True).first()
         if current_obj:
