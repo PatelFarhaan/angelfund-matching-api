@@ -19,46 +19,38 @@ def db_details(database, collection):
     return collection
 
 
-# @click.command()
-# @click.option('--email', '-e', type=str, help="Enter the email address")
-def delete_email_address(emails: list) -> None:
+#<==================================================================================================>
+#                                   EMAIL DELETE LOGIC
+#<==================================================================================================>
+@click.command()
+@click.option('--email', '-e', type=str, help="Enter the email address")
+def delete_email_address(email: str) -> None:
     ml_collection = db_details("matching", "users")
     inv_collection = db_details("admin", "investor")
     str_collection = db_details("admin", "startup")
 
-    for email in emails:
 
-        my_query = {"email": email}
+    my_query = {"email": email}
 
-        ml_query = ml_collection.find_one(my_query)
-        inv_query = inv_collection.find_one(my_query)
-        str_query = str_collection.find_one(my_query)
+    ml_query = ml_collection.find_one(my_query)
+    inv_query = inv_collection.find_one(my_query)
+    str_query = str_collection.find_one(my_query)
 
-        if ml_query:
-            ml_collection.delete_many(my_query)
-            print("User Deleted from Machine Learning")
+    if ml_query:
+        ml_collection.delete_many(my_query)
+        print("User Deleted from Machine Learning")
 
-        if str_query:
-            str_collection.delete_one(my_query)
-            print("User Deleted from Startup")
+    if str_query:
+        str_collection.delete_one(my_query)
+        print("User Deleted from Startup")
 
-        if inv_query:
-            inv_collection.delete_one(my_query)
-            print("User Deleted from Investors")
+    if inv_query:
+        inv_collection.delete_one(my_query)
+        print("User Deleted from Investors")
 
 
 #<==================================================================================================>
 #                                   MAIN FUNCTION
 #<==================================================================================================>
 if __name__ == '__main__':
-    emails = [
-"tomaszewski.ben@gmail.com",
-"chrismoreno13@gmail.com",
-"emrah@indestro.com",
-"elibcole@gmail.com",
-"t@saola.ventures",
-"zann@2048.vc",
-"gyan@bayes.vc",
-"cassandra@upheavalinv.com",
-"bob.rosin@gmail.com"]
-    # delete_email_address(emails)
+    delete_email_address()

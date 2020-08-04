@@ -23,16 +23,17 @@ from common_utilities.google_email import google_email_confirmation
 from common_utilities.wait_list_email_inv import wait_list_user_inv
 from common_utilities.account_delete_email import delete_user_account
 from common_utilities.hide_user_profile import hide_user, unhide_user
-from common_utilities.login_analytics import user_login_data_processing
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.common_mappings import sector_data, accreditation_data
+from common_utilities.user_retention_individual import individual_user_retention
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from flask import url_for, request, Blueprint, jsonify, redirect, session, render_template
 from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
-from common_utilities.unique_login import inv_unique_users_daily, inv_unique_users_monthly
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.user_retention import inv_daily_retention, inv_weekly_retention, inv_monthly_retention
+from common_utilities.unique_login import inv_unique_users_daily, inv_unique_users_monthly, inv_unique_users_weekly
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.new_user_count_analytics import inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count
@@ -83,13 +84,22 @@ def google_token():
                         user.save()
                         logger.debug(f"investor logged in: {email}")
 
-                        analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
-                        analytics_thread.start()
-
-                        unique_user_list = [inv_unique_users_daily, inv_unique_users_monthly]
+                        unique_user_list = [inv_unique_users_daily, inv_unique_users_weekly, inv_unique_users_monthly]
                         for i in unique_user_list:
                             unique_user_thread = threading.Thread(target=i, args=(email,))
                             unique_user_thread.start()
+
+                        def retention_single_thread():
+                            user_retention_list = [inv_daily_retention, inv_weekly_retention, inv_monthly_retention]
+                            for retention_modules in user_retention_list:
+                                retention_modules()
+
+                        retention_thread = threading.Thread(target=retention_single_thread, args=())
+                        retention_thread.start()
+
+                        individual_user_retention_thread = threading.Thread(target=individual_user_retention,
+                                                                            args=(email, True,))
+                        individual_user_retention_thread.start()
 
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
@@ -220,13 +230,23 @@ def login():
             user.save()
             logger.debug(f"investor logged in: {email}")
 
-            analytics_thread = threading.Thread(target=user_login_data_processing, args=(email, True))
-            analytics_thread.start()
-
-            unique_user_list = [inv_unique_users_daily, inv_unique_users_monthly]
+            unique_user_list = [inv_unique_users_daily, inv_unique_users_weekly, inv_unique_users_monthly]
             for i in unique_user_list:
                 unique_user_thread = threading.Thread(target=i, args=(email,))
                 unique_user_thread.start()
+
+
+            def retention_single_thread():
+                user_retention_list = [inv_daily_retention, inv_weekly_retention, inv_monthly_retention]
+                for retention_modules in user_retention_list:
+                    retention_modules()
+
+            retention_thread = threading.Thread(target=retention_single_thread, args=())
+            retention_thread.start()
+
+            individual_user_retention_thread = threading.Thread(target=individual_user_retention,
+                                                                args=(email, True,))
+            individual_user_retention_thread.start()
 
             ma_schema = InvestorUserSchema()
             user_objs = ma_schema.dump(user)
@@ -513,7 +533,6 @@ def referral_verification(token):
     user = Investor.objects.filter(email=referred_by).first()
 
     if user:
-        # For referred_by user
         ref_by_obj = Referrals.objects.filter(email=user.email).first()
         if ref_by_obj:
             details = dict(ref_by_obj.details)
@@ -921,44 +940,18 @@ def investors_dashboard():
                 if not str_transactional_replicas:
                     technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
-                deals = {
-                    "0": "$25,000 to $50,000",
-                    "1": "$50,000 to $100,000",
-                    "2": "$100,000 to $250,000",
-                    "3": "$250,000 to $500,000"
-                }
-
-                # import ipdb; ipdb.set_trace()
-
-                temp_dict = {}
-                temp_dict["inv_bio"] = inv_obj.bio
-                temp_dict["inv_fn"] = inv_obj.first_name
-
-                if inv_obj.profile_pic_link:
-                    temp_dict["inv_img"] = inv_obj.profile_pic_link
-                else:
-                    temp_dict["inv_img"] = CONSTANT.ANONYMOUS_PP.value
-
-                temp_dict["str_bio"] = str_obj.bio
-                temp_dict["str_fn"] = str_obj.first_name
-                if str_obj.co_founders != []:
+                def all_info():
+                    temp_dict = {}
+                    temp_dict["str_bio"] = str_obj.bio
+                    temp_dict["inv_fn"] = inv_obj.first_name
+                    temp_dict["str_fn"] = str_obj.first_name
+                    temp_dict["str_cn"] = str_obj.company_name
+                    temp_dict["str_seeking"] = str_obj.round_size
+                    temp_dict["str_pitch"] = str_obj.startup_pitch
                     temp_dict["str_founders"] = str_obj.co_founders[0].get("name")
-                    if str_obj.co_founders[0].get("position") != []:
-                        temp_dict["str_position"] = str_obj.co_founders[0].get("position")[0]
-                    else:
-                        temp_dict["str_founders"] = None
-                else:
-                    temp_dict["str_founders"] = None
-                    temp_dict["str_position"] = None
+                    return temp_dict
 
-                temp_dict["str_seeking"] = str_obj.round_size
-                temp_dict["str_raised"] = str_obj.raised
-                if str_obj.profile_pic_link:
-                    temp_dict["str_img"] = str_obj.profile_pic_link
-                else:
-                    temp_dict["str_img"] = CONSTANT.ANONYMOUS_PP.value
-
-                email_connected(inv_email, str_email, temp_dict)
+                email_connected(inv_email, str_email, all_info())
 
                 str_matching_obj = get_str_matching_data(str_email)
                 str_id = str_matching_obj.get("_id")

@@ -133,25 +133,11 @@ class Referrals(db.Document):
 
 
 #<==================================================================================================>
-#                                     USER ANALYTICS
-#<==================================================================================================>
-class UserAnalytics(db.Document):
-    today = db.ListField()
-    is_inv = db.BooleanField()
-    first_week = db.ListField()
-    third_week = db.ListField()
-    second_week = db.ListField()
-    fourth_week = db.ListField()
-    email = db.EmailField(required=True)
-
-    meta = dict(indexes=['email'])
-
-
-#<==================================================================================================>
 #                                       NEW USERS DAILY
 #<==================================================================================================>
 class InvDailyNewUsers(db.Document):
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
@@ -159,6 +145,7 @@ class InvDailyNewUsers(db.Document):
 
 class StrDailyNewUsers(db.Document):
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
@@ -169,6 +156,7 @@ class StrDailyNewUsers(db.Document):
 #<==================================================================================================>
 class InvWeeklyNewUsers(db.Document):
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
@@ -176,6 +164,7 @@ class InvWeeklyNewUsers(db.Document):
 
 class StrWeeklyNewUsers(db.Document):
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
@@ -186,6 +175,7 @@ class StrWeeklyNewUsers(db.Document):
 #<==================================================================================================>
 class InvMonthlyNewUsers(db.Document):
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
@@ -193,6 +183,7 @@ class InvMonthlyNewUsers(db.Document):
 
 class StrMonthlyNewUsers(db.Document):
     count = db.IntField(default=0)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt'])
@@ -204,17 +195,44 @@ class StrMonthlyNewUsers(db.Document):
 class InvUniqueUsersDaily(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    current = db.BooleanField(default=False)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
-    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+    meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
 
 
 class StrUniqueUsersDaily(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    current = db.BooleanField(default=False)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
-    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+    meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
+
+
+#<==================================================================================================>
+#                                      WEEKLY UNIQUE USERS
+#<==================================================================================================>
+class InvUniqueUsersWeekly(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current = db.BooleanField(default=False)
+    date = db.DateTimeField(default=datetime.date.today)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
+
+
+class StrUniqueUsersWeekly(db.Document):
+    users_dict = db.DictField()
+    count = db.IntField(default=0)
+    current = db.BooleanField(default=False)
+    date = db.DateTimeField(default=datetime.date.today)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
 
 
 #<==================================================================================================>
@@ -223,17 +241,59 @@ class StrUniqueUsersDaily(db.Document):
 class InvUniqueUsersMonthly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    current = db.BooleanField(default=False)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
-    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+    meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
 
 
 class StrUniqueUsersMonthly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
+    current = db.BooleanField(default=False)
+    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
-    meta = dict(indexes=['count', 'current_dt', 'users_dict'])
+    meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
+
+
+#<==================================================================================================>
+#                                    INVESTOR RETENTION RATE
+#<==================================================================================================>
+class InvRetention(db.Document):
+    daily = db.ListField()
+    weekly = db.ListField()
+    monthly = db.ListField()
+
+    meta = dict(indexes=['daily', 'weekly', 'monthly'])
+
+
+#<==================================================================================================>
+#                                    STARTUP RETENTION RATE
+#<==================================================================================================>
+class StrRetention(db.Document):
+    daily = db.ListField()
+    weekly = db.ListField()
+    monthly = db.ListField()
+
+    meta = dict(indexes=['daily', 'weekly', 'monthly'])
+
+
+#<==================================================================================================>
+#                                     USER ANALYTICS
+#<==================================================================================================>
+class UserAnalytics(db.Document):
+    today = db.ListField()
+    is_inv = db.BooleanField()
+    first_week = db.ListField()
+    third_week = db.ListField()
+    second_week = db.ListField()
+    fourth_week = db.ListField()
+    email = db.EmailField(required=True)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['email', 'current_dt'])
 
 
 #<==================================================================================================>
