@@ -1,4 +1,6 @@
 appspec.yml merge=ours
 bitbucket-pipelines.yml merge=ours
 common_utilities/__init__.py merge=ours
+project/templates/reset-success-inv.html
+project/templates/reset-success-str.html
 common_utilities/shell_cripts/after_deploy_supervisor_restart.sh merge=ours
