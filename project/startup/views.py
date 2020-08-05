@@ -12,32 +12,32 @@ from project import serial
 from common_utilities import CONSTANT
 from flask_login import login_user, login_required
 from project.models import Startup, Investor, Referrals
-from common_utilities.referral_email import email_referral
 from common_utilities.jwt_decoder import startup_jwt_decoder
-from common_utilities.connected_emails import email_connected
-from common_utilities.password_reset import password_reset_email
+from common_utilities.emails.referral_email import email_referral
 from common_utilities.technical_error_mail import technical_errors
-from common_utilities.email_confirmation import email_confirmation
-from common_utilities.wait_list_email_str import wait_list_user_str
-from common_utilities.google_email import google_email_confirmation
-from common_utilities.account_delete_email import delete_user_account
+from common_utilities.emails.connected_emails import email_connected
 from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.emails.password_reset import password_reset_email
 from werkzeug.security import generate_password_hash, check_password_hash
-from common_utilities.user_retention_individual import individual_user_retention
+from common_utilities.emails.email_confirmation import email_confirmation
+from common_utilities.emails.wait_list_email_str import wait_list_user_str
+from common_utilities.emails.google_email import google_email_confirmation
+from common_utilities.emails.account_delete_email import delete_user_account
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
+from common_utilities.analytics.user_retention_individual import individual_user_retention
 from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from common_utilities.user_retention import str_daily_retention, str_weekly_retention, str_monthly_retention
-from common_utilities.unique_login import str_unique_users_daily, str_unique_users_monthly, str_unique_users_weekly
+from common_utilities.analytics.user_retention import str_daily_retention, str_weekly_retention, str_monthly_retention
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
+from common_utilities.analytics.unique_login import str_unique_users_daily, str_unique_users_monthly, str_unique_users_weekly
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
-from common_utilities.new_user_count_analytics import str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count
+from common_utilities.analytics.new_user_count_analytics import str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count
 from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
                                                              validate_referrer_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
@@ -1359,12 +1359,6 @@ def change_password():
 #<==================================================================================================>
 @startup_blueprint.route('/get-jwt-token', methods=['POST'])
 def jwt_for_confirmation_page():
-    """
-    This is a function to create a user jwt token from email address.
-
-    :param: email
-    :return: jwt token
-    """
     input_request = request.get_json()
     response = validate_email_schema(input_request)
     if response["result"]:
@@ -1394,15 +1388,6 @@ def jwt_for_confirmation_page():
 #<==================================================================================================>
 @startup_blueprint.route('/ste-mapping', methods=['POST'])
 def string_to_email_mapping():
-    """
-    This is a function to return the respective emails from the string values
-
-    :param: string_id
-    :type:  string
-
-    :return: email
-    :type:   string
-    """
     input_req = request.get_json()
     response = validate_inv_passed_recvisit_schema(input_req)
 

@@ -4,7 +4,7 @@
 import sys
 import boto3
 import logging
-sys.path.append('../')
+sys.path.append('../../')
 from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 

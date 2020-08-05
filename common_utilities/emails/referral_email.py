@@ -1,41 +1,47 @@
 #<==================================================================================================>
-#                                         IMPORTS
+#                                       IMPORTS
 #<==================================================================================================>
 import sys
 import boto3
+import string
 import logging
-sys.path.append('../')
+sys.path.append('../../')
 from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
 #<==================================================================================================>
-#                                         LOGGER
+#                                       LOGGER
 #<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
 #<==================================================================================================>
-#                                   DELETE USER ACCOUNT
+#                                   EMAIL REFERRAL
 #<==================================================================================================>
-def delete_user_account(user_email):
+def email_referral(user_email, full_name, first_name, link, is_investor, domain):
     RECIPIENT = [user_email]
-    SENDER = CONSTANT.EMAIL_SENDER.value
+    first_name = first_name.capitalize()
+    full_name = string.capwords(full_name)
     AWS_REGION = CONSTANT.EMAIL_REGION.value
+    SENDER = "Angelfund.ai <hello@angelfund.ai>"
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Your Angelfund.ai account has been deleted"
-    BODY_HTML = """
+    SUBJECT = f"{first_name} has invited you to join Angelfund.ai!"
+    BODY_HTML = f"""
 <html>
    <head>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+      <link
+         rel="stylesheet"
+         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
+         />
       <style>
          body,
-         html {
+         html {{
          margin: 0 !important;
          padding: 0 !important;
-         }
-         .container {
+         }}
+         .container {{
          display: block !important;
          width: 600px !important;
          margin: auto !important;
@@ -44,34 +50,34 @@ def delete_user_account(user_email):
          box-shadow: 0px 2px 3px 0px #f2f2ff !important;
          margin-top: 5% !important;
          border-radius: 5px !important;
-         }
+         }}
          p,
          h1,
-         .sizing {
+         .sizing {{
          font-family: "Roboto", sans-serif !important;
-         }
-         p {
+         }}
+         p {{
          margin: 30px 0 !important;
-         }
-         .logo {
+         }}
+         .logo {{
          display: block !important;
          margin: auto !important;
          text-align: center !important;
          padding-top: 10px !important;
-         }
-         .title {
+         }}
+         .title {{
          padding-top: 30px;
          padding-bottom: 10px;
          padding-left: 10px;
          border-bottom: 2px solid #e6e6e6;
-         }
-         .hook {
+         }}
+         .hook {{
          padding-top: 30px;
          text-align: left;
          padding-bottom: 10px;
          margin: 3%;
-         }
-         .footer {
+         }}
+         .footer {{
          margin: 0% !important;
          left: 0%;
          bottom: 0%;
@@ -80,90 +86,93 @@ def delete_user_account(user_email):
          background-color: lightgrey;
          opacity: 0.3;
          padding: 2% 0;
-         }
-         h1 {
+         }}
+         h1 {{
          font-size: 28px !important;
          font-family: Lato;
          font-weight: 500;
          color: #707070;
-         }
-         strong {
+         }}
+         strong {{
          font-weight: 500;
-         }
-         .sizing {
+         }}
+         .sizing {{
          font-size: 17px !important;
-         }
-         a {
+         }}
+         a {{
          transition: all 0.5s ease-in-out;
-         }
-         a:hover {
+         }}
+         a:hover {{
          font-size: 18px;
-         }
-         @media only screen and (max-width: 600px) {
-         .logo {
+         }}
+         @media only screen and (max-width: 600px) {{
+         .logo {{
          padding-left: 5%;
          margin: 0px !important;
          text-align: left !important;
-         }
-         .container {
+         }}
+         .container {{
          margin: 0px !important;
          padding: 0% !important;
          border: none !important;
          box-shadow: none !important;
          width: 100% !important;
-         }
-         .hook {
+         }}
+         .hook {{
          display: block;
          margin: auto;
          width: 80%;
-         }
-         h1 {
+         }}
+         h1 {{
          font-size: 20px !important;
-         }
-         .sizing {
+         }}
+         .sizing {{
          font-size: 15px !important;
-         }
-         .title {
+         }}
+         .title {{
          padding-left: 5% !important;
          margin-left: 0% !important;
-         }
-         .footer {
-         font-size: 15px;
-         }
-         }
+         }}
+         }}
       </style>
    </head>
    <div class="container">
       <div class="logo">
-         <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
-            style="height: 30px; width: 165px;" />
+         <img
+            src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/Icons/Angelfund.ai+Logo.png"
+            style="height: 30px; width: 165px;"
+            />
       </div>
       <div class="title">
          <h1>
-            Account Deleted
+            Referral From {full_name}
          </h1>
       </div>
       <div class="hook">
+         <strong class="sizing">
+         {first_name} is inviting you to join
+         <span style="color: #5e51f4;">Angelfund.ai!</span>
+         </strong>
          <p class="sizing">
-            Your Angelfund.ai account has been successfully deleted. We're sad to
-            see you go!
+            Sign up using their link to get early access to the most relevant
+            startups & investors:
          </p>
-         <p class="sizing">
-            If you didn't request an account deletion, please contact us immediately.
-         </p>
-         <p class="sizing">
-            We wish you all the best! <br />
-            <span style="color: #5e51f4;">Angelfund.ai</span>
+         <p class="sizing" style="text-decoration: none;">
+            <a
+               style="
+               word-wrap: break-word;
+               text-decoration: underline;
+               color: #5e51f4;
+               "
+               href="{link}"
+               >{domain}/api/v1/{is_investor}/referral/{first_name}</a
+               >
          </p>
       </div>
       <div class="footer">
-         <div valign="middle" style="display: block; width: 100%; margin: auto; height: 25px;">
-            <a target="_blank" href="https://twitter.com/angelfundAI" style="height: 25px;
-            width: 25px;">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" 
-            valign="middle"
-            style="
-               vertical-align: middle;
+         <div>
+            <a target="_blank" href="https://twitter.com/angelfundAI">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/twitter-512.png" style="
                height: 25px;
                width: 25px;
                text-decoration: none;
@@ -171,12 +180,8 @@ def delete_user_account(user_email):
                color: gray; 
                "></img>
             </a>
-            <a target="_blank" href="https://www.linkedin.com/company/angelfundai" style="height: 25px;
-            width: 25px;">
-            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" 
-            valign="middle"
-            style="
-               vertical-align: middle;
+            <a target="_blank" href="https://www.linkedin.com/company/angelfundai">
+            <img src="https://angelfund-company-images.s3-us-west-1.amazonaws.com/25325.png" style="
                height: 25px;
                width: 25px;
                text-decoration: none;
@@ -193,7 +198,7 @@ def delete_user_account(user_email):
       </div>
    </div>
 </html>
-    """
+"""
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,
@@ -220,6 +225,6 @@ def delete_user_account(user_email):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: account deletion: failed {user_email}")
+        logger.error(f"common utilities: email confirmation: failed {user_email}")
     else:
-        logger.debug(f"common utilities: account deletion: success {user_email}")
+        logger.debug(f"common utilities: email confirmation: success {user_email}")

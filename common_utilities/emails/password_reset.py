@@ -1,34 +1,44 @@
 #<==================================================================================================>
-#                                         IMPORTS
+#                                        IMPORTS
 #<==================================================================================================>
 import sys
 import boto3
 import logging
-sys.path.append('../')
+sys.path.append('../../')
 from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
 
 #<==================================================================================================>
-#                                         LOGGER
+#                                        LOGGER
 #<==================================================================================================>
 logger = logging.getLogger(__name__)
 
 
 #<==================================================================================================>
-#                                   EMAIL CONFIRMATION
+#                                 RESET PASSWORD EMAIL TEMPLATE
 #<==================================================================================================>
-def email_confirmation(user_email, email_confirm_link, first_name):
+def password_reset_email(user_email, password_reset_link):
+    """
+    Sending the user an email to reset their passowrd
+
+    :parameter
+      ==> user_email          :str
+      ==> password_reset_link :str
+
+    :returns
+      ==> None                :None
+    """
     RECIPIENT = [user_email]
     SENDER = CONSTANT.EMAIL_SENDER.value
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"{first_name}, please confirm your email address"
+    SUBJECT = "Reset your Angelfund.ai password"
     BODY_HTML = """
 <html>
    <head>
-      <link 
+      <link
          rel="stylesheet"
          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
          />
@@ -47,44 +57,6 @@ def email_confirmation(user_email, email_confirm_link, first_name):
          box-shadow: 0px 2px 3px 0px #f2f2ff !important;
          margin-top: 2% !important;
          border-radius: 5px !important;
-         }}
-         .fa-twitter::before {{
-         content: "\\f099";
-         }}
-         .fa-linkedin::before {{
-         content: "\\f0e1";
-         }}
-         element {{
-         font-size: 25px;
-         text-decoration: none;
-         background-color: gray;
-         width: 30px;
-         color: white;
-         }}
-         .fa {{
-         display: inline-block;
-         font: normal normal normal 14px/1 FontAwesome;
-         font-size: 14px;
-         font-size: 14px;
-         font-size: inherit;
-         text-rendering: auto;
-         -webkit-font-smoothing: antialiased;
-         -moz-osx-font-smoothing: grayscale;
-         }}
-         element {{
-         font-size: 25px;
-         text-decoration: none;
-         margin-right: 10px;
-         color: gray;
-         }}
-         .fa {{
-         display: inline-block;
-         font: normal normal normal 14px/1 FontAwesome;
-         font-size: 14px;
-         font-size: inherit;
-         text-rendering: auto;
-         -webkit-font-smoothing: antialiased;
-         -moz-osx-font-smoothing: grayscale;
          }}
          p,
          h1,
@@ -109,7 +81,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
          .hook {{
          padding-top: 30px;
          text-align: center;
-         padding-bottom: 30px;
+         padding-bottom: 10px;
          margin: 3%;
          }}
          .bottom-text {{
@@ -136,10 +108,11 @@ def email_confirmation(user_email, email_confirm_link, first_name):
          font-weight: 500;
          }}
          .sizing {{
-         font-size: 16px !important;
+         font-size: 17px !important;
          }}
          button {{
          height: 50px;
+         margin-top: 10px;
          /* margin-left: 15%; */
          padding: 10px 30px;
          background-color: #5e51f4;
@@ -205,37 +178,35 @@ def email_confirmation(user_email, email_confirm_link, first_name):
             />
       </div>
       <div class="title">
-         <h1>Confirm Your Email</h1>
+         <h1>Reset Password</h1>
       </div>
       <div class="hook">
-         <p class="sizing">
-            Hey {first_name}—thanks for signing up for
-            <span style="color: #5e51f4;">Angelfund.ai!</span> <br />Click here to
-            confirm your email address and get started:
+         <strong class="sizing">
+         Resetting your password is simple-we'll have you up and running in no
+         time.
+         </strong>
+         <p style="margin-bottom: 6%;" class="sizing">
+            If you requested a password reset, click here to create a new one:
          </p>
-         <p class="sizing" style="margin-bottom: 6%;"></p>
          <div style="text-align: center;">
+            <a style="color: white; text-decoration: none;" target="_blank" href="{password_reset_link}">
             <button>
-            <a
-               style="color: white; text-decoration: none;"
-               target="_blank"
-               href="{email_confirm_link}"
-               >Confirm my Email</a
-               >
+            Reset my Password
             </button>
+            </a>
          </div>
       </div>
       <div class="bottom-section">
-         <div class="bottom-text" style="padding-top: 5px;">
+         <div class="bottom-text">
             <p class="sizing">
                <strong class="sizing">Button not working?</strong><br />
                Just click on the link below or paste it into your browser.
-               {email_confirm_link}
+               {password_reset_link}
             </p>
             <p class="sizing">
-               You received this email because you signed up for an Angelfund.ai
-               account with this email address. If this was a mistake, please ignore
-               this message.
+               You received this email because you requested a password reset. If you
+               did not,
+               <span style="text-decoration: underline;">please contact us.</span>
             </p>
          </div>
       </div>
@@ -268,7 +239,7 @@ def email_confirmation(user_email, email_confirm_link, first_name):
       </div>
    </div>
 </html>
-    """.format(email_confirm_link=email_confirm_link, first_name=first_name)
+    """.format(password_reset_link=password_reset_link)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,

@@ -2,7 +2,7 @@
 #                                      IMPORTS
 #<==================================================================================================>
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 from datetime import datetime, timedelta, date
 from project.models import (InvUniqueUsersDaily, StrUniqueUsersDaily, InvUniqueUsersMonthly,
                             StrUniqueUsersMonthly, InvUniqueUsersWeekly, StrUniqueUsersWeekly)

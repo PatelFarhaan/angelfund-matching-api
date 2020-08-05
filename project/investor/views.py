@@ -11,32 +11,32 @@ import threading
 from project import serial
 from common_utilities import CONSTANT
 from flask_login import login_required, login_user
-from common_utilities.referral_email import email_referral
 from common_utilities.jwt_decoder import investor_jwt_decoder
-from common_utilities.connected_emails import email_connected
 from common_utilities.company_images import company_images_api
-from common_utilities.password_reset import password_reset_email
-from common_utilities.email_confirmation import email_confirmation
+from common_utilities.emails.referral_email import email_referral
 from common_utilities.technical_error_mail import technical_errors
 from project.models import Investor, Startup, Referrals, AngelGroup
-from common_utilities.google_email import google_email_confirmation
-from common_utilities.wait_list_email_inv import wait_list_user_inv
-from common_utilities.account_delete_email import delete_user_account
+from common_utilities.emails.connected_emails import email_connected
 from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.emails.password_reset import password_reset_email
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
+from common_utilities.emails.email_confirmation import email_confirmation
+from common_utilities.emails.google_email import google_email_confirmation
+from common_utilities.emails.wait_list_email_inv import wait_list_user_inv
 from common_utilities.common_mappings import sector_data, accreditation_data
-from common_utilities.user_retention_individual import individual_user_retention
+from common_utilities.emails.account_delete_email import delete_user_account
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
+from common_utilities.analytics.user_retention_individual import individual_user_retention
 from flask import url_for, request, Blueprint, jsonify, redirect, session, render_template
 from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from common_utilities.user_retention import inv_daily_retention, inv_weekly_retention, inv_monthly_retention
-from common_utilities.unique_login import inv_unique_users_daily, inv_unique_users_monthly, inv_unique_users_weekly
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
+from common_utilities.analytics.user_retention import inv_daily_retention, inv_weekly_retention, inv_monthly_retention
 from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
-from common_utilities.new_user_count_analytics import inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count
+from common_utilities.analytics.unique_login import inv_unique_users_daily, inv_unique_users_monthly, inv_unique_users_weekly
+from common_utilities.analytics.new_user_count_analytics import inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count
 from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
                                                    inv_mutual_updates)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
@@ -1005,6 +1005,11 @@ def investors_dashboard():
 @investor_blueprint.route('/history-all', methods=["GET"])
 @jwt_required
 def history():
+    def get_passed_feedback(str_email: str, inv_email: str):
+        str_obj = Startup.objects.filter(email=str_email).first()
+        inv_feedback = dict(getattr(str_obj, "feedback")).get(inv_email)
+        return inv_feedback
+
     jwt_decode = investor_jwt_decoder(get_jwt_identity())
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
@@ -1017,7 +1022,9 @@ def history():
     ma_schema = StartupPassedSchema()
     for k, v in passed.items():
         str_obj = Startup.objects.filter(email=k).first()
-        data.append(ma_schema.dump(str_obj))
+        passed_str_data = ma_schema.dump(str_obj)
+        passed_str_data["feedback"] = get_passed_feedback(k, inv_obj.email)
+        data.append(passed_str_data)
 
     # connected
     connected = getattr(inv_obj, "connected")
@@ -1055,6 +1062,11 @@ def connected():
 @investor_blueprint.route('/history-passed', methods=["GET"])
 @jwt_required
 def passed():
+    def get_passed_feedback(str_email: str, inv_email: str):
+        str_obj = Startup.objects.filter(email=str_email).first()
+        inv_feedback = dict(getattr(str_obj, "feedback")).get(inv_email)
+        return inv_feedback
+
     jwt_decode = investor_jwt_decoder(get_jwt_identity())
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
@@ -1065,7 +1077,9 @@ def passed():
     data = []
     for k, v in passed.items():
         str_obj = Startup.objects.filter(email=k).first()
-        data.append(ma_schema.dump(str_obj))
+        passed_str_data = ma_schema.dump(str_obj)
+        passed_str_data["feedback"] = get_passed_feedback(k, inv_obj.email)
+        data.append(passed_str_data)
     return jsonify({"result": True, "data": data})
 
 
@@ -1196,12 +1210,6 @@ def delete_account():
 @investor_blueprint.route('/jwt-token-check', methods=["GET"])
 @jwt_required
 def expired_jwt_token_check():
-    """
-     checks whether a JWT token is expired
-
-     : param ==> None
-     : rparam ==> obj (whether or not token is expired)
-     """
     resp_obj = {
         "result": True,
         "message": "token is valid"
@@ -1214,12 +1222,6 @@ def expired_jwt_token_check():
 #<==================================================================================================>
 @investor_blueprint.route('/get-jwt-token', methods=['POST'])
 def jwt_for_confirmation_page():
-    """
-    This is a function to create a user jwt token from email address.
-
-    :param: email
-    :return: jwt token
-    """
     input_request = request.get_json()
     response = validate_email_schema(input_request)
     if response["result"]:
@@ -1250,17 +1252,6 @@ def jwt_for_confirmation_page():
 #<==================================================================================================>
 @investor_blueprint.route('/delete-email-address', methods=['POST'])
 def delete_email_address():
-    """
-    This is a function to delete email address from the startup and investor
-    from the main server for testing purpose.
-
-    :param: emails_list
-    :type:  list
-
-    :return: result
-    :type:   dict
-    """
-
     def db_details(database, collection):
         from pymongo import MongoClient
         remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
@@ -1310,16 +1301,6 @@ def delete_email_address():
 #<==================================================================================================>
 @investor_blueprint.route('/ste-mapping', methods=['POST'])
 def string_to_email_mapping():
-    """
-    This is a function to return the respective emails from the string values
-
-    :param: string_id
-    :type:  string
-
-    :return: email
-    :type:   string
-    """
-
     input_req = request.get_json()
     response = validate_inv_passed_recvisit_schema(input_req)
 
@@ -1339,16 +1320,6 @@ def string_to_email_mapping():
 #<==================================================================================================>
 @investor_blueprint.route('/angelgroup-name-search', methods=['POST'])
 def angel_group_name_search():
-    """
-    This is a test function to return the matching values of angel group from the AG database
-
-    :param: name
-    :type:  string
-
-    :return: complete matching name
-    :type:   string
-    """
-
     input_req = request.get_json()
     response = validate_inv_angel_group_name_schema(input_req)
     if response["result"]:

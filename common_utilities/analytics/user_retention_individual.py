@@ -2,7 +2,7 @@
 #                                      IMPORTS
 #<==================================================================================================>
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 from project.models import UserAnalytics
 from datetime import datetime, timedelta
 
