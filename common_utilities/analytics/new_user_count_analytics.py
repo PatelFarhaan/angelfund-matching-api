@@ -3,7 +3,7 @@
 #<==================================================================================================>
 import sys
 sys.path.append("../../")
-from _datetime import datetime, timedelta, date
+from _datetime import datetime, timedelta
 from project.models import (InvDailyNewUsers, InvWeeklyNewUsers, InvMonthlyNewUsers,
                             StrDailyNewUsers, StrWeeklyNewUsers, StrMonthlyNewUsers)
 
@@ -12,17 +12,27 @@ from project.models import (InvDailyNewUsers, InvWeeklyNewUsers, InvMonthlyNewUs
 #                                   GENERAL HELPER FUCNTION
 # <==================================================================================================>
 def helper(day: int, collection: (InvMonthlyNewUsers, InvWeeklyNewUsers, InvDailyNewUsers,
-                                               StrMonthlyNewUsers, StrWeeklyNewUsers, StrDailyNewUsers)):
-    user_obj = collection.objects.filter(date=date.today()).first()
+                                  StrMonthlyNewUsers, StrWeeklyNewUsers, StrDailyNewUsers)):
+    def untrue_current():
+        current_obj = collection.objects.filter(current=True).first()
+        if current_obj:
+            current_obj.current = False
+            current_obj.save()
+
+    user_obj = collection.objects.filter(current=True).first()
     if user_obj:
         if datetime.now() > user_obj.current_dt + timedelta(days=day):
-            new_obj = collection(count=1, date=date.today(), current_dt=datetime.now())
+            untrue_current()
+            current_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            new_obj = collection(count=1, current=True, current_dt=current_day)
             new_obj.save()
         else:
             user_obj.count += 1
             user_obj.save()
     else:
-        new_user = collection(count=1, date=date.today(), current_dt=datetime.now())
+        untrue_current()
+        current_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        new_user = collection(count=1, current=True, current_dt=current_day)
         new_user.save()
 
 #<==================================================================================================>

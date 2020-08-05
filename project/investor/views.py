@@ -3,6 +3,7 @@
 #<==================================================================================================>
 import os
 import uuid
+import time
 import magic
 import shutil
 import logging
@@ -88,11 +89,13 @@ def google_token():
                         for i in unique_user_list:
                             unique_user_thread = threading.Thread(target=i, args=(email,))
                             unique_user_thread.start()
+                        time.sleep(1)
 
                         def retention_single_thread():
                             user_retention_list = [inv_daily_retention, inv_weekly_retention, inv_monthly_retention]
                             for retention_modules in user_retention_list:
                                 retention_modules()
+
 
                         retention_thread = threading.Thread(target=retention_single_thread, args=())
                         retention_thread.start()
