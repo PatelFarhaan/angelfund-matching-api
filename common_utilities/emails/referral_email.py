@@ -225,6 +225,6 @@ def email_referral(user_email, full_name, first_name, link, is_investor, domain)
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: email confirmation: failed {user_email}")
+        logger.error(f"email referral ==> failed {user_email} from {first_name}")
     else:
-        logger.debug(f"common utilities: email confirmation: success {user_email}")
+        logger.debug(f"email referral ==> success {user_email} from {first_name}")
