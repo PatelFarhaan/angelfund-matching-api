@@ -35,5 +35,5 @@ def send_email_threading(email, name):
 # send_email_threading("liya@angelfund.ai", "Liya")
 # send_email_threading("farhaan@angelfund.ai", "Farhaan")
 # send_email_threading("briandam26@yahoo.com", "Birna")
-# send_email_threading("birna@angelfund.ai", "Birna")
-# send_email_threading("liyajin7@gmail.com", "Birna")
+send_email_threading("birna@angelfund.ai", "Birna")
+send_email_threading("liyajin7@gmail.com", "Birna")

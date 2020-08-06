@@ -147,8 +147,7 @@ def google_email_confirmation(user_email):
       </div>
       <div class="hook">
          <p class="sizing">
-            Hey {{first_name}}—you've successfully signed up for <span style="color: #5e51f4;">Angelfund.ai</span>
-            <br></br>with your Google Account.
+            Hey {{first_name}}—you've successfully signed up for <span style="color: #5e51f4;">Angelfund.ai</span> with your Google Account.
          </p>
          <p class="sizing">
             Glad to have you with us!
@@ -218,6 +217,6 @@ def google_email_confirmation(user_email):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"google signup email: failed {user_email}")
+        logger.error(f"google signup email ==> failed {user_email}")
     else:
-        logger.debug(f"google signup email: success {user_email}")
+        logger.debug(f"google signup email ==> success {user_email}")
