@@ -1130,23 +1130,23 @@ def history():
     feedback = getattr(str_obj, "feedback")
     feedback_schema = InvestorFeedbackSchema()
     for k, v in feedback.items():
-        if not v["is_anonymous"]:
+        if not v.get("is_anonymous"):
             inv_obj = Investor.objects.filter(email=k).first()
             resp = feedback_schema.dump(inv_obj)
-            resp["comment"] = v["comment"]
-            resp["reason"] = v["reason"]
+            resp["comment"] = v.get("comment")
+            resp["reason"] = v.get("field")[0] if v.get("field") else None
             data.append(resp)
         else:
             resp = {}
             resp["deals"] = []
-            resp["action"] = "Passed"
             resp["location"] = None
             resp["last_name"] = None
+            resp["action"] = "Passed"
             resp["first_name"] = None
             resp["first_name"] = None
-            resp["reason"] = v["reason"]
-            resp["comment"] = v["comment"]
+            resp["comment"] = v.get("comment")
             resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
+            resp["reason"] = v.get("field")[0] if v.get("field") else None
             data.append(resp)
 
     # connected
@@ -1193,32 +1193,32 @@ def passed():
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
 
-    res = []
+    data = []
     str_obj = jwt_decode["user_obj"]
     feedback = getattr(str_obj, "feedback")
-
     feedback_schema = InvestorFeedbackSchema()
-    for k,v in feedback.items():
-        if not v["is_anonymous"]:
+
+    for k, v in feedback.items():
+        if not v.get("is_anonymous"):
             inv_obj = Investor.objects.filter(email=k).first()
             resp = feedback_schema.dump(inv_obj)
-            resp["comment"] = v["comment"]
-            resp["reason"] = v["reason"]
-            res.append(resp)
+            resp["comment"] = v.get("comment")
+            resp["reason"] = v.get("field")[0] if v.get("field") else None
+            data.append(resp)
         else:
             resp = {}
             resp["deals"] = []
-            resp["action"] = "Passed"
             resp["location"] = None
             resp["last_name"] = None
+            resp["action"] = "Passed"
             resp["first_name"] = None
             resp["first_name"] = None
-            resp["reason"] = v["reason"]
-            resp["comment"] = v["comment"]
+            resp["comment"] = v.get("comment")
             resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
-            res.append(resp)
+            resp["reason"] = v.get("field")[0] if v.get("field") else None
+            data.append(resp)
 
-    return {"result": True, "data": res}
+    return {"result": True, "data": data}
 
 
 #<==================================================================================================>
