@@ -1170,7 +1170,7 @@ def history():
             inv_obj = Investor.objects.filter(email=k).first()
             resp = feedback_schema.dump(inv_obj)
             resp["comment"] = v.get("comment")
-            resp["reason"] = v.get("field")[0] if v.get("field") else None
+            resp["reason"] = v.get("fields")[0] if v.get("fields") else None
             data.append(resp)
         else:
             resp = {}
@@ -1182,7 +1182,7 @@ def history():
             resp["first_name"] = None
             resp["comment"] = v.get("comment")
             resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
-            resp["reason"] = v.get("field")[0] if v.get("field") else None
+            resp["reason"] = v.get("fields")[0] if v.get("fields") else None
             data.append(resp)
 
     # connected
@@ -1244,7 +1244,7 @@ def passed():
             inv_obj = Investor.objects.filter(email=k).first()
             resp = feedback_schema.dump(inv_obj)
             resp["comment"] = v.get("comment")
-            resp["reason"] = v.get("field")[0] if v.get("field") else None
+            resp["reason"] = v.get("fields")[0] if v.get("fields") else None
             data.append(resp)
         else:
             resp = {}
@@ -1256,7 +1256,7 @@ def passed():
             resp["first_name"] = None
             resp["comment"] = v.get("comment")
             resp["profile_pic_link"] = CONSTANT.ANONYMOUS_PP.value
-            resp["reason"] = v.get("field")[0] if v.get("field") else None
+            resp["reason"] = v.get("fields")[0] if v.get("fields") else None
             data.append(resp)
 
     logger.debug(f"startup: history-passed: data found: {str_obj.email}")
