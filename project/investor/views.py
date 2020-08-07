@@ -291,6 +291,7 @@ def reset_link(token):
                 user_obj = Investor.objects.filter(email=email).first()
                 user_obj.is_logged_in = False
                 user_obj.save()
+                logger.debug(f"investor: reset-link/token: user logged out: {email}")
                 email = email.lower()
         except:
             return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
