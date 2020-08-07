@@ -12,7 +12,6 @@ import threading
 from project import serial
 from common_utilities import CONSTANT
 from flask_login import login_required, login_user
-from common_utilities.user_login_check import user_logged_in
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.company_images import company_images_api
 from common_utilities.emails.referral_email import email_referral
@@ -474,9 +473,6 @@ def logout():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     user_obj.is_logged_in = False
     user_obj.save()
@@ -495,9 +491,6 @@ def referral_link():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     inp_req = request.get_json()
     response = validate_referrer_schema(inp_req)
@@ -600,9 +593,6 @@ def update_info():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     if user_obj.is_logged_in:
         input_data = request.get_json()
@@ -683,9 +673,6 @@ def monday_notifications():
         return jsonify(jwt_decode)
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     if request.method == "POST":
         response = validate_inv_monday_notification_schema(request.get_json())
@@ -714,9 +701,6 @@ def profile_visibility():
         return jsonify(jwt_decode)
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     response = validate_profile_vis_schema(request.get_json())
     if response["result"]:
@@ -762,9 +746,6 @@ def waitlist_email():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     email, first_name = user_obj.email, user_obj.first_name
     if email:
@@ -786,9 +767,6 @@ def mime_files():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     file_name = None
     file_type = request.form.get("type")
@@ -841,9 +819,6 @@ def investors_dashboard():
             return jsonify(jwt_decode)
 
         user_obj = jwt_decode["user_obj"]
-        login_check_resp = user_logged_in(user_obj)
-        if not login_check_resp.get("result"):
-            return login_check_resp
 
         matching_obj = get_inv_matching_data(user_obj.email)
 
@@ -876,9 +851,6 @@ def investors_dashboard():
             return jsonify(jwt_decode)
 
         inv_obj = jwt_decode["user_obj"]
-        login_check_resp = user_logged_in(inv_obj)
-        if not login_check_resp.get("result"):
-            return login_check_resp
 
         inv_email = inv_obj.email
 
@@ -1067,12 +1039,8 @@ def history():
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
 
-    inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
-
     data = []
+    inv_obj = jwt_decode["user_obj"]
 
     # passed
     passed = getattr(inv_obj, "passed")
@@ -1105,9 +1073,6 @@ def connected():
         return jsonify(jwt_decode)
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     connected = getattr(inv_obj, "connected")
     ma_schema = StartupConnectedSchema()
@@ -1136,9 +1101,6 @@ def passed():
         return jsonify(jwt_decode)
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     passed = getattr(inv_obj, "passed")
     ma_schema = StartupPassedSchema()
@@ -1164,9 +1126,6 @@ def passed_revisit():
         return jsonify(jwt_decode)
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     input_req = request.get_json()
     response = validate_inv_passed_recvisit_schema(input_req)
@@ -1196,9 +1155,6 @@ def change_password():
         return jsonify(jwt_decode)
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     if inv_obj is not None:
         token = serial.dumps(inv_obj.email, salt='email_reset')
@@ -1227,9 +1183,6 @@ def general_company_images():
             return jsonify(jwt_decode)
 
         user_obj = jwt_decode["user_obj"]
-        login_check_resp = user_logged_in(user_obj)
-        if not login_check_resp.get("result"):
-            return login_check_resp
 
         inp_req = request.get_json()
         response = validate_company_schema(inp_req)
@@ -1253,9 +1206,6 @@ def verify_password():
         return jsonify(jwt_decode)
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     response = validate_delete_acc_schema(request.get_json())
     if response["result"]:
@@ -1280,9 +1230,6 @@ def delete_account():
 
 
     inv_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(inv_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     response = validate_delete_acc_conf_schema(request.get_json())
     if response["result"]:

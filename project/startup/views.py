@@ -13,11 +13,9 @@ from common_utilities import CONSTANT
 from flask_login import login_user, login_required
 from project.models import Startup, Investor, Referrals
 from common_utilities.jwt_decoder import startup_jwt_decoder
-from common_utilities.user_login_check import user_logged_in
 from common_utilities.emails.referral_email import email_referral
 from common_utilities.technical_error_mail import technical_errors
 from common_utilities.emails.connected_emails import email_connected
-from common_utilities.machine_learning.hide_user_profile import hide_user, unhide_user
 from common_utilities.emails.password_reset import password_reset_email
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.emails.email_confirmation import email_confirmation
@@ -27,19 +25,21 @@ from common_utilities.emails.account_delete_email import delete_user_account
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
+from common_utilities.machine_learning.hide_user_profile import hide_user, unhide_user
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
 from common_utilities.analytics.user_retention_individual import individual_user_retention
-from common_utilities.machine_learning.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.machine_learning.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.analytics.user_retention import str_daily_retention, str_weekly_retention, str_monthly_retention
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
-from common_utilities.machine_learning.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.analytics.unique_login import str_unique_users_daily, str_unique_users_monthly, str_unique_users_weekly
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
+from common_utilities.machine_learning.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.analytics.new_user_count_analytics import str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count
-from common_utilities.machine_learning.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
+from common_utilities.machine_learning.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, \
+    str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
                                                              validate_referrer_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
                                                              validate_email_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
@@ -443,9 +443,6 @@ def logout():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     user_obj.is_logged_in = False
     user_obj.save()
@@ -464,9 +461,6 @@ def referral_link():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     inp_req = request.get_json()
     response = validate_referrer_schema(inp_req)
@@ -568,9 +562,6 @@ def update_info():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     if user_obj.is_logged_in:
         input_data = request.get_json()
@@ -666,9 +657,6 @@ def monday_notifications():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     if request.method == "POST":
         response = validate_str_monday_notification_schema(request.get_json())
@@ -697,9 +685,6 @@ def profile_visibility():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     response = validate_profile_vis_schema(request.get_json())
     if response["result"]:
@@ -744,9 +729,6 @@ def remove_slide_deck():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     response = validate_remove_slide_deck_schema(request.get_json())
     if response["result"]:
@@ -775,9 +757,6 @@ def mime_files():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     file_name = None
     file_type = request.form.get("type")
@@ -842,9 +821,6 @@ def co_founders_image_upload_to_s3():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     file_name = None
     file_type = request.form.get("type")
@@ -895,9 +871,6 @@ def waitlist_email():
         return jsonify(jwt_decode)
 
     user_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(user_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     email, first_name, company_name = user_obj.email, user_obj.first_name, user_obj.company_name
     if email:
@@ -920,10 +893,6 @@ def startup_dashboard():
             return jsonify(jwt_decode)
 
         user_obj = jwt_decode["user_obj"]
-        login_check_resp = user_logged_in(user_obj)
-        if not login_check_resp.get("result"):
-            return login_check_resp
-
         matching_obj = get_str_matching_data(user_obj.email)
 
         if matching_obj == {}:
@@ -954,9 +923,6 @@ def startup_dashboard():
             return jsonify(jwt_decode)
 
         str_obj = jwt_decode["user_obj"]
-        login_check_resp = user_logged_in(str_obj)
-        if not login_check_resp.get("result"):
-            return login_check_resp
 
         str_email =  str_obj.email
 
@@ -1193,14 +1159,9 @@ def history():
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
 
-    str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
-
     data = []
+    str_obj = jwt_decode["user_obj"]
 
-    # import ipdb; ipdb.set_trace()
     # # passed
     feedback = getattr(str_obj, "feedback")
     feedback_schema = InvestorFeedbackSchema()
@@ -1247,9 +1208,6 @@ def connected():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     connected = getattr(str_obj, "connected")
     ma_schema = InvestorConnectedSchema()
@@ -1275,12 +1233,9 @@ def passed():
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
 
-    str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
-
     data = []
+    str_obj = jwt_decode["user_obj"]
+
     feedback = getattr(str_obj, "feedback")
     feedback_schema = InvestorFeedbackSchema()
 
@@ -1319,10 +1274,6 @@ def passed_revisit():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
-
     input_req = request.get_json()
     response = validate_inv_passed_recvisit_schema(input_req)
 
@@ -1351,10 +1302,6 @@ def verify_password():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
-
     response = validate_delete_acc_schema(request.get_json())
     if response["result"]:
         password = response["data"]["password"]
@@ -1378,9 +1325,6 @@ def delete_account():
             return jsonify(jwt_decode)
 
         str_obj = jwt_decode["user_obj"]
-        login_check_resp = user_logged_in(str_obj)
-        if not login_check_resp.get("result"):
-            return login_check_resp
 
         response = validate_delete_acc_conf_schema(request.get_json())
         if response["result"]:
@@ -1446,9 +1390,6 @@ def change_password():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    login_check_resp = user_logged_in(str_obj)
-    if not login_check_resp.get("result"):
-        return login_check_resp
 
     if str_obj is not None:
         token = serial.dumps(str_obj.email, salt='email_reset')
