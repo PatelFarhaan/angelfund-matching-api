@@ -18,7 +18,7 @@ from common_utilities.emails.referral_email import email_referral
 from common_utilities.technical_error_mail import technical_errors
 from project.models import Investor, Startup, Referrals, AngelGroup
 from common_utilities.emails.connected_emails import email_connected
-from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.machine_learning.hide_user_profile import hide_user, unhide_user
 from common_utilities.emails.password_reset import password_reset_email
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,16 +30,16 @@ from common_utilities.emails.account_delete_email import delete_user_account
 from project.investor.marshmallow_serialize import InvestorUserSchema, InvestorMLSchema
 from common_utilities.analytics.user_retention_individual import individual_user_retention
 from flask import url_for, request, Blueprint, jsonify, redirect, session, render_template
-from common_utilities.startup_matching_db import get_str_matching_data, str_mutual_updates
+from common_utilities.machine_learning.startup_matching_db import get_str_matching_data, str_mutual_updates
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
 from common_utilities.analytics.user_retention import inv_daily_retention, inv_weekly_retention, inv_monthly_retention
-from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
+from common_utilities.machine_learning.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.analytics.unique_login import inv_unique_users_daily, inv_unique_users_monthly, inv_unique_users_weekly
 from common_utilities.analytics.new_user_count_analytics import inv_daily_new_users_count, inv_weekly_new_users_count, inv_monthly_new_users_count
-from common_utilities.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
-                                                   inv_mutual_updates)
+from common_utilities.machine_learning.investor_matching_db import (insert_into_matching, update_into_matching, get_inv_matching_data, process_all_str_data,
+                                                                    inv_mutual_updates)
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_delete_acc_schema,
@@ -83,7 +83,7 @@ def google_token():
                         login_user(user)
                         user.is_logged_in = True
                         user.save()
-                        logger.debug(f"investor logged in: {email}")
+                        logger.debug(f"investor: google-token: logged in: {email}")
 
                         unique_user_list = [inv_unique_users_daily, inv_unique_users_weekly, inv_unique_users_monthly]
                         for i in unique_user_list:
@@ -144,7 +144,7 @@ def google_token():
                         if not insert_into_matching(email, ml_schema_resp):
                             technical_errors("INVESTOR: SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
 
-                        logger.debug(f"investor created {email} via Google OAuth")
+                        logger.debug(f"investor: google-token: created via Google OAuth: {email}")
 
                         thread = threading.Thread(target=google_email_confirmation, args=(email,))
                         thread.start()
@@ -153,7 +153,7 @@ def google_token():
                         login_user(user)
                         user.is_logged_in = True
                         user.save()
-                        logger.debug(f"investor logged in: {email}")
+                        logger.debug(f"investor: google-token: logged in: {email}")
 
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
@@ -179,7 +179,7 @@ def google_token():
                         return ret_obj
                 else:
                     message = "User email not available or not verified by Google."
-                    logger.debug(f"{message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
+                    logger.debug(f"investor: google-token: {message}: {userinfo_response.json().get('email', 'email_not_mentioned')}")
                     return jsonify({"result": False, "error": message}), 400
             else:
                 return jsonify({"result": False, "error": "invalid token"}), 400
@@ -206,7 +206,7 @@ def login():
         user = Investor.objects.filter(email=email).first()
         if user is None:
             error = "user does not exist"
-            logger.debug(f"investor does not exixt: {email}")
+            logger.debug(f"investor: login: does not exist: {email}")
             return jsonify({"result": False, "error": error})
 
         if user.is_google_signup:
@@ -231,7 +231,7 @@ def login():
             login_user(user)
             user.is_logged_in = True
             user.save()
-            logger.debug(f"investor logged in: {email}")
+            logger.debug(f"investor: login: logged in: {email}")
 
             unique_user_list = [inv_unique_users_daily, inv_unique_users_weekly, inv_unique_users_monthly]
             for i in unique_user_list:
@@ -269,9 +269,8 @@ def login():
             }
             return ret_obj
         else:
-            logger.debug(f"investor wrong credentials: {email}")
-            error = "wrong credentials"
-            return jsonify({"result": False, "error": error})
+            logger.debug(f"investor: login: wrong credentials: {email}")
+            return jsonify({"result": False, "error": "wrong credentials"})
     else:
         return jsonify(response)
 
@@ -282,27 +281,16 @@ def login():
 @investor_blueprint.route('/reset-link/<token>', methods=['GET', 'POST'])
 def reset_link(token):
     if request.method == "GET":
-        try:
-            email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
-
-            if email:
-                user_obj = Investor.objects.filter(email=email).first()
-                user_obj.is_logged_in = False
-                user_obj.save()
-                email = email.lower()
-        except:
-            return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
-
-        user = Investor.objects.filter(email=email).first()
-        if user:
-            if user.password_reset_meta_data == {}:
-                return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
         return render_template("reset.html")
 
     elif request.method == "POST":
         try:
             email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
+            logger.debug(f"investor: reset-link/token: reset password link clicked: {email}")
             if email:
+                user_obj = Investor.objects.filter(email=email).first()
+                user_obj.is_logged_in = False
+                user_obj.save()
                 email = email.lower()
         except:
             return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
@@ -318,9 +306,10 @@ def reset_link(token):
                 user.password = generate_password_hash(password)
                 user.password_reset_meta_data = {}
                 user.save()
-                logger.debug(f"investor password changed: {email}")
+                logger.debug(f"investor: reset-link/token: password changed: {email}")
                 return render_template("reset-success-inv.html")
         else:
+            logger.debug(f"investor: reset-link/token: user does not exist: {email}")
             return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
 
@@ -338,17 +327,19 @@ def forgot_password():
         user = Investor.objects.filter(email=email).first()
 
         if user is None:
-            logger.debug(f"investor does not exist: {email}")
+            logger.debug(f"investor: forgot-password: user does not exist : {email}")
             return jsonify({"result": True, "message": "email sent if the user exists"})
 
         token = serial.dumps(user.email, salt='email_reset')
         link = url_for('investor.reset_link', token=token, _external=True)
         user.password_reset_meta_data = {"is_clicked": False}
         user.save()
+        logger.debug(f"investor: forgot-password: forgot password link generated: {email}")
+
 
         thread = threading.Thread(target=password_reset_email, args=(email, link,))
         thread.start()
-        logger.debug(f"investor password reset link sent: {email}")
+        logger.debug(f"investor: forgot-password: forgot password link sent: {email}")
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify(response)
@@ -370,7 +361,7 @@ def register():
         email_exist = Investor.objects.filter(email=email).first()
 
         if email_exist:
-            logger.debug(f"investor exists: {email}")
+            logger.debug(f"investor: register: exists: {email}")
             error = "email exists"
             return jsonify({"result": False, "error": error})
 
@@ -385,7 +376,7 @@ def register():
         if not insert_into_matching(email, ml_schema_resp):
             technical_errors("INVESTOR: REGISTER UPDATE UNSUCCESSFUL", email)
 
-        logger.debug(f"investor created {email}")
+        logger.debug(f"investor: register: created {email}")
 
         token = serial.dumps(email, salt='email_confirm')
         link = url_for('investor.email_confirmed', token=token, _external=True)
@@ -413,6 +404,7 @@ def register():
 def email_confirmed(token):
     try:
         email = serial.loads(token, salt='email_confirm')
+        logger.debug(f"investor: email-confirmed: email confirmation link clicked: {email}")
         if email:
             email = email.lower()
     except:
@@ -426,22 +418,23 @@ def email_confirmed(token):
         else:
             user.email_confirmed = True
             user.save()
+            logger.debug(f"investor: email-confirmed: email confirmed: {email}")
+
 
         if not update_into_matching(email, {"email_confirmed": True}):
             technical_errors("INVESTOR: EMAIL CONFIRMATION UPDATE UNSUCCESSFUL", email)
-
-        logger.debug(f"investor email confirmed {email}")
 
         login_user(user)
         user.is_logged_in = True
         user.passowrd_confirm_meta_data = {}
         user.save()
         session["email"] = email
-        logger.debug(f"investor logged in: {email}")
+
+        logger.debug(f"investor: email-confirmed: logged in: {email}")
         return redirect(url_for("investor.confirmation_signup_flow", email=email, code=302))
 
     else:
-        logger.debug(f"investor does not exist {email}")
+        logger.debug(f"investor: email-confirmed: user does not exist {email}")
         return redirect(f"{CONSTANT.CURRENT_SERVER.value}/investor/signup")
 
 
@@ -457,12 +450,14 @@ def confirmation_signup_flow():
         email = email.lower()
 
     if not email:
+        logger.debug(f"investor: confirmation-signup-flow: email not in session: {email}")
         return jsonify({"reuslt": False, "error": "session expired"})
 
     inv_obj = Investor.objects.filter(email=email).first()
     first_name = (inv_obj.first_name).strip().replace(" ", "_")
     last_name = (inv_obj.last_name).strip().replace(" ", "_")
     query_string = f"confirmed=True&email={inv_obj.email}&fn={first_name}&ln={last_name}&investor=true"
+    logger.debug(f"investor: confirmation-signup-flow: redirect to onboarding flow: {email}")
     return redirect(f"{CONSTANT.CURRENT_SERVER.value}/investor/signup?{query_string}"), 302
 
 
@@ -479,6 +474,7 @@ def logout():
     user_obj = jwt_decode["user_obj"]
     user_obj.is_logged_in = False
     user_obj.save()
+    logger.debug(f"investor: logout: user logged out: {user_obj.email}")
     return jsonify({"result": True, "message": "user logged out"})
 
 
@@ -505,15 +501,18 @@ def referral_link():
         ref_email = ref_email.lower()
 
     if Investor.objects.filter(email=ref_email).first():
+        logger.debug(f"investor: referral-link: referral email exists on investors model: {ref_email}")
         return jsonify({"result": False, "error": "user exists"})
 
     if Startup.objects.filter(email=ref_email).first():
+        logger.debug(f"investor: referral-link: referral email exists on startup model: {ref_email}")
         return jsonify({"result": False, "error": "user exists"})
 
     full_name = user_obj.first_name + " " + user_obj.last_name
     first_name = user_obj.first_name
 
     ref_obj = {"referred_by": user_obj.email, "referred": ref_email}
+    logger.info(f"investor: referral-link: {ref_email} is referred by {user_obj.email}")
 
     token = serial.dumps(ref_obj, salt='email_referral')
     link = url_for('investor.referral_verification', token=token, _external=True)
@@ -545,7 +544,7 @@ def referral_verification(token):
             details = dict(ref_by_obj.details)
             referred_to = list(details.get("referred_to"))
             if referred in referred_to:
-                logger.debug(f"{referred} is already referred by {referred_by}")
+                logger.debug(f"investor: referral: {referred} is already referred by {referred_by}")
                 return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
             referred_to.append(referred)
@@ -563,7 +562,7 @@ def referral_verification(token):
         # For referred_to user
         ref_to_obj = Referrals.objects.filter(email=referred).first()
         if ref_to_obj:
-            logger.debug(f"{referred} is already referred by {referred_by}")
+            logger.debug(f"investor: referral: {referred} is already referred by {referred_by}")
             return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
         details = {
@@ -573,10 +572,10 @@ def referral_verification(token):
         new_ref_obj = Referrals(email=referred, details=details)
         new_ref_obj.save()
 
-        logger.debug(f"{referred} is referred by {referred_by}")
+        logger.debug(f"investor: referral: {referred} is referred by {referred_by}")
         return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
     else:
-        logger.debug(f"investor does not exist {referred_by} :=> referral verification")
+        logger.debug(f"investor: referral: startup does not exist {referred_by}")
         return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
 
@@ -599,6 +598,7 @@ def update_info():
 
         for key in list(input_data.keys()):
             if key not in available_fields:
+                logger.debug(f"investor: update-info: {key} key does not exist in available fields: {user_obj.email}")
                 return jsonify({"result": False, "error": "invalid user field"})
 
         for field in input_data:
@@ -607,6 +607,7 @@ def update_info():
                     sectors_map = sector_data()
                     res = [ sectors_map.get(i) for i in input_data[field] if sectors_map.get(i) != None ]
                     setattr(user_obj, field, res)
+                    logger.info(f"investor: update-info: {field } updated to {res}: {user_obj.email}")
 
                     if not update_into_matching(user_obj.email, {field: res}):
                         technical_errors("INVESTOR: SIGNUP FLOW SECTORS UPDATE UNSUCCESSFUL", user_obj.email)
@@ -615,12 +616,15 @@ def update_info():
                     accreditation_map = accreditation_data()
                     res = accreditation_map.get(input_data[field])
                     setattr(user_obj, field, res)
+                    logger.info(f"investor: update-info: {field} updated to {res}: {user_obj.email}")
 
                     if not update_into_matching(user_obj.email, {field: res}):
                         technical_errors("INVESTOR: SIGNUP FLOW ACCREDATIONS UPDATE UNSUCCESSFUL", user_obj.email)
 
                 else:
                     setattr(user_obj, field, input_data[field])
+                    logger.info(f"investor: update-info: {field} updated to {input_data[field]}: {user_obj.email}")
+
                     if not update_into_matching(user_obj.email, {field: input_data[field]}):
                         technical_errors("INVESTOR: SIGNUP FLOW UPDATE UNSUCCESSFUL", user_obj.email)
 
@@ -670,8 +674,10 @@ def monday_notifications():
     if request.method == "POST":
         response = validate_inv_monday_notification_schema(request.get_json())
         if response["result"]:
-            setattr(inv_obj, "monday_notification", response["data"]["monday_notification"])
+            inp_data = response["data"]["monday_notification"]
+            setattr(inv_obj, "monday_notification", inp_data)
             inv_obj.save()
+            logger.debug(f"investor: monday-notifications: monday notification set to {inp_data}: {inv_obj.email}")
 
             if not update_into_matching(inv_obj.email, {"monday_notification": response["data"]["monday_notification"]}):
                 technical_errors("INVESTOR: MONDAY NOTIFICATIONS UPDATE UNSUCCESSFUL", inv_obj.email)
@@ -697,6 +703,7 @@ def profile_visibility():
         visible = response["data"]["visible"]
         setattr(inv_obj, "show_profile", visible)
         inv_obj.save()
+        logger.debug(f"investor: profile-visibility: profile visibility set to {visible}: {inv_obj.email}")
 
         matching_obj = get_inv_matching_data(inv_obj.email)
 
@@ -740,7 +747,7 @@ def waitlist_email():
         email = email.lower()
     thread = threading.Thread(target=wait_list_user_inv, args=(email, first_name,))
     thread.start()
-    logger.debug(f"investor wait list email sent: {email}")
+    logger.debug(f"investor: waitlist: wait list email sent: {user_obj.email}")
     return jsonify({"result": True, "message": "email sent if the user exists"})
 
 
@@ -785,6 +792,7 @@ def mime_files():
             user_obj.profile_pic_link = image_url
             user_obj.save()
             shutil.rmtree(file_location)
+            logger.debug(f"investor: mime-files: profile pic updated: {user_obj.email}")
             return jsonify({"result": True, "url": image_url})
         else:
             shutil.rmtree(file_location)
@@ -819,12 +827,15 @@ def investors_dashboard():
         discover = get_discover(_id)
 
         if not discover["result"]:
+            logger.debug(f"investor: dashboard: no match found: {user_obj.email}")
             return {"result": False, "error": "no match found"}
 
         elif discover["result"] and discover["data"] == []:
+            logger.debug(f"investor: dashboard: no match found: {user_obj.email}")
             return {"result": False, "error": "no match found"}
 
         else:
+            logger.debug(f"investor: dashboard: data found: {user_obj.email}")
             str_data = process_all_str_data(discover["data"])
             return jsonify({"result": True, "data": str_data})
 
@@ -896,7 +907,7 @@ def investors_dashboard():
             inv_id = inv_matching_obj.get("_id")
 
             resp = set_response(inv_id, str_id, False)
-            if resp.get("status_code") != 200:
+            if resp.get("result"):
                 technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
 
             return jsonify({"result": True, "message": "passed"})
@@ -967,7 +978,7 @@ def investors_dashboard():
                 inv_id = inv_matching_obj.get("_id")
 
                 resp = set_response(inv_id, str_id, False)
-                if resp.get("status_code") != 200:
+                if resp.get("result"):
                     technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
 
                 return jsonify({"result": True, "message": "connected"})
@@ -1000,7 +1011,7 @@ def investors_dashboard():
                 inv_id = inv_matching_obj.get("_id")
 
                 resp = set_response(inv_id, str_id, False)
-                if resp.get("status_code") != 200:
+                if resp.get("result"):
                     technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
 
                 return jsonify({"result": True, "message": "invitation"})
@@ -1040,6 +1051,7 @@ def history():
         str_obj = Startup.objects.filter(email=k).first()
         data.append(ma_schema.dump(str_obj))
 
+    logger.debug(f"investor: history-all: data found: {inv_obj.email}")
     return jsonify({"result": True, "data": data})
 
 
@@ -1060,6 +1072,8 @@ def connected():
     for k,v in connected.items():
         str_obj = Startup.objects.filter(email=k).first()
         data.append(ma_schema.dump(str_obj))
+
+    logger.debug(f"investor: history-connected: data found: {inv_obj.email}")
     return jsonify({"result": True, "data": data})
 
 
@@ -1087,6 +1101,8 @@ def passed():
         passed_str_data = ma_schema.dump(str_obj)
         passed_str_data["feedback"] = get_passed_feedback(k, inv_obj.email)
         data.append(passed_str_data)
+
+    logger.debug(f"investor: history-passed: data found: {inv_obj.email}")
     return jsonify({"result": True, "data": data})
 
 
@@ -1096,6 +1112,11 @@ def passed():
 @investor_blueprint.route('/history-profile-view', methods=["POST"])
 @jwt_required
 def passed_revisit():
+    jwt_decode = investor_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+    inv_obj = jwt_decode["user_obj"]
+
     input_req = request.get_json()
     response = validate_inv_passed_recvisit_schema(input_req)
 
@@ -1107,6 +1128,7 @@ def passed_revisit():
 
         ma_schema = StartupDashboardSchema()
         data = ma_schema.dump(str_obj)
+        logger.debug(f"investor: history-profile-view: data found: {inv_obj.email}")
         return jsonify({"result": True, "data": data})
     else:
         return jsonify(response)
@@ -1128,10 +1150,11 @@ def change_password():
         link = url_for('investor.reset_link', token=token, _external=True)
         inv_obj.password_reset_meta_data = {"is_clicked": False}
         inv_obj.save()
+        logger.debug(f"investor: change-password: password link generated: {inv_obj.email}")
 
         thread = threading.Thread(target=password_reset_email, args=(inv_obj.email, link,))
         thread.start()
-        logger.debug(f"investor password reset link sent: {inv_obj.email}")
+        logger.debug(f"investor: change-password: password link sent: {inv_obj.email}")
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify({"result": False, "error": "user does not exists"})
@@ -1148,6 +1171,7 @@ def general_company_images():
         if not jwt_decode["result"]:
             return jsonify(jwt_decode)
 
+        user_obj = jwt_decode["user_obj"]
         inp_req = request.get_json()
         response = validate_company_schema(inp_req)
 
@@ -1155,6 +1179,7 @@ def general_company_images():
             return jsonify(response)
 
         company_name = response["data"]["company_name"]
+        logger.debug(f"investor: company-image-api: {company_name} searched by: {user_obj.email}")
         return company_images_api(company_name)
 
 
@@ -1173,7 +1198,9 @@ def verify_password():
     if response["result"]:
         password = response["data"]["password"]
         if check_password_hash(inv_obj.password, password):
+            logger.debug(f"investor: verify-password: correct password: {inv_obj.email}")
             return jsonify({"result": True, "message": "correct credentials"})
+        logger.debug(f"investor: verify-password: wrong password: {inv_obj.email}")
         return jsonify({"result": False, "message": "wrong credentials"})
     return jsonify(response)
 
@@ -1196,6 +1223,7 @@ def delete_account():
         if delete:
             setattr(inv_obj, "delete_account", delete)
             inv_obj.save()
+            logger.debug(f"investor: delete-account: account deleted: {inv_obj.email}")
 
             matching_obj = get_inv_matching_data(inv_obj.email)
             str_id = matching_obj.get("_id")
@@ -1204,7 +1232,6 @@ def delete_account():
 
             thread = threading.Thread(target=delete_user_account, args=(inv_obj.email, ))
             thread.start()
-            logger.debug(f"investor delete account email sent: {inv_obj.email}")
 
             return jsonify({"result": True, "message": "account deleted"})
         return jsonify({"result": False, "message": "account not deleted"})
@@ -1240,7 +1267,7 @@ def jwt_for_confirmation_page():
         user = Investor.objects.filter(email=email).first()
         if user is None:
             error = "user does not exist"
-            logger.debug(f"Investor does not exist: {email}")
+            logger.debug(f"investor: get-jwt-token: {error}: {email}")
             return jsonify({"result": False, "error": error})
 
         jwt_obj = {"email": email, "model": "Investor"}
@@ -1249,6 +1276,7 @@ def jwt_for_confirmation_page():
             "result": True,
             "token": access_token
         }
+        logger.debug(f"investor: get-jwt-token: new jwt token generated: {email}")
         return jsonify(ret_obj)
     else:
         return jsonify(response)
@@ -1272,9 +1300,11 @@ def delete_email_address():
     api_key = input_request.get("api_key")
 
     if api_key != "***REMOVED***`NqU":
+        logger.debug(f"investor: delete-email-address: invalid api key: angelfund-team")
         return jsonify({"result": False, "error": "Invalid API key"})
 
     if not emails_list:
+        logger.debug(f"investor: delete-email-address: email address not present in input body: angelfund-team")
         return jsonify({"result": False, "error": "emails list not present in the input body"})
 
     ml_collection = db_details("matching", "users")
@@ -1290,15 +1320,16 @@ def delete_email_address():
 
         if ml_query:
             ml_collection.delete_many(my_query)
+            logger.debug(f"investor: delete-email-address: email address deleted from ML model: {email}: angelfund-team")
             print("User Deleted from Machine Learning")
 
         if str_query:
             str_collection.delete_one(my_query)
-            print("User Deleted from Startup")
+            logger.debug(f"investor: delete-email-address: email address deleted from startup model: {email}: angelfund-team")
 
         if inv_query:
             inv_collection.delete_one(my_query)
-            print("User Deleted from Investors")
+            logger.debug(f"investor: delete-email-address: email address deleted from investor model: {email}: angelfund-team")
 
     return jsonify({"result": True, "message": "All emails deleted if existed"})
 

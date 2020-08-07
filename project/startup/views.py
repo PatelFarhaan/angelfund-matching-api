@@ -16,7 +16,7 @@ from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.emails.referral_email import email_referral
 from common_utilities.technical_error_mail import technical_errors
 from common_utilities.emails.connected_emails import email_connected
-from common_utilities.hide_user_profile import hide_user, unhide_user
+from common_utilities.machine_learning.hide_user_profile import hide_user, unhide_user
 from common_utilities.emails.password_reset import password_reset_email
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.emails.email_confirmation import email_confirmation
@@ -30,15 +30,15 @@ from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upl
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
 from common_utilities.analytics.user_retention_individual import individual_user_retention
-from common_utilities.investor_matching_db import inv_mutual_updates, get_inv_matching_data
+from common_utilities.machine_learning.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from common_utilities.analytics.user_retention import str_daily_retention, str_weekly_retention, str_monthly_retention
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
-from common_utilities.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
+from common_utilities.machine_learning.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
 from common_utilities.analytics.unique_login import str_unique_users_daily, str_unique_users_monthly, str_unique_users_weekly
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
 from common_utilities.analytics.new_user_count_analytics import str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count
-from common_utilities.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
+from common_utilities.machine_learning.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
                                                              validate_referrer_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
                                                              validate_email_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
@@ -135,7 +135,7 @@ def google_token():
                         if not insert_into_matching(email, ml_schema_resp):
                             technical_errors("STARTUP: SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
 
-                        logger.debug(f"startup: google-token: created {email} via Google OAuth")
+                        logger.debug(f"startup: google-token: created via Google OAuth: {email}")
 
                         thread = threading.Thread(target=google_email_confirmation, args=(email,))
                         thread.start()
@@ -278,6 +278,9 @@ def reset_link(token):
             email = serial.loads(token, salt='email_reset', max_age=int(CONSTANT.PASSWORD_RESET_LINK_AGE.value))
             logger.debug(f"startup: reset-link/token: reset password link clicked: {email}")
             if email:
+                user_obj = Startup.objects.filter(email=email).first()
+                user_obj.is_logged_in = False
+                user_obj.save()
                 email = email.lower()
         except:
             return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
@@ -287,7 +290,6 @@ def reset_link(token):
             password = request.form.get("password")
 
             if user.password_reset_meta_data == {}:
-                # link can only be clicked once
                 return redirect(f"{CONSTANT.CURRENT_SERVER.value}", code=302)
 
             if not user.password_reset_meta_data["is_clicked"]:
@@ -412,6 +414,9 @@ def email_confirmed(token):
 @login_required
 def confirmation_signup_flow():
     email = session.get("email")
+
+    if email:
+        email = email.lower()
 
     if not email:
         logger.debug(f"startup: confirmation-signup-flow: email not in session: {email}")
@@ -951,7 +956,7 @@ def startup_dashboard():
                 inv_id = inv_matching_obj.get("_id")
 
                 resp = set_response(str_id, inv_id, False)
-                if resp.get("status_code") != 200:
+                if resp.get("result"):
                     technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
 
             return jsonify({"result": False, "messgae": "already passed"})
@@ -979,7 +984,7 @@ def startup_dashboard():
             inv_id = inv_matching_obj.get("_id")
 
             resp = set_response(str_id, inv_id, False)
-            if resp.get("status_code") != 200:
+            if resp.get("result"):
                 technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
 
             return jsonify({"result": True, "message": "passed"})
@@ -1051,7 +1056,7 @@ def startup_dashboard():
                 inv_id = inv_matching_obj.get("_id")
 
                 resp = set_response(str_id, inv_id, True)
-                if resp.get("status_code") != 200:
+                if resp.get("result"):
                     technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
 
                 return jsonify({"result": True, "message": "connected"})
@@ -1090,7 +1095,7 @@ def startup_dashboard():
                 inv_id = inv_matching_obj.get("_id")
 
                 resp = set_response(str_id, inv_id, True)
-                if resp.get("status_code") != 200:
+                if resp.get("result"):
                     technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
 
                 email_connected(inv_email, str_email, all_info())
@@ -1129,7 +1134,7 @@ def startup_dashboard():
                 inv_id = inv_matching_obj.get("_id")
 
                 resp = set_response(str_id, inv_id, True)
-                if resp.get("status_code") != 200:
+                if resp.get("result"):
                     technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
 
                 return jsonify({"result": True, "message": "invitation"})
@@ -1148,6 +1153,7 @@ def history():
     str_obj = jwt_decode["user_obj"]
     data = []
 
+    # import ipdb; ipdb.set_trace()
     # # passed
     feedback = getattr(str_obj, "feedback")
     feedback_schema = InvestorFeedbackSchema()
@@ -1315,7 +1321,7 @@ def delete_account():
             if delete:
                 setattr(str_obj, "delete_account", delete)
                 str_obj.save()
-                logger.debug(f"startup: delete-account: account deleted : {str_obj.email}")
+                logger.debug(f"startup: delete-account: account deleted: {str_obj.email}")
 
                 matching_obj = get_str_matching_data(str_obj.email)
                 str_id = matching_obj.get("_id")
@@ -1352,11 +1358,11 @@ def forgot_password():
         link = url_for('startup.reset_link', token=token, _external=True)
         user.password_reset_meta_data = {"is_clicked": False}
         user.save()
-        logger.debug(f"startup: forgot-password: forgot password link generated : {email}")
+        logger.debug(f"startup: forgot-password: forgot password link generated: {email}")
 
         thread = threading.Thread(target=password_reset_email, args=(email, link,))
         thread.start()
-        logger.debug(f"startup: forgot-password: forgot password link sent : {email}")
+        logger.debug(f"startup: forgot-password: forgot password link sent: {email}")
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify(response)
@@ -1378,11 +1384,11 @@ def change_password():
         link = url_for('startup.reset_link', token=token, _external=True)
         str_obj.password_reset_meta_data = {"is_clicked": False}
         str_obj.save()
-        logger.debug(f"startup: change-password: password link generated : {str_obj.email}")
+        logger.debug(f"startup: change-password: password link generated: {str_obj.email}")
 
         thread = threading.Thread(target=password_reset_email, args=(str_obj.email, link,))
         thread.start()
-        logger.debug(f"startup: change-password: password link sent : {str_obj.email}")
+        logger.debug(f"startup: change-password: password link sent: {str_obj.email}")
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify({"result": False, "error": "user does not exists"})
@@ -1403,7 +1409,7 @@ def jwt_for_confirmation_page():
         user = Startup.objects.filter(email=email).first()
         if user is None:
             error = "user does not exist"
-            logger.debug(f"startup: get-jwt-token: {error} : {email}")
+            logger.debug(f"startup: get-jwt-token: {error}: {email}")
             return jsonify({"result": False, "error": error})
 
         jwt_obj = {"email": email, "model": "Startup"}
@@ -1412,7 +1418,7 @@ def jwt_for_confirmation_page():
             "result": True,
             "token": access_token
         }
-        logger.debug(f"startup: get-jwt-token: new jwt token generated : {email}")
+        logger.debug(f"startup: get-jwt-token: new jwt token generated: {email}")
         return jsonify(ret_obj)
     else:
         return jsonify(response)

@@ -4,7 +4,7 @@
 import sys
 import json
 import requests
-sys.path.append('../')
+sys.path.append('../../')
 from common_utilities import CONSTANT
 
 

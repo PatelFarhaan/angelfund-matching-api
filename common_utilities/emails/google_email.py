@@ -24,7 +24,7 @@ def google_email_confirmation(user_email):
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Thank you for signing up for ANGELFUND!!!"
+    SUBJECT = "Thanks for creating an Angelfund.ai account!"
     BODY_HTML = """
 
 
