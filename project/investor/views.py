@@ -340,7 +340,6 @@ def forgot_password():
 
         thread = threading.Thread(target=password_reset_email, args=(email, link,))
         thread.start()
-        logger.debug(f"investor: forgot-password: forgot password link sent: {email}")
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify(response)
@@ -752,7 +751,6 @@ def waitlist_email():
         email = email.lower()
     thread = threading.Thread(target=wait_list_user_inv, args=(email, first_name,))
     thread.start()
-    logger.debug(f"investor: waitlist: wait list email sent: {user_obj.email}")
     return jsonify({"result": True, "message": "email sent if the user exists"})
 
 
@@ -873,7 +871,8 @@ def investors_dashboard():
         if not str_invite:
 
             if not response["data"].get("feedback"):
-                return jsonify({"result": False, "error": "feedback is mandotory"})
+                logger.debug(f"investor: dashboard: feedback is mandatory: {inv_obj.email}")
+                return jsonify({"result": False, "error": "feedback is mandatory"})
 
             str_feedback = response["data"]["feedback"]
 
@@ -902,9 +901,11 @@ def investors_dashboard():
             str_transactional_replicas = str_mutual_updates(str_obj)
 
             if not inv_transactional_replicas:
+                logger.debug(f"investor: dashboard: dashboard update unsuccessful: {inv_obj.email}")
                 technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
 
             if not str_transactional_replicas:
+                logger.debug(f"investor: dashboard: dashboard update unsuccessful: {str_obj.email}")
                 technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
             str_matching_obj = get_str_matching_data(str_email)
@@ -914,8 +915,11 @@ def investors_dashboard():
             inv_id = inv_matching_obj.get("_id")
 
             resp = set_response(inv_id, str_id, False)
-            if resp.get("result"):
+            if not resp.get("result"):
+                logger.debug(f"investor: dashboard: set response unsuccessful from: {inv_id} to {str_id}: False: {inv_obj.email}")
                 technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
+            else:
+                logger.debug(f"investor: dashboard: set response successful from: {inv_id} to {str_id}: False: {inv_obj.email}")
 
             return jsonify({"result": True, "message": "passed"})
 
@@ -960,14 +964,15 @@ def investors_dashboard():
                 str_transactional_replicas = str_mutual_updates(str_obj)
 
                 if not inv_transactional_replicas:
+                    logger.debug(f"investor: dashboard: dashboard update unsuccessful: {inv_obj.email}")
                     technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
 
                 if not str_transactional_replicas:
+                    logger.debug(f"investor: dashboard: dashboard update unsuccessful: {str_obj.email}")
                     technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
                 def all_info():
                     temp_dict = {}
-                    temp_dict["str_bio"] = str_obj.bio
                     temp_dict["inv_fn"] = inv_obj.first_name
                     temp_dict["str_fn"] = str_obj.first_name
                     temp_dict["str_cn"] = str_obj.company_name
@@ -984,9 +989,13 @@ def investors_dashboard():
                 inv_matching_obj = get_inv_matching_data(inv_email)
                 inv_id = inv_matching_obj.get("_id")
 
-                resp = set_response(inv_id, str_id, False)
-                if resp.get("result"):
+                resp = set_response(inv_id, str_id, True)
+                if not resp.get("result"):
+                    logger.debug(f"investor: dashboard: set response unsuccessful from: {inv_id} to {str_id}: True: {inv_obj.email}")
                     technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
+                else:
+                    logger.debug(f"investor: dashboard: set response successful from: {inv_id} to {str_id}: True: {inv_obj.email}")
+
 
                 return jsonify({"result": True, "message": "connected"})
 
@@ -1006,9 +1015,11 @@ def investors_dashboard():
                 str_transactional_replicas = str_mutual_updates(str_obj)
 
                 if not inv_transactional_replicas:
+                    logger.debug(f"investor: dashboard: dashboard update unsuccessful: {inv_obj.email}")
                     technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
 
                 if not str_transactional_replicas:
+                    logger.debug(f"investor: dashboard: dashboard update unsuccessful: {str_obj.email}")
                     technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
 
                 str_matching_obj = get_str_matching_data(str_email)
@@ -1017,9 +1028,12 @@ def investors_dashboard():
                 inv_matching_obj = get_inv_matching_data(inv_email)
                 inv_id = inv_matching_obj.get("_id")
 
-                resp = set_response(inv_id, str_id, False)
-                if resp.get("result"):
+                resp = set_response(inv_id, str_id, True)
+                if not resp.get("result"):
+                    logger.debug(f"investor: dashboard: set response unsuccessful from: {inv_id} to {str_id}: True: {inv_obj.email}")
                     technical_errors("INVESTOR: SET RESPONSE UNSUCCESSFUL", inv_obj.email)
+                else:
+                    logger.debug(f"investor: dashboard: set response successful from: {inv_id} to {str_id}: True: {inv_obj.email}")
 
                 return jsonify({"result": True, "message": "invitation"})
 
@@ -1044,6 +1058,7 @@ def history():
 
     # passed
     passed = getattr(inv_obj, "passed")
+    print(passed)
     ma_schema = StartupPassedSchema()
     for k, v in passed.items():
         str_obj = Startup.objects.filter(email=k).first()
@@ -1165,7 +1180,6 @@ def change_password():
 
         thread = threading.Thread(target=password_reset_email, args=(inv_obj.email, link,))
         thread.start()
-        logger.debug(f"investor: change-password: password link sent: {inv_obj.email}")
         return jsonify({"result": True, "message": "email sent if the user exists"})
     else:
         return jsonify({"result": False, "error": "user does not exists"})

@@ -335,7 +335,6 @@ def wait_list_user_startup(user_email, first_name):
         logger.debug(f"common utilities: monday notifications: success {user_email}")
 
 
-
 #<==================================================================================================>
 #                              MONDAY NOTIFICATIONS EMAIL INVESTOR
 #<==================================================================================================>

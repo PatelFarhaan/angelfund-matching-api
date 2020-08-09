@@ -108,7 +108,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
             to coordinate a time to share more about the opportunity.
          </p>
          <br />
-         <strong class="sizing"> {str_founders}—meet {inv_fn}. </strong>
+         <strong class="sizing"> {str_fn}—meet {inv_fn}. </strong>
          <p class="sizing">
             {inv_fn} invests in companies within your sector, and is interested in
             learning more about {str_fn}.
@@ -126,8 +126,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
 </html>
     """.format(inv_fn=all_info['inv_fn'], str_founders=all_info['str_founders'],
                str_pitch=all_info['str_pitch'], str_cn=all_info['str_cn'],
-               str_fn=all_info['str_fn'], str_bio=all_info['str_bio'],
-               str_seeking=int(all_info['str_seeking']))
+               str_fn=all_info['str_fn'], str_seeking=int(all_info['str_seeking']))
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,
