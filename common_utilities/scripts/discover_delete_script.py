@@ -31,6 +31,6 @@ def reset_matched_per_week():
 #<==================================================================================================>
 #                                    MAIN CALLING FUNCTION
 #<==================================================================================================>
-# delete_discover_collection()
-# reset_matched_per_week()
+delete_discover_collection()
+reset_matched_per_week()
 monday_notofication()
