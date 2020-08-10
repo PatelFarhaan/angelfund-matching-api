@@ -196,7 +196,6 @@ class InvUniqueUsersDaily(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
     current = db.BooleanField(default=False)
-    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
@@ -206,7 +205,6 @@ class StrUniqueUsersDaily(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
     current = db.BooleanField(default=False)
-    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
@@ -219,7 +217,6 @@ class InvUniqueUsersWeekly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
     current = db.BooleanField(default=False)
-    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
@@ -229,7 +226,6 @@ class StrUniqueUsersWeekly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
     current = db.BooleanField(default=False)
-    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
@@ -242,7 +238,6 @@ class InvUniqueUsersMonthly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
     current = db.BooleanField(default=False)
-    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])
@@ -252,7 +247,6 @@ class StrUniqueUsersMonthly(db.Document):
     users_dict = db.DictField()
     count = db.IntField(default=0)
     current = db.BooleanField(default=False)
-    date = db.DateTimeField(default=datetime.date.today)
     current_dt = db.DateTimeField(default=datetime.datetime.now)
 
     meta = dict(indexes=['count', 'current_dt', 'users_dict', 'current'])

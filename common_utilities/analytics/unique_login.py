@@ -3,7 +3,7 @@
 #<==================================================================================================>
 import sys
 sys.path.append("../../")
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from project.models import (InvUniqueUsersDaily, StrUniqueUsersDaily, InvUniqueUsersMonthly,
                             StrUniqueUsersMonthly, InvUniqueUsersWeekly, StrUniqueUsersWeekly)
 
@@ -18,12 +18,13 @@ def helper(email: str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUse
             current_obj.current = False
             current_obj.save()
 
-    user_obj = collection.objects.filter(date=date.today()).first()
+    user_obj = collection.objects.filter(current=True).first()
     if user_obj:
         if datetime.now() > user_obj.current_dt + timedelta(days=day):
             untrue_current()
-            new_obj = collection(count=1, date=date.today(), current=True,
-                                 users_dict={email: True}, current_dt=datetime.now())
+            current_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+            new_obj = collection(count=1, current=True, users_dict={email: True},
+                                 current_dt=current_day)
             new_obj.save()
         else:
             temp_dict = dict(user_obj.users_dict)
@@ -35,8 +36,9 @@ def helper(email: str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUse
         untrue_current()
         new_dict = dict()
         new_dict[email] = True
-        new_user = collection(count=1, date=date.today(), current=True,
-                              users_dict=new_dict, current_dt=datetime.now())
+        current_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        new_user = collection(count=1, current=True, users_dict=new_dict,
+                              current_dt=current_day)
         new_user.save()
 
 
