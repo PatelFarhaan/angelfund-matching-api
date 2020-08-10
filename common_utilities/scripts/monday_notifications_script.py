@@ -30,26 +30,21 @@ def monday_notofication():
     my_query = {"monday_notification": True}
 
     total_count = collection.estimated_document_count()
-    for offset in range(0, total_count+1, 50):
-        data_chunk = list(collection.find(my_query).skip(offset).limit(50))
-        print([i.get("_id") for i in data_chunk])
+    for offset in range(0, total_count+1, 10):
+        data_chunk = list(collection.find(my_query).skip(offset).limit(10))
 
-        # for doc in data_chunk:
-        #     email = doc.get("email")
-        #     first_name = doc.get("first_name")
-        #     is_investor = True if doc.get("investor") else False
-            # print(is_investor, type(is_investor))
-            # if is_investor:
-            #     print("here")
-            #     if email in ("patel.farhaaan@gmail.com", "mohammedfarhaan.patel@sjsu.edu"):
-            #         thread = threading.Thread(target=wait_list_user_investor, args=(email, first_name))
-            #         thread.start()
-            #         time.sleep(0.01)
-            # else:
-            #     if email in ("patel.farhaaan@gmail.com", "mohammedfarhaan.patel@sjsu.edu"):
-            #         thread = threading.Thread(target=wait_list_user_startup, args=(email, first_name))
-            #         thread.start()
-            #         time.sleep(0.01)
+        for doc in data_chunk:
+            email = doc.get("email")
+            first_name = doc.get("first_name")
+            is_investor = True if doc.get("investor") else False
+            if is_investor:
+                    thread = threading.Thread(target=wait_list_user_investor, args=(email, first_name))
+                    thread.start()
+                    time.sleep(1)
+            else:
+                    thread = threading.Thread(target=wait_list_user_startup, args=(email, first_name))
+                    thread.start()
+                    time.sleep(1)
 
 
 #<==================================================================================================>
