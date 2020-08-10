@@ -619,12 +619,3 @@ def wait_list_user_investor(user_email, first_name):
         logger.error(f"common utilities: monday notifications: failed {user_email}")
     else:
         logger.debug(f"common utilities: monday notifications: success {user_email}")
-
-
-#<==================================================================================================>
-#                             MONDAY NOTIFICATIONS CALLING FUNCTION
-#<==================================================================================================>
-monday_notofication()
-
-
-# * * * * * cd /Users/farhaan/projects && source venv/bin/activate && cd /Users/farhaan/projects/angelfund/flask/common_utilities/scripts && python3 monday_notifications_script.py

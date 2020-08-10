@@ -6,6 +6,7 @@ sys.path.append("../../")
 from pymongo import MongoClient
 from common_utilities import CONSTANT
 from common_utilities.machine_learning.ml_apis import clear_discover
+from common_utilities.scripts.monday_notifications_script import monday_notofication
 
 
 #<==================================================================================================>
@@ -32,3 +33,4 @@ def reset_matched_per_week():
 #<==================================================================================================>
 delete_discover_collection()
 reset_matched_per_week()
+monday_notofication()
