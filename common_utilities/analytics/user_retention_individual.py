@@ -3,15 +3,16 @@
 #<==================================================================================================>
 import sys
 sys.path.append("../../")
-from project.models import UserAnalytics
 from datetime import datetime, timedelta
+from project.models import InvestorUserAnalytics, StartupUserAnalytics
 
 
 #<==================================================================================================>
 #                                     USER LOGIN DATA PROCESSING
 #<==================================================================================================>
 def individual_user_retention(email: str, is_inv: bool):
-    user_obj = UserAnalytics.objects.filter(email=email, is_inv=is_inv).first()
+    collection = InvestorUserAnalytics if is_inv else StartupUserAnalytics
+    user_obj = collection.objects.filter(email=email).first()
     if user_obj:
         user_created_dt = getattr(user_obj, "current_dt")
         if user_created_dt >= datetime.now() + timedelta(days=30):
@@ -59,12 +60,11 @@ def individual_user_retention(email: str, is_inv: bool):
         new_users_schema = {
             "email": email,
             "third_week": [],
-            "is_inv": is_inv,
             "second_week": [],
             "fourth_week": [],
             "today": [datetime.now()],
             "current_dt": datetime.now(),
             "first_week": [datetime.now()]
         }
-        new_user = UserAnalytics(**new_users_schema)
+        new_user = collection(**new_users_schema)
         new_user.save()

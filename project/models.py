@@ -275,11 +275,25 @@ class StrRetention(db.Document):
 
 
 #<==================================================================================================>
-#                                     USER ANALYTICS
+#                                   INVESTOR ANALYTICS
 #<==================================================================================================>
-class UserAnalytics(db.Document):
+class InvestorUserAnalytics(db.Document):
     today = db.ListField()
-    is_inv = db.BooleanField()
+    first_week = db.ListField()
+    third_week = db.ListField()
+    second_week = db.ListField()
+    fourth_week = db.ListField()
+    email = db.EmailField(required=True)
+    current_dt = db.DateTimeField(default=datetime.datetime.now)
+
+    meta = dict(indexes=['email', 'current_dt'])
+
+
+#<==================================================================================================>
+#                                    STARTUP ANALYTICS
+#<==================================================================================================>
+class StartupUserAnalytics(db.Document):
+    today = db.ListField()
     first_week = db.ListField()
     third_week = db.ListField()
     second_week = db.ListField()
