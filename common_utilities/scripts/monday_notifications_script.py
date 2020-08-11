@@ -30,23 +30,21 @@ def monday_notofication():
     my_query = {"monday_notification": True}
 
     total_count = collection.estimated_document_count()
-    for offset in range(0, total_count, 100):
-        data_chunk = list(collection.find(my_query).skip(offset).limit(100))
+    for offset in range(0, total_count+1, 10):
+        data_chunk = list(collection.find(my_query).skip(offset).limit(10))
 
         for doc in data_chunk:
             email = doc.get("email")
             first_name = doc.get("first_name")
-            is_investor = True if doc.get("investor") is True else False
+            is_investor = True if doc.get("investor") else False
             if is_investor:
-                if email in ("patel.farhaaan@gmail.com", "mohammedfarhaan.patel@sjsu.edu"):
                     thread = threading.Thread(target=wait_list_user_investor, args=(email, first_name))
                     thread.start()
-                    time.sleep(0.01)
+                    time.sleep(1)
             else:
-                if email in ("patel.farhaaan@gmail.com", "mohammedfarhaan.patel@sjsu.edu"):
                     thread = threading.Thread(target=wait_list_user_startup, args=(email, first_name))
                     thread.start()
-                    time.sleep(0.01)
+                    time.sleep(1)
 
 
 #<==================================================================================================>
@@ -54,11 +52,11 @@ def monday_notofication():
 #<==================================================================================================>
 def wait_list_user_startup(user_email, first_name):
     RECIPIENT = [user_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = CONSTANT.EMAIL_SENDER.value
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"{first_name}, new investors are waiting for you! :stopwatch:"
+    SUBJECT = f"{first_name}, new investors are waiting for you!"
     BODY_HTML = """
 <html>
   <head>
@@ -335,17 +333,16 @@ def wait_list_user_startup(user_email, first_name):
         logger.debug(f"common utilities: monday notifications: success {user_email}")
 
 
-
 #<==================================================================================================>
 #                              MONDAY NOTIFICATIONS EMAIL INVESTOR
 #<==================================================================================================>
 def wait_list_user_investor(user_email, first_name):
     RECIPIENT = [user_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = CONSTANT.EMAIL_SENDER.value
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"{first_name}, new startups are waiting for you! :stopwatch:"
+    SUBJECT = f"{first_name}, new startups are waiting for you!"
     BODY_HTML = """
 <html>
   <head>
@@ -620,12 +617,3 @@ def wait_list_user_investor(user_email, first_name):
         logger.error(f"common utilities: monday notifications: failed {user_email}")
     else:
         logger.debug(f"common utilities: monday notifications: success {user_email}")
-
-
-#<==================================================================================================>
-#                             MONDAY NOTIFICATIONS CALLING FUNCTION
-#<==================================================================================================>
-monday_notofication()
-
-
-# * * * * * cd /Users/farhaan/projects && source venv/bin/activate && cd /Users/farhaan/projects/angelfund/flask/common_utilities/scripts && python3 monday_notifications_script.py

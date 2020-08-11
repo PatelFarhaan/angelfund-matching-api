@@ -4,7 +4,7 @@
 import sys
 import boto3
 import logging
-sys.path.append('../')
+sys.path.append('../../')
 from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
@@ -16,16 +16,18 @@ logger = logging.getLogger(__name__)
 
 
 #<==================================================================================================>
-#                                   DELETE USER ACCOUNT
+#                                 GOOGLE EMAIL CONFIRMATION
 #<==================================================================================================>
-def delete_user_account(user_email):
+def google_email_confirmation(user_email):
     RECIPIENT = [user_email]
     SENDER = CONSTANT.EMAIL_SENDER.value
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = "Your Angelfund.ai account has been deleted"
+    SUBJECT = "Thanks for creating an Angelfund.ai account!"
     BODY_HTML = """
+
+
 <html>
    <head>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
@@ -67,7 +69,7 @@ def delete_user_account(user_email):
          }
          .hook {
          padding-top: 30px;
-         text-align: left;
+         text-align: center;
          padding-bottom: 10px;
          margin: 3%;
          }
@@ -140,20 +142,15 @@ def delete_user_account(user_email):
       </div>
       <div class="title">
          <h1>
-            Account Deleted
+            Account Created
          </h1>
       </div>
       <div class="hook">
          <p class="sizing">
-            Your Angelfund.ai account has been successfully deleted. We're sad to
-            see you go!
+            Hey {{first_name}}—you've successfully signed up for <span style="color: #5e51f4;">Angelfund.ai</span> with your Google Account.
          </p>
          <p class="sizing">
-            If you didn't request an account deletion, please contact us immediately.
-         </p>
-         <p class="sizing">
-            We wish you all the best! <br />
-            <span style="color: #5e51f4;">Angelfund.ai</span>
+            Glad to have you with us!
          </p>
       </div>
       <div class="footer">
@@ -220,6 +217,6 @@ def delete_user_account(user_email):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: account deletion: failed {user_email}")
+        logger.error(f"google signup email: failed: {user_email}")
     else:
-        logger.debug(f"common utilities: account deletion: success {user_email}")
+        logger.debug(f"google signup email: success: {user_email}")

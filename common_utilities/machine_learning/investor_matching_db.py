@@ -2,7 +2,7 @@
 #                                         IMPORTS
 #<==================================================================================================>
 import sys
-sys.path.append("../")
+sys.path.append("../../")
 from pymongo import MongoClient
 from project.models import Startup
 from common_utilities import CONSTANT

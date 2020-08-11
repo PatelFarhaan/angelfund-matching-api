@@ -2,15 +2,9 @@
 #                                         IMPORTS
 #<==================================================================================================>
 import sys
-import threading
 sys.path.append("../../")
-from common_utilities.referral_email import email_referral
-from common_utilities.connected_emails import email_connected
-from common_utilities.password_reset import password_reset_email
-from common_utilities.email_confirmation import email_confirmation
-from common_utilities.wait_list_email_str import wait_list_user_str
-from common_utilities.wait_list_email_inv import wait_list_user_inv
-from common_utilities.account_delete_email import delete_user_account
+from common_utilities.emails import (account_delete_email, connected_emails, email_confirmation,
+google_email, password_reset, referral_email, wait_list_email_inv, wait_list_email_str)
 
 
 #<==================================================================================================>
@@ -25,6 +19,7 @@ def send_email_threading(email, name):
     all_info["str_bio"] = "Test Bio"
     all_info["str_seeking"] = "300000"
 
+    google_email.google_email_confirmation(email)
     # delete_user_account(email)
     # wait_list_user_inv(email, name)
     # wait_list_user_str(email, name, "Angelfund")
@@ -41,3 +36,4 @@ def send_email_threading(email, name):
 # send_email_threading("farhaan@angelfund.ai", "Farhaan")
 # send_email_threading("briandam26@yahoo.com", "Birna")
 # send_email_threading("birna@angelfund.ai", "Birna")
+# send_email_threading("liyajin7@gmail.com", "Birna")

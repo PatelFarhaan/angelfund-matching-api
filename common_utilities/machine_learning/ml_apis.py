@@ -4,7 +4,7 @@
 import sys
 import json
 import requests
-sys.path.append('../')
+sys.path.append('../../')
 from common_utilities import CONSTANT
 
 
@@ -89,4 +89,17 @@ def delete_user_ml(user_id):
         'Content-Type': content_type
     }
     response = requests.request("POST", url, headers=headers, data=json.dumps(payload))
+    return response.json()
+
+
+#<==================================================================================================>
+#                                 CLEAN DISCOVER FROM ML
+#<==================================================================================================>
+def clear_discover():
+    url = f"{CONSTANT.CURRENT_ML_SERVER.value}/clean_discover"
+    headers = {
+        'x-auth-key': x_auth_key,
+        'Content-Type': content_type
+    }
+    response = requests.request("POST", url, headers=headers)
     return response.json()

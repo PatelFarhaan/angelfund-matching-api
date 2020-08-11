@@ -51,7 +51,7 @@ def file_upload_to_s3(file, object_name):
                              aws_access_key_id=CONSTANT.ACCESS_KEY.value,
                              aws_secret_access_key=CONSTANT.ACCESS_VALUE.value
                              )
-    object_name = object_name + ".jpg"
+    object_name += ".jpg"
     s3_client.upload_file(file_location, bucket, object_name,
                           ExtraArgs={'ACL': 'public-read'})
     public_url = f'https://{bucket}.s3-us-west-1.amazonaws.com/{object_name}'

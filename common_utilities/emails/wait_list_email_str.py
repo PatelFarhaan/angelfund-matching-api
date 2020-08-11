@@ -4,7 +4,7 @@
 import sys
 import boto3
 import logging
-sys.path.append('../')
+sys.path.append('../../')
 from common_utilities import CONSTANT
 from botocore.exceptions import ClientError
 
@@ -254,6 +254,6 @@ def wait_list_user_str(user_email, first_name, company_name):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"common utilities: wait list: failed {user_email}")
+        logger.error(f"wait list: failed {user_email}")
     else:
-        logger.debug(f"common utilities: wait list: success {user_email}")
+        logger.debug(f"wait list: success {user_email}")
