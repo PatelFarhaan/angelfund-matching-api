@@ -160,6 +160,8 @@ def wait_list_user_startup(user_email, first_name):
 
       button:hover {{
         transform: scale(1.1);
+        outline: none !important;
+        border: none !important;
       }}
 
       .bottom-section {{
@@ -251,11 +253,11 @@ def wait_list_user_startup(user_email, first_name):
         That means every week, Angelfund.ai will show you better investors.
       </strong>
       <div style="text-align: left;">
-        <button target="_blank" href="https://www.angelfund.ai/login">
-          <a style="color: white; text-decoration: none;"
-            >See This Week's Investors</a
-          >
-        </button>
+        <a target="_blank" href="https://www.angelfund.ai/login">
+          <button style="color: white; text-decoration: none;">
+            See This Week's Investors
+          </button>
+        </a>
       </div>
     </div>
     <div class="bottom-section">
@@ -446,6 +448,8 @@ def wait_list_user_investor(user_email, first_name):
 
       button:hover {{
         transform: scale(1.1);
+        outline: none !important;
+        border: none !important;
       }}
 
       .bottom-section {{
@@ -537,11 +541,11 @@ def wait_list_user_investor(user_email, first_name):
         That means every week, Angelfund.ai will show you better deals.
       </strong>
       <div style="text-align: left;">
-        <button target="_blank" href="https://www.angelfund.ai/login">
-          <a style="color: white; text-decoration: none;"
-            >See This Week's Deals</a
-          >
-        </button>
+        <a target="_blank" href="https://www.angelfund.ai/login">
+          <button style="color: white; text-decoration: none;">
+            See This Week's Deals
+          </button>
+        </a>
       </div>
     </div>
     <div class="bottom-section">

@@ -23,7 +23,7 @@ def helper(email: str, day: int, collection: (InvUniqueUsersMonthly,StrUniqueUse
     user_obj = collection.objects.filter(current=True).first()
     if user_obj:
         latest_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-        if latest_dt > user_obj.current_dt + timedelta(days=day):
+        if latest_dt >= user_obj.current_dt + timedelta(days=day):
             untrue_current()
             current_day = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
             new_obj = collection(count=1, current=True, users_dict={email: True},

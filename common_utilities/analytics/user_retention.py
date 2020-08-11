@@ -21,7 +21,7 @@ def helper(days: int, collection: (InvRetention, StrRetention),
         last_retention = retention_list[-1]
         unique_login_cnt = model.objects.filter(current=True).first()
         last_retention_date = datetime.strptime(last_retention.get("date"), '%Y-%m-%d').date()
-        if date.today() > last_retention_date + timedelta(days=days):
+        if date.today() >= last_retention_date + timedelta(days=days):
             obj = {"date": str(date.today()),
                    "unique_login": unique_login_cnt.count if unique_login_cnt else 0}
             retention_list.append(obj)
