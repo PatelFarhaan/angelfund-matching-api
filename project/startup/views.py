@@ -22,6 +22,8 @@ from common_utilities.emails.email_confirmation import email_confirmation
 from common_utilities.emails.wait_list_email_str import wait_list_user_str
 from common_utilities.emails.google_email import google_email_confirmation
 from common_utilities.emails.account_delete_email import delete_user_account
+from common_utilities.analytics.user_signin_analytics import login_analytics
+from common_utilities.analytics.user_signup_analytics import signup_analytics
 from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
@@ -29,15 +31,11 @@ from common_utilities.machine_learning.hide_user_profile import hide_user, unhid
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
-from common_utilities.analytics.user_retention_individual import individual_user_retention
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from common_utilities.machine_learning.investor_matching_db import inv_mutual_updates, get_inv_matching_data
-from common_utilities.analytics.user_retention import str_daily_retention, str_weekly_retention, str_monthly_retention
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
-from common_utilities.analytics.unique_login import str_unique_users_daily, str_unique_users_monthly, str_unique_users_weekly
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
 from common_utilities.machine_learning.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
-from common_utilities.analytics.new_user_count_analytics import str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count
 from common_utilities.machine_learning.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, \
     str_mutual_updates
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
@@ -82,22 +80,8 @@ def google_token():
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
 
-                        unique_user_list = [str_unique_users_daily, str_unique_users_weekly, str_unique_users_monthly]
-                        for i in unique_user_list:
-                            unique_user_thread = threading.Thread(target=i, args=(email,))
-                            unique_user_thread.start()
-
-                        def retention_single_thread():
-                            user_retention_list = [str_daily_retention, str_weekly_retention, str_monthly_retention]
-                            for retention_modules in user_retention_list:
-                                retention_modules()
-
-                        retention_thread = threading.Thread(target=retention_single_thread, args=())
-                        retention_thread.start()
-
-                        individual_user_retention_thread = threading.Thread(target=individual_user_retention,
-                                                                            args=(email, False,))
-                        individual_user_retention_thread.start()
+                        analytics_thread = threading.Thread(target=login_analytics, args=(email, False,))
+                        analytics_thread.start()
 
                         rev_sectors_data = rev_sector_data()
                         rev_progress_data = rev_progress_mapping()
@@ -150,10 +134,8 @@ def google_token():
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
 
-                        user_count_analytics = [str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count]
-                        for i in user_count_analytics:
-                            login_cnt_thread = threading.Thread(target=i, args=())
-                            login_cnt_thread.start()
+                        signup_analytics_thread = threading.Thread(target=signup_analytics, args=(False,))
+                        signup_analytics_thread.start()
 
                         rev_sectors_data = rev_sector_data()
                         rev_progress_data = rev_progress_mapping()
@@ -225,22 +207,8 @@ def login():
             user.save()
             logger.debug(f"startup: login: logged in: {email}")
 
-            unique_user_list = [str_unique_users_daily, str_unique_users_weekly, str_unique_users_monthly]
-            for i in unique_user_list:
-                unique_user_thread = threading.Thread(target=i, args=(email,))
-                unique_user_thread.start()
-
-            def retention_single_thread():
-                user_retention_list = [str_daily_retention, str_weekly_retention, str_monthly_retention]
-                for retention_modules in user_retention_list:
-                    retention_modules()
-
-            retention_thread = threading.Thread(target=retention_single_thread, args=())
-            retention_thread.start()
-
-            individual_user_retention_thread = threading.Thread(target=individual_user_retention,
-                                                                args=(email, False,))
-            individual_user_retention_thread.start()
+            analytics_thread = threading.Thread(target=login_analytics, args=(email, False,))
+            analytics_thread.start()
 
             ma_schema = StartupUserSchema()
             user_objs = ma_schema.dump(user)
@@ -355,10 +323,8 @@ def register():
         thread = threading.Thread(target=email_confirmation, args=(email, link, user.first_name))
         thread.start()
 
-        user_count_analytics = [str_daily_new_users_count, str_weekly_new_users_count, str_monthly_new_users_count]
-        for i in user_count_analytics:
-            login_cnt_thread = threading.Thread(target=i, args=())
-            login_cnt_thread.start()
+        signup_analytics_thread = threading.Thread(target=signup_analytics, args=(False,))
+        signup_analytics_thread.start()
 
         user.passowrd_confirm_meta_data = {"is_clicked": False}
         user.save()
