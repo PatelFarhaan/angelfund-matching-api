@@ -111,7 +111,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
          <strong class="sizing"> {str_fn}—meet {inv_fn}. </strong>
          <p class="sizing">
             {inv_fn} invests in companies within your sector, and is interested in
-            learning more about {str_fn}.
+            learning more about {str_cn}.
          </p>
          <br />
          <p class="sizing">
