@@ -238,7 +238,6 @@ def login():
                 unique_user_thread = threading.Thread(target=i, args=(email,))
                 unique_user_thread.start()
 
-
             def retention_single_thread():
                 user_retention_list = [inv_daily_retention, inv_weekly_retention, inv_monthly_retention]
                 for retention_modules in user_retention_list:
