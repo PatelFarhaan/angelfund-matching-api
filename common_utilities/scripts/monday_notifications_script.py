@@ -52,11 +52,11 @@ def monday_notofication():
 #<==================================================================================================>
 def wait_list_user_startup(user_email, first_name):
     RECIPIENT = [user_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = CONSTANT.EMAIL_SENDER.value
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"{first_name}, new investors are waiting for you! :stopwatch:"
+    SUBJECT = f"{first_name}, new investors are waiting for you!"
     BODY_HTML = """
 <html>
   <head>
@@ -338,11 +338,11 @@ def wait_list_user_startup(user_email, first_name):
 #<==================================================================================================>
 def wait_list_user_investor(user_email, first_name):
     RECIPIENT = [user_email]
-    AWS_REGION = "us-east-1"
-    SENDER = "noreply@angelfund.ai"
+    SENDER = CONSTANT.EMAIL_SENDER.value
+    AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"{first_name}, new startups are waiting for you! :stopwatch:"
+    SUBJECT = f"{first_name}, new startups are waiting for you!"
     BODY_HTML = """
 <html>
   <head>
