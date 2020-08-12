@@ -27,7 +27,7 @@ def monday_notofication():
     db = mongo_client.matching
     collection = db.users
 
-    my_query = {"monday_notification": True}
+    my_query = {"monday_notification": True, "approved": True}
 
     total_count = collection.estimated_document_count()
     for offset in range(0, total_count+1, 10):
