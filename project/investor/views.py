@@ -1285,43 +1285,44 @@ def delete_email_address():
         collection = db[collection]
         return collection
 
-    input_request = request.get_json()
-    emails_list = input_request.get("emails_list")
-    api_key = input_request.get("api_key")
+    if request.method == "POST":
+        input_request = request.get_json()
+        emails_list = input_request.get("emails_list")
+        api_key = input_request.get("api_key")
 
-    if api_key != "***REMOVED***`NqU":
-        logger.debug(f"investor: delete-email-address: invalid api key: angelfund-team")
-        return jsonify({"result": False, "error": "Invalid API key"})
+        if api_key != "***REMOVED***`NqU":
+            logger.debug(f"investor: delete-email-address: invalid api key: angelfund-team")
+            return jsonify({"result": False, "error": "Invalid API key"})
 
-    if not emails_list:
-        logger.debug(f"investor: delete-email-address: email address not present in input body: angelfund-team")
-        return jsonify({"result": False, "error": "emails list not present in the input body"})
+        if not emails_list:
+            logger.debug(f"investor: delete-email-address: email address not present in input body: angelfund-team")
+            return jsonify({"result": False, "error": "emails list not present in the input body"})
 
-    ml_collection = db_details("matching", "users")
-    inv_collection = db_details("admin", "investor")
-    str_collection = db_details("admin", "startup")
+        ml_collection = db_details("matching", "users")
+        inv_collection = db_details("admin", "investor")
+        str_collection = db_details("admin", "startup")
 
-    for email in emails_list:
-        my_query = {"email": email}
+        for email in emails_list:
+            my_query = {"email": email}
 
-        ml_query = ml_collection.find_one(my_query)
-        inv_query = inv_collection.find_one(my_query)
-        str_query = str_collection.find_one(my_query)
+            ml_query = ml_collection.find_one(my_query)
+            inv_query = inv_collection.find_one(my_query)
+            str_query = str_collection.find_one(my_query)
 
-        if ml_query:
-            ml_collection.delete_many(my_query)
-            logger.debug(f"investor: delete-email-address: email address deleted from ML model: {email}: angelfund-team")
-            print("User Deleted from Machine Learning")
+            if ml_query:
+                ml_collection.delete_many(my_query)
+                logger.debug(f"investor: delete-email-address: email address deleted from ML model: {email}: angelfund-team")
+                print("User Deleted from Machine Learning")
 
-        if str_query:
-            str_collection.delete_one(my_query)
-            logger.debug(f"investor: delete-email-address: email address deleted from startup model: {email}: angelfund-team")
+            if str_query:
+                str_collection.delete_one(my_query)
+                logger.debug(f"investor: delete-email-address: email address deleted from startup model: {email}: angelfund-team")
 
-        if inv_query:
-            inv_collection.delete_one(my_query)
-            logger.debug(f"investor: delete-email-address: email address deleted from investor model: {email}: angelfund-team")
+            if inv_query:
+                inv_collection.delete_one(my_query)
+                logger.debug(f"investor: delete-email-address: email address deleted from investor model: {email}: angelfund-team")
 
-    return jsonify({"result": True, "message": "All emails deleted if existed"})
+        return jsonify({"result": True, "message": "All emails deleted if existed"})
 
 
 #<==================================================================================================>
