@@ -127,7 +127,7 @@ def google_token():
 
                         logger.debug(f"investor: google-token: created via Google OAuth: {email}")
 
-                        thread = threading.Thread(target=google_email_confirmation, args=(email,))
+                        thread = threading.Thread(target=google_email_confirmation, args=(user,))
                         thread.start()
 
                         user = Investor.objects.filter(email=email).first()
