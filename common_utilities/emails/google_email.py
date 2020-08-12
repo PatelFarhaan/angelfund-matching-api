@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 #<==================================================================================================>
 #                                 GOOGLE EMAIL CONFIRMATION
 #<==================================================================================================>
-def google_email_confirmation(user_email):
-    RECIPIENT = [user_email]
+def google_email_confirmation(user):
+    RECIPIENT = [user.email]
     SENDER = CONSTANT.EMAIL_SENDER.value
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
@@ -190,7 +190,7 @@ def google_email_confirmation(user_email):
       </div>
    </div>
 </html>
-    """.format(first_name=user_email.first_name)
+    """.format(first_name=user.first_name)
     CHARSET = "UTF-8"
     client = boto3.client('ses',
                           region_name=AWS_REGION,
@@ -217,6 +217,6 @@ def google_email_confirmation(user_email):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"google signup email: failed: {user_email}")
+        logger.error(f"google signup email: failed: {user.email}")
     else:
-        logger.debug(f"google signup email: success: {user_email}")
+        logger.debug(f"google signup email: success: {user.email}")

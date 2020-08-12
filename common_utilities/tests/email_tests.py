@@ -11,13 +11,13 @@ google_email, password_reset, referral_email, wait_list_email_inv, wait_list_ema
 #                               EMAIL SENDING USING THREADING
 #<==================================================================================================>
 def send_email_threading(email, name):
-    link = "https://www.google.com"
-    all_info = {}
-    all_info["inv_fn"] = "Farhaan"
-    all_info["str_fn"] = "AngelFund"
-    all_info["str_founders"] = "Birna"
-    all_info["str_bio"] = "Test Bio"
-    all_info["str_seeking"] = "300000"
+    # link = "https://www.google.com"
+    # all_info = {}
+    # all_info["inv_fn"] = "Farhaan"
+    # all_info["str_fn"] = "AngelFund"
+    # all_info["str_founders"] = "Birna"
+    # all_info["str_bio"] = "Test Bio"
+    # all_info["str_seeking"] = "300000"
 
     google_email.google_email_confirmation(email)
     # delete_user_account(email)
@@ -33,7 +33,7 @@ def send_email_threading(email, name):
 #                                       MAIN FUNCTION
 #<==================================================================================================>
 # send_email_threading("liya@angelfund.ai", "Liya")
-# send_email_threading("farhaan@angelfund.ai", "Farhaan")
+# send_email_threading(obj, "Farhaan")
 # send_email_threading("briandam26@yahoo.com", "Birna")
 # send_email_threading("birna@angelfund.ai", "Birna")
 # send_email_threading("liyajin7@gmail.com", "Birna")
