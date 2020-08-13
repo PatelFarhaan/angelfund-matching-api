@@ -79,6 +79,7 @@ def google_token():
 
                         ma_schema = StartupUserSchema()
                         user_objs = ma_schema.dump(user)
+                        user_objs["email"] = email
 
                         analytics_thread = threading.Thread(target=login_analytics, args=(email, False,))
                         analytics_thread.start()
