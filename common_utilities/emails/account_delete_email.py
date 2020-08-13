@@ -220,6 +220,6 @@ def delete_user_account(user_email):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"account deleted: failed: {user_email}")
+        logger.error(f"{user_email.investor}: account deleted: failed: {user_email}")
     else:
-        logger.debug(f"account deleted: success: {user_email}")
+        logger.debug(f"{user_email.investor}: account deleted: success: {user_email}")

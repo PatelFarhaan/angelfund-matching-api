@@ -254,6 +254,6 @@ def wait_list_user_inv(user_email, first_name):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"wait list: failed: {user_email}")
+        logger.error(f"{user_email.investor}: wait list: failed: {user_email}")
     else:
-        logger.debug(f"wait list: success: {user_email}")
+        logger.debug(f"{user_email.investor}: wait list: success: {user_email}")

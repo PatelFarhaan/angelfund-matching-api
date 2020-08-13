@@ -217,6 +217,6 @@ def google_email_confirmation(user):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"google signup email: failed: {user.email}")
+        logger.error(f"{user.investor}: google signup email: failed: {user.email}")
     else:
-        logger.debug(f"google signup email: success: {user.email}")
+        logger.debug(f"{user.investor}: google signup email: success: {user.email}")
