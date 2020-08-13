@@ -282,7 +282,7 @@ class InvestorUserAnalytics(db.Document):
     weekly = db.ListField()
     monthly = db.ListField()
     last_login = db.DateTimeField()
-    email = db.EmailField(required=True)
+    email = db.EmailField(required=True, unique=True)
 
     meta = dict(indexes=['email'])
 
@@ -295,7 +295,7 @@ class StartupUserAnalytics(db.Document):
     weekly = db.ListField()
     monthly = db.ListField()
     last_login = db.DateTimeField()
-    email = db.EmailField(required=True)
+    email = db.EmailField(required=True, unique=True)
 
     meta = dict(indexes=['email'])
 

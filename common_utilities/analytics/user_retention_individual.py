@@ -12,7 +12,7 @@ from project.models import InvestorUserAnalytics, StartupUserAnalytics
 #<==================================================================================================>
 def individual_user_retention(email: str, is_inv: bool):
     collection = InvestorUserAnalytics if is_inv else StartupUserAnalytics
-    collection_obj = InvestorUserAnalytics.objects.filter(email=email).first()
+    collection_obj = collection.objects.filter(email=email).first()
     if collection_obj:
         collection_obj = collection_obj[0]
 
