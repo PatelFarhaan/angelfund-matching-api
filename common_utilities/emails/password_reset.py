@@ -266,6 +266,6 @@ def password_reset_email(user_email, password_reset_link):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"password reset: failed: {user_email}")
+        logger.error(f"{user_email.investor}: password reset: failed: {user_email}")
     else:
-        logger.debug(f"password reset: success: {user_email}")
+        logger.debug(f"{user_email.investor}: password reset: success: {user_email}")

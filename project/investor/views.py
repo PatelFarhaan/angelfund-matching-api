@@ -87,6 +87,7 @@ def google_token():
 
                         ma_schema = InvestorUserSchema()
                         user_objs = ma_schema.dump(user)
+                        user_objs["email"] = email
 
                         rev_acc_data = rev_accreditation_data()
                         rev_sectors_data = rev_sector_data()

@@ -295,6 +295,6 @@ def email_confirmation(user_email, email_confirm_link, first_name):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"email confirmation: failed {user_email}")
+        logger.error(f"{user_email.investor}: email confirmation: failed {user_email}")
     else:
-        logger.debug(f"email confirmation: success {user_email}")
+        logger.debug(f"{user_email.investor}: email confirmation: success {user_email}")
