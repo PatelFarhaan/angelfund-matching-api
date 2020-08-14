@@ -13,9 +13,8 @@ from project.models import InvestorUserAnalytics, StartupUserAnalytics
 def individual_user_retention(email: str, is_inv: bool):
     collection = InvestorUserAnalytics if is_inv else StartupUserAnalytics
     collection_obj = collection.objects.filter(email=email).first()
-    if collection_obj:
-        collection_obj = collection_obj[0]
 
+    if collection_obj:
         if collection_obj.last_login.date() == date.today():
             return
         else:
@@ -23,6 +22,7 @@ def individual_user_retention(email: str, is_inv: bool):
             collection_obj.daily += [{"date": str(date.today())}]
             collection_obj.weekly = helper(collection_obj.weekly, 7)
             collection_obj.monthly = helper(collection_obj.monthly, 30)
+            collection_obj.save()
             return
     else:
         user_obj = {}
@@ -40,7 +40,7 @@ def individual_user_retention(email: str, is_inv: bool):
 #                                      HELPER FUNCTION
 #<==================================================================================================>
 def helper(list_obj, days):
-    last_ele_date = list_obj[-1].get("date")
-    if date.today() + timedelta(days=days) >= last_ele_date:
+    last_ele_date = datetime.strptime(list_obj[-1].get("date"), '%Y-%m-%d').date()
+    if date.today() >= last_ele_date + timedelta(days=days):
         list_obj += [{"date": str(date.today())}]
     return list_obj
