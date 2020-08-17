@@ -154,10 +154,10 @@ def email_referral(user_email, full_name, first_name, link, is_investor, domain)
          <span style="color: #5e51f4;">Angelfund.ai!</span>
          </strong>
          <p class="sizing">
-            Angelfund.ai connects the most relevant founders and angel investors by using ML to makes smart, informed matches. Angelfund.ai is your warm intro, without the dependency on your personal networks.
+            Angelfund.ai connects the most relevant founders and angel investors by using ML to makes smart, informed matches. Angelfund.ai <i>is</i> your warm intro, without the dependency on your personal networks.
          </p>
          <p class="sizing">
-            Sign up using their link to experience personalized access to relevant
+            Sign up using {first_name}'s link to experience personalized access to relevant
             startups & investors:
          </p>
          <p class="sizing" style="text-decoration: none;">
