@@ -173,13 +173,10 @@ def wait_list_user_inv(user_email, first_name):
       </p>
 
       <p class="sizing">
-        We're looking forward to seeing you on Angelfund.ai, and are incredibly
-        excited to start introducing you to relevant startups.
+        We're incredibly excited to start introducing you to relevant startups on Angelfund.ai, and are onboarding new investors as fast as we can. 
       </p>
       <p class="sizing">
-        We're in the early stages of growing our community and are onboarding
-        new investors as fast as we can. When you're off the waitlist and your
-        profile's been approved, we'll let you know.
+        We’ll be conducting our due diligence and may ask you some questions along the way. Once your profile's been approved and you’re off the waitlist, we'll let you know!
       </p>
       <p class="sizing">
         All the best!
