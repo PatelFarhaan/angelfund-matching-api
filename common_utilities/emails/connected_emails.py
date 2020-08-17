@@ -113,7 +113,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
             {inv_fn} invests in companies within your sector, and is interested in
             learning more about {str_cn}.
          </p>
-         <p class="sizing">
+         <p class="sizing"><br />
             We’ll let you two take it from here.
          </p>
          <p class="sizing">
