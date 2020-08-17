@@ -642,6 +642,60 @@ def monday_notifications():
 
 
 #<==================================================================================================>
+#                                   PROFILE COMPLETION CHECK
+#<==================================================================================================>
+@startup_blueprint.route('/profile-completion-check', methods=["GET"])
+@jwt_required
+def profile_complete_check():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+    logo_check, co_founders_check = True, True
+
+    # <================ COMPANY NAME CHECK ================> #
+    if not str_obj.company_link:
+        str_obj.company_logo_check = False
+        str_obj.show_profile = False
+        logo_check = False
+        str_obj.save()
+        logger.debug(f"startup: profile-completion-check: no company logo for: {str_obj.email}")
+        logger.debug(f"startup: profile-completion-check: show profile field set to False: {str_obj.email}")
+
+    # <================ CO-FOUNDERS CHECK ================> #
+    for cf in str_obj.co_founders:
+        if cf.get("primary"):
+            if not cf.get("linkedin_link"):
+                co_founders_check = False
+                logger.debug(f"startup: profile-completion-check: no linkedin link for: {str_obj.email}")
+                break
+
+        if not cf.get("name") and cf.get("position") and cf.get("bio"):
+            co_founders_check = False
+            logger.debug(f"startup: profile-completion-check: profile incomplete for: {str_obj.email}")
+            break
+
+    if not co_founders_check:
+        str_obj.co_founders_check = False
+        str_obj.show_profile = False
+        str_obj.save()
+
+    if not all([logo_check, co_founders_check]):
+        data = {"company_logo": logo_check, "co_founders": co_founders_check}
+        logger.debug(f"startup: profile-completion-check: entire profile incomplete for: {str_obj.email}")
+        return jsonify({"result": False, "message": "incomplete profile", "data": data})
+
+    str_obj.co_founders_check = co_founders_check
+    str_obj.company_logo_check = logo_check
+    str_obj.show_profile = True
+    str_obj.save()
+    data = {"company_logo": logo_check, "co_founders": co_founders_check}
+    logger.debug(f"startup: profile-completion-check: entire profile complete for: {str_obj.email}")
+    return jsonify({"result": True, "message": "completed profile", "data": data})
+
+
+#<==================================================================================================>
 #                                  PROFILE VISIBILITY
 #<==================================================================================================>
 @startup_blueprint.route('/profile-visibility', methods=["POST"])
