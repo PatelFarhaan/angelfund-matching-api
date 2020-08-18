@@ -693,8 +693,8 @@ def profile_complete_check():
         logger.debug(f"startup: profile-completion-check: entire profile incomplete for: {str_obj.email}")
         return jsonify({"result": False, "message": "incomplete profile", "data": data})
 
-    str_obj.co_founders_check = co_founders_check
-    str_obj.company_logo_check = logo_check
+    str_obj.co_founders_check = True
+    str_obj.company_logo_check = True
     str_obj.show_profile = True
     str_obj.save()
     data = {"company_logo_check": logo_check, "co_founders_check": co_founders_check}
