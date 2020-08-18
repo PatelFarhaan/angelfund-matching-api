@@ -602,7 +602,6 @@ def update_info():
             else:
                 jsonify({"result": False, "error": "invalid user field"})
 
-
         ma_schema = StartupUserSchema()
         user_objs = ma_schema.dump(user_obj)
 
@@ -663,7 +662,7 @@ def profile_complete_check():
     logo_check, co_founders_check = True, True
 
     # <================ COMPANY NAME CHECK ================> #
-    if not str_obj.company_link:
+    if not str_obj.profile_pic_link:
         str_obj.company_logo_check = False
         str_obj.show_profile = False
         logo_check = False
@@ -679,7 +678,7 @@ def profile_complete_check():
                 logger.debug(f"startup: profile-completion-check: no linkedin link for: {str_obj.email}")
                 break
 
-        if not cf.get("name") and cf.get("position") and cf.get("bio"):
+        if not all([cf.get("name"), cf.get("position"), cf.get("bio")]):
             co_founders_check = False
             logger.debug(f"startup: profile-completion-check: profile incomplete for: {str_obj.email}")
             break
@@ -690,7 +689,7 @@ def profile_complete_check():
         str_obj.save()
 
     if not all([logo_check, co_founders_check]):
-        data = {"company_logo": logo_check, "co_founders": co_founders_check}
+        data = {"company_logo_check": logo_check, "co_founders_check": co_founders_check}
         logger.debug(f"startup: profile-completion-check: entire profile incomplete for: {str_obj.email}")
         return jsonify({"result": False, "message": "incomplete profile", "data": data})
 
@@ -698,7 +697,7 @@ def profile_complete_check():
     str_obj.company_logo_check = logo_check
     str_obj.show_profile = True
     str_obj.save()
-    data = {"company_logo": logo_check, "co_founders": co_founders_check}
+    data = {"company_logo_check": logo_check, "co_founders_check": co_founders_check}
     logger.debug(f"startup: profile-completion-check: entire profile complete for: {str_obj.email}")
     return jsonify({"result": True, "message": "completed profile", "data": data})
 
