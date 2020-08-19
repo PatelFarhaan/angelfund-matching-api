@@ -113,6 +113,19 @@ def processing_helper(email: str) -> dict:
             str_obj.save()
         except:
             res["profile_pic_link"] = None
+
+    if res["co_founders"]:
+        for cf in res["co_founders"]:
+            if cf.get("linkedin_link"):
+                if not cf.get("linkedin_link").startswith("https://"):
+                    linkedin_link = "https://" + cf.get("linkedin_link")
+                    cf["linkedin_link"] = linkedin_link
+
+    if res["company_link"]:
+        if not res.get("company_link").startswith("https://"):
+            company_link = "https://" + res.get("company_link")
+            res["company_link"] = company_link
+
     return {"result": True, "data":res}
 
 
@@ -121,13 +134,20 @@ def processing_helper(email: str) -> dict:
 #<==================================================================================================>
 def process_all_str_data(data: list) -> list:
     res = []
+    duplicate_check = set()
+
     for str in data:
         _id = str["_id"]
-        str_data = get_str_details(_id)
-        if str_data["result"]:
-            str_details = processing_helper(str_data["email"])
-            if str_details["result"]:
-                res.append(str_details["data"])
+        if _id not in duplicate_check:
+            duplicate_check.add(_id)
+            str_data = get_str_details(_id)
+            if str_data["result"]:
+                str_details = processing_helper(str_data["email"])
+                if str_details["result"]:
+                    res.append(str_details["data"])
+        else:
+            continue
+
     return res
 
 

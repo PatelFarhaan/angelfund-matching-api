@@ -106,13 +106,19 @@ def processing_helper(email: str) -> dict:
 #<==================================================================================================>
 def process_all_str_data(data: list) -> list:
     res = []
+    duplicate_check = set()
+
     for str in data:
         _id = str["_id"]
-        str_data = get_str_details(_id)
-        if str_data["result"]:
-            str_details = processing_helper(str_data["email"])
-            if str_details["result"]:
-                res.append(str_details["data"])
+        if _id not in duplicate_check:
+            duplicate_check.add(_id)
+            str_data = get_str_details(_id)
+            if str_data["result"]:
+                str_details = processing_helper(str_data["email"])
+                if str_details["result"]:
+                    res.append(str_details["data"])
+        else:
+            continue
     return res
 
 

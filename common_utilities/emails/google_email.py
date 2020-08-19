@@ -116,7 +116,6 @@ def google_email_confirmation(user):
          }}
          .hook {{
          display: block;
-         margin: auto;
          width: 80%;
          }}
          h1 {{

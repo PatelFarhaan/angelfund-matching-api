@@ -16,7 +16,8 @@ class StartupUserSchema(ma.Schema):
                   "sectors", "company_name", "company_link", "startup_pitch", "first_invite",
                   "bio", "round_size", "raised", "progress", "position", "co_founders",
                   "num_team_members", "slide_deck", "approved", "email_confirmed",
-                  "first_dashboard_visit", "show_profile", "monday_notification")
+                  "first_dashboard_visit", "show_profile", "monday_notification",
+                  "company_logo_check", "co_founders_check")
 
 
 #<==================================================================================================>

@@ -563,6 +563,14 @@ def update_info():
                     if not update_into_matching(user_obj.email, {field: res}):
                         technical_errors("STARTUP: PROGRESS DATA UPDATE UNSUCCESSFUL", user_obj.email)
 
+                elif field == "bio":
+                    setattr(user_obj, field, input_data[field])
+                    str_co_founders = user_obj.co_founders
+                    str_co_founders[0]["bio"] = input_data[field]
+                    logger.info(f"startup: update-info: {field} updated to {input_data[field]}: {user_obj.email}")
+                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
+                        technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
+
                 elif field == "round_size":
                     setattr(user_obj, field, input_data[field])
                     logger.info(f"startup: update-info: {field} updated to {input_data[field]}: {user_obj.email}")
@@ -593,7 +601,6 @@ def update_info():
 
             else:
                 jsonify({"result": False, "error": "invalid user field"})
-
 
         ma_schema = StartupUserSchema()
         user_objs = ma_schema.dump(user_obj)
@@ -639,6 +646,60 @@ def monday_notifications():
             return jsonify({"result": True, "message": "value updated"})
         else:
             return jsonify(response)
+
+
+#<==================================================================================================>
+#                                   PROFILE COMPLETION CHECK
+#<==================================================================================================>
+@startup_blueprint.route('/profile-completion-check', methods=["GET"])
+@jwt_required
+def profile_complete_check():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+    logo_check, co_founders_check = True, True
+
+    # <================ COMPANY NAME CHECK ================> #
+    if not str_obj.profile_pic_link:
+        str_obj.company_logo_check = False
+        str_obj.show_profile = False
+        logo_check = False
+        str_obj.save()
+        logger.debug(f"startup: profile-completion-check: no company logo for: {str_obj.email}")
+        logger.debug(f"startup: profile-completion-check: show profile field set to False: {str_obj.email}")
+
+    # <================ CO-FOUNDERS CHECK ================> #
+    for cf in str_obj.co_founders:
+        if cf.get("primary"):
+            if not cf.get("linkedin_link"):
+                co_founders_check = False
+                logger.debug(f"startup: profile-completion-check: no linkedin link for: {str_obj.email}")
+                break
+
+        if not all([cf.get("name"), cf.get("position"), cf.get("bio")]):
+            co_founders_check = False
+            logger.debug(f"startup: profile-completion-check: profile incomplete for: {str_obj.email}")
+            break
+
+    if not co_founders_check:
+        str_obj.co_founders_check = False
+        str_obj.show_profile = False
+        str_obj.save()
+
+    if not all([logo_check, co_founders_check]):
+        data = {"company_logo_check": logo_check, "co_founders_check": co_founders_check}
+        logger.debug(f"startup: profile-completion-check: entire profile incomplete for: {str_obj.email}")
+        return jsonify({"result": False, "message": "incomplete profile", "data": data})
+
+    str_obj.co_founders_check = True
+    str_obj.company_logo_check = True
+    str_obj.show_profile = True
+    str_obj.save()
+    data = {"company_logo_check": logo_check, "co_founders_check": co_founders_check}
+    logger.debug(f"startup: profile-completion-check: entire profile complete for: {str_obj.email}")
+    return jsonify({"result": True, "message": "completed profile", "data": data})
 
 
 #<==================================================================================================>
