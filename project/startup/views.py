@@ -566,7 +566,9 @@ def update_info():
                 elif field == "bio":
                     setattr(user_obj, field, input_data[field])
                     str_co_founders = user_obj.co_founders
-                    str_co_founders[0]["bio"] = input_data[field]
+                    if str_co_founders:
+                        if str_co_founders[0].get("bio"):
+                            str_co_founders[0]["bio"] = input_data[field]
                     logger.info(f"startup: update-info: {field} updated to {input_data[field]}: {user_obj.email}")
                     if not update_into_matching(user_obj.email, {field: input_data[field]}):
                         technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
