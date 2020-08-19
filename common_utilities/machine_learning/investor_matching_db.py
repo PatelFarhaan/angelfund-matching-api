@@ -113,6 +113,19 @@ def processing_helper(email: str) -> dict:
             str_obj.save()
         except:
             res["profile_pic_link"] = None
+
+    if res["co_founders"]:
+        for cf in res["co_founders"]:
+            if cf.get("linkedin_link"):
+                if not cf.get("linkedin_link").startswith("https://"):
+                    linkedin_link = "https://" + cf.get("linkedin_link")
+                    cf["linkedin_link"] = linkedin_link
+
+    if res["company_link"]:
+        if not res.get("company_link").startswith("https://"):
+            company_link = "https://" + res.get("company_link")
+            res["company_link"] = company_link
+
     return {"result": True, "data":res}
 
 
