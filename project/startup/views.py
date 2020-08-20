@@ -661,13 +661,13 @@ def profile_complete_check():
         return jsonify(jwt_decode)
 
     str_obj = jwt_decode["user_obj"]
-    logo_check, co_founders_check = True, True
+    profile_pic_check, co_founders_check = True, True
 
     # <================ COMPANY NAME CHECK ================> #
-    if not str_obj.company_link:
+    if not str_obj.profile_pic_link:
         str_obj.company_logo_check = False
         str_obj.show_profile = False
-        logo_check = False
+        profile_pic_check = False
         str_obj.save()
         logger.debug(f"startup: profile-completion-check: no company logo for: {str_obj.email}")
         logger.debug(f"startup: profile-completion-check: show profile field set to False: {str_obj.email}")
@@ -686,13 +686,13 @@ def profile_complete_check():
             break
 
     if not co_founders_check:
-        str_obj.company_logo_check = logo_check
+        str_obj.company_logo_check = profile_pic_check
         str_obj.co_founders_check = False
         str_obj.show_profile = False
         str_obj.save()
 
-    if not all([logo_check, co_founders_check]):
-        data = {"company_logo_check": logo_check, "co_founders_check": co_founders_check}
+    if not all([profile_pic_check, co_founders_check]):
+        data = {"company_logo_check": profile_pic_check, "co_founders_check": co_founders_check}
         logger.debug(f"startup: profile-completion-check: entire profile incomplete for: {str_obj.email}")
         return jsonify({"result": False, "message": "incomplete profile", "data": data})
 
@@ -700,7 +700,7 @@ def profile_complete_check():
     str_obj.company_logo_check = True
     str_obj.show_profile = True
     str_obj.save()
-    data = {"company_logo_check": logo_check, "co_founders_check": co_founders_check}
+    data = {"company_logo_check": profile_pic_check, "co_founders_check": co_founders_check}
     logger.debug(f"startup: profile-completion-check: entire profile complete for: {str_obj.email}")
     return jsonify({"result": True, "message": "completed profile", "data": data})
 
