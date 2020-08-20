@@ -664,7 +664,7 @@ def profile_complete_check():
     logo_check, co_founders_check = True, True
 
     # <================ COMPANY NAME CHECK ================> #
-    if not str_obj.profile_pic_link:
+    if not str_obj.company_link:
         str_obj.company_logo_check = False
         str_obj.show_profile = False
         logo_check = False
@@ -686,6 +686,7 @@ def profile_complete_check():
             break
 
     if not co_founders_check:
+        str_obj.company_logo_check = logo_check
         str_obj.co_founders_check = False
         str_obj.show_profile = False
         str_obj.save()
