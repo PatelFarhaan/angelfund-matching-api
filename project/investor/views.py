@@ -658,6 +658,7 @@ def monday_notifications():
 @investor_blueprint.route('/prior-investment-check', methods=["GET"])
 @jwt_required
 def prior_investment_check():
+
     def update_ml(visible, inv_obj):
         matching_obj = get_inv_matching_data(inv_obj.email)
 
@@ -665,12 +666,9 @@ def prior_investment_check():
             technical_errors("INVESTOR: SHOW PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING CODE", inv_obj.email)
             return {"result": False, "message": "no match found"}
 
-        _id = matching_obj.get("_id")
+        if not visible:
+            _id = matching_obj.get("_id")
 
-        if visible:
-            if not unhide_user(email=inv_obj.email, id=_id):
-                technical_errors("INVESTOR: UNHIDE PROFILE UPDATE UNSUCCESSFUL INTO HIDE PROFILE COLLECTION", inv_obj.email)
-        elif not visible:
             if not hide_user(email=inv_obj.email, id=_id):
                 technical_errors("INVESTOR: HIDE PROFILE UPDATE UNSUCCESSFUL INTO HIDE PROFILE COLLECTION", inv_obj.email)
 
@@ -697,9 +695,8 @@ def prior_investment_check():
         return jsonify({"result": False, "message": "prior investment field is empty"})
 
     inv_obj.prior_inv_completed = True
-    inv_obj.show_profile = True
+    # inv_obj.show_profile = True
     inv_obj.save()
-    update_ml(True, inv_obj)
     logger.debug(f"investor: prior-investment-check: prior investments not empty for: {inv_obj.email}")
     logger.debug(f"investor: prior-investment-check: show profile field set to True: {inv_obj.email}")
     return jsonify({"result": True, "message": "prior investment field is not empty"})
