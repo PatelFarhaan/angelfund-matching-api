@@ -666,14 +666,12 @@ def prior_investment_check():
 
     if not inv_obj.prior_investments:
         inv_obj.prior_inv_completed = False
-        inv_obj.show_profile = False
         inv_obj.save()
         logger.debug(f"investor: prior-investment-check: prior investments empty for: {inv_obj.email}")
         logger.debug(f"investor: prior-investment-check: show profile field set to False: {inv_obj.email}")
         return jsonify({"result": False, "message": "prior investment field is empty"})
 
     inv_obj.prior_inv_completed = True
-    inv_obj.show_profile = True
     inv_obj.save()
     logger.debug(f"investor: prior-investment-check: prior investments not empty for: {inv_obj.email}")
     logger.debug(f"investor: prior-investment-check: show profile field set to True: {inv_obj.email}")
