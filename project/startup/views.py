@@ -656,6 +656,26 @@ def monday_notifications():
 @startup_blueprint.route('/profile-completion-check', methods=["GET"])
 @jwt_required
 def profile_complete_check():
+
+    def update_ml(visible, str_obj):
+        matching_obj = get_str_matching_data(str_obj.email)
+
+        if matching_obj == {}:
+            return {"result": False, "message": "no match found"}
+
+        if not visible:
+            _id = matching_obj.get("_id")
+
+            if not hide_user(email=str_obj.email, id=_id):
+                technical_errors("STARTUP: HIDE PROFILE UPDATE UNSUCCESSFUL INTO HIDE PROFILE COLLECTION", str_obj.email)
+
+            if not hide_profile_from_discover(_id):
+                technical_errors("STARTUP: HIDE PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING CODE", str_obj.email)
+
+        if not update_into_matching(str_obj.email, {"show_profile": visible}):
+            technical_errors("STARTUP: SHOW PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING COLLECTION", str_obj.email)
+
+
     jwt_decode = startup_jwt_decoder(get_jwt_identity())
     if not jwt_decode["result"]:
         return jsonify(jwt_decode)
@@ -692,6 +712,7 @@ def profile_complete_check():
         str_obj.save()
 
     if not all([profile_pic_check, co_founders_check]):
+        update_ml(False, str_obj)
         data = {"company_logo_check": profile_pic_check, "co_founders_check": co_founders_check}
         logger.debug(f"startup: profile-completion-check: entire profile incomplete for: {str_obj.email}")
         return jsonify({"result": False, "message": "incomplete profile", "data": data})
