@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 #<==================================================================================================>
 #                                   EMAIL CONFIRMATION
 #<==================================================================================================>
-def email_confirmation(user_email, email_confirm_link, first_name):
-    RECIPIENT = [user_email]
+def email_confirmation(user, email_confirm_link, first_name):
+    RECIPIENT = [user.email]
     SENDER = CONSTANT.EMAIL_SENDER.value
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
@@ -295,6 +295,6 @@ def email_confirmation(user_email, email_confirm_link, first_name):
             Source=SENDER,
         )
     except ClientError as e:
-        logger.error(f"{user_email.investor}: email confirmation: failed {user_email}")
+        logger.error(f"{user.investor}: email confirmation: failed {user.email}")
     else:
-        logger.debug(f"{user_email.investor}: email confirmation: success {user_email}")
+        logger.debug(f"{user.investor}: email confirmation: success {user.email}")

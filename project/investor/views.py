@@ -200,7 +200,7 @@ def login():
             error = "please confirm your email address"
             token = serial.dumps(email, salt='email_confirm')
             link = url_for('investor.email_confirmed', token=token, _external=True)
-            thread = threading.Thread(target=email_confirmation, args=(email, link, user.first_name))
+            thread = threading.Thread(target=email_confirmation, args=(user, link, user.first_name))
             thread.start()
             return jsonify({"result": False, "error": error})
 
@@ -345,7 +345,7 @@ def register():
 
         token = serial.dumps(email, salt='email_confirm')
         link = url_for('investor.email_confirmed', token=token, _external=True)
-        thread = threading.Thread(target=email_confirmation, args=(email, link, input_request.get("first_name")))
+        thread = threading.Thread(target=email_confirmation, args=(new_user, link, input_request.get("first_name")))
         thread.start()
 
         signup_analytics_thread = threading.Thread(target=signup_analytics, args=(True,))
