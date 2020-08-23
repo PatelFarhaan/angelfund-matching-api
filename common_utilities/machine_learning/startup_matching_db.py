@@ -27,11 +27,11 @@ def insert_into_matching(email: str, user_obj: dict) -> bool:
     collection = db_details()
     my_query = {"email": email, "investor": False}
 
-    last_record = collection.find().skip(collection.count() - 1)
-    if last_record != []:
-        _id = last_record[0]["_id"] + 100
-    else:
+    users_count = collection.estimated_document_count()
+    if users_count == 0:
         _id = 0
+    else:
+        _id = list(collection.find().skip(users_count - 1))[0].get("_id") + 100
 
     doc = list(collection.find(my_query))
     user_obj["_id"] = _id
