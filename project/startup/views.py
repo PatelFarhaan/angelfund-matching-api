@@ -941,7 +941,7 @@ def startup_dashboard():
 
         else:
             logger.debug(f"startup: dashboard: data found: {user_obj.email}")
-            str_data = process_all_str_data(discover["data"])
+            str_data = process_all_str_data(discover["data"], user_obj)
             return jsonify({"result": True, "data": str_data})
 
     elif request.method == "POST":
