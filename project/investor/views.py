@@ -331,6 +331,9 @@ def register():
             return jsonify({"result": False, "error": error})
 
         input_request["password"] = generate_password_hash(input_request["password"])
+
+        if input_request.get("email"):
+            input_request["email"] = input_request["email"].lower()
         new_user = Investor(**input_request)
         new_user.save()
 

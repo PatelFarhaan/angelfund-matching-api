@@ -307,6 +307,8 @@ def register():
             }
         ]
 
+        if input_request.get("email"):
+            input_request["email"] = input_request["email"].lower()
         new_user = Startup(**input_request)
         new_user.save()
 
