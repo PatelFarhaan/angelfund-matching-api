@@ -1038,8 +1038,11 @@ def investors_dashboard():
 def history():
     def get_passed_feedback(str_email: str, inv_email: str):
         str_obj = Startup.objects.filter(email=str_email).first()
-        inv_feedback = dict(getattr(str_obj, "feedback")).get(inv_email)
-        return inv_feedback
+        if str_obj:
+            inv_feedback = dict(getattr(str_obj, "feedback")).get(inv_email)
+            return inv_feedback
+        else:
+            return None
 
     jwt_decode = investor_jwt_decoder(get_jwt_identity())
     if not jwt_decode["result"]:
@@ -1055,8 +1058,10 @@ def history():
     for k, v in passed.items():
         str_obj = Startup.objects.filter(email=k).first()
         passed_str_data = ma_schema.dump(str_obj)
-        passed_str_data["feedback"] = get_passed_feedback(k, inv_obj.email)
-        data.append(passed_str_data)
+        investors_feedback = get_passed_feedback(k, inv_obj.email)
+        if investors_feedback:
+            passed_str_data["feedback"] = investors_feedback
+            data.append(passed_str_data)
 
     # connected
     connected = getattr(inv_obj, "connected")

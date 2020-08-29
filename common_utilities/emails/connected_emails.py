@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 #<==================================================================================================>
 def email_connected(inv_email: str, str_email: str, all_info):
     RECIPIENT = [inv_email, str_email]
-    SENDER = CONSTANT.EMAIL_SENDER.value
+    SENDER = CONSTANT.EMAIL_SENDER_HELLO.value
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value

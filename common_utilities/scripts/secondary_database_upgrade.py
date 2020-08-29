@@ -58,9 +58,7 @@ def insert_into_matching():
 
         for doc in data_chunk:
             def helper(email):
-
                 if secondary_collection.find({"email": email}):
-                    print(email)
                     for k, v in doc.items():
                         if k == "_id":
                             continue
@@ -68,6 +66,11 @@ def insert_into_matching():
                             secondary_collection.update_one({"email": email}, {"$set": {k: v}})
                         except:
                             print("Exception occoured in updating", doc.get("email"))
+                else:
+                    try:
+                        secondary_collection.insert(dict(doc), check_keys=False)
+                    except:
+                        print("Exception occoured in inserting", doc.get("email"))
 
             email = doc.get("email")
             thread = threading.Thread(target=helper, args=(email, ))

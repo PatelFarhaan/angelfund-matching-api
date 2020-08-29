@@ -24,7 +24,7 @@ def email_referral(user_email, full_name, first_name, link, is_investor, domain)
     first_name = first_name.capitalize()
     full_name = string.capwords(full_name)
     AWS_REGION = CONSTANT.EMAIL_REGION.value
-    SENDER = "Angelfund.ai <hello@angelfund.ai>"
+    SENDER = CONSTANT.EMAIL_SENDER_HELLO.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
     SUBJECT = f"{first_name} has invited you to join Angelfund.ai!"
@@ -168,7 +168,7 @@ def email_referral(user_email, full_name, first_name, link, is_investor, domain)
                color: #5e51f4;
                "
                href="{link}"
-               >{domain}/api/v1/{is_investor}/referral/{first_name}</a
+               >{domain}/refer/{first_name}</a
                >
          </p>
       </div>
