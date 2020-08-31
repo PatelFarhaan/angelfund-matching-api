@@ -24,7 +24,7 @@ def email_connected(inv_email: str, str_email: str, all_info):
     AWS_REGION = CONSTANT.EMAIL_REGION.value
     AWS_ACCESS_KEY = CONSTANT.ACCESS_KEY.value
     AWS_ACCESS_VALUE = CONSTANT.ACCESS_VALUE.value
-    SUBJECT = f"Angelfund.ai Intro: {all_info['inv_fn']} – {all_info['str_founders']}"
+    SUBJECT = f"Angelfund.ai Intro: {all_info['inv_fn']} – {all_info['str_fn']}"
     BODY_HTML = """
 <html>
    <head>

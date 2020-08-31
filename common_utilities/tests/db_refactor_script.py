@@ -25,33 +25,41 @@ def db_connection_details():
 #<==================================================================================================>
 def database_refactor(collection: (Investor, Startup)):
     pass
-    # is_inv = True if collection == Investor else False
-    # total_count = collection.objects.count()
-    # for offset in range(0, total_count + 1, 10):
-    #     data_chunk = list(collection.objects.skip(offset).limit(10))
-    #
-    #     for doc in data_chunk:
-    #         try:
-    #             print(doc.company_logo_check)
-    #             if doc.company_logo_check or doc.company_logo_check == False:
-    #                 continue
-    #                 # ml_collection = db_connection_details()
-    #                 # my_query = {"email": email, "investor": is_inv}
-    #                 # ml_rec = ml_collection.find_one(my_query)
-    #                 #
-    #                 # if ml_rec:
-    #                 #     if ml_rec.get("co_founders_check") or ml_rec.get("co_founders_check") == False:
-    #                 #         continue
-    #                 #     else:
-    #                 #         newvalues = {"$set": {"co_founders_check": False}}
-    #                 #         ml_collection.update_one(my_query, newvalues)
-    #             else:
-    #                 continue
-    #
-    #         except AttributeError as e:
-    #             print("here")
-    #             doc.company_logo_check = False
-    #             doc.save()
+    is_inv = True if collection == Investor else False
+    total_count = collection.objects.count()
+    ml_collection = db_connection_details()
+
+    for offset in range(0, total_count + 1, 10):
+        data_chunk = list(collection.objects.skip(offset).limit(10))
+
+        for doc in data_chunk:
+            email = doc.email
+            my_query = {"email": email, "investor": is_inv}
+            ml_rec = ml_collection.find_one(my_query)
+
+            if ml_rec:
+                co_founders = ml_rec.get("co_founders")
+                if co_founders:
+                    print(co_founders)
+                    for cf_obj in co_founders:
+                        temp = None
+                        _pic = False
+                        for k,v in cf_obj.items():
+                            if k == "photo":
+                                _pic = True
+                                temp = v
+                                break
+
+                        if temp or _pic:
+                            cf_obj.pop("photo")
+                            if not cf_obj.get("profile_image"):
+                                cf_obj["profile_image"] = temp
+                            else:
+                                cf_obj["profile_image"] = None
+
+                            newvalues = {"$set": {"co_founders": [cf_obj]}}
+                            ml_collection.update_one(my_query, newvalues)
+
 
 
 # database_refactor(Startup)
