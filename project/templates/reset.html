@@ -80,9 +80,7 @@
             >New Password (must be at least 8 characters)</label
           ><br />
           <input
-            onchange="check_pass();"
             minlength="8"
-            name="password"
             id="password"
             type="password"
             value=""
@@ -95,23 +93,16 @@
               border: 1px solid lightGrey;
               border-radius: 5px;
             "
+            required
           />
         </div>
         <div style="padding-top: 1.5rem;">
           <label style="margin-left: 25px;" for="confirm"
             >Confirm Password
           </label>
-          <span
-            style="margin-right: 25px; float: right; color: red; display: none;"
-            id="error"
-            >The passwords do not match.</span
-          >
-          <br />
           <input
-            onchange="check_pass();"
             minlength="8"
-            name="confirm"
-            id="confirm"
+            id="confirm_password"
             type="password"
             value=""
             style="
@@ -123,6 +114,7 @@
               border: 1px solid lightGrey;
               border-radius: 5px;
             "
+            required
           />
         </div>
         <button
@@ -136,31 +128,28 @@
             color: white;
             border-radius: 5px;
           "
-          type="submit"
-          name="submit"
           value="registration"
-          id="submit"
-          disabled="false"
+          type="submit"
         >
           Reset my password
-        </button>
+        </button>    
       </form>
     </div>
   </body>
   <script>
-    function check_pass() {
-      if (
-        document.getElementById("password").value ==
-        document.getElementById("confirm").value
-      ) {
-        document.getElementById("submit").disabled = false
-        document.getElementById("confirm").style.borderColor = "lightGrey"
-        document.getElementById("error").style.display = "none"
-      } else {
-        document.getElementById("submit").disabled = true
-        document.getElementById("confirm").style.borderColor = "red"
-        document.getElementById("error").style.display = "block"
-      }
+    var password = document.getElementById("password")
+    , confirm_password = document.getElementById("confirm_password");
+
+    function validatePassword(){
+        if(password.value != confirm_password.value) {
+            confirm_password.setCustomValidity("The passwords do not match.");
+        } else {
+            confirm_password.setCustomValidity('');
+            
+        }
     }
+
+    password.onchange = validatePassword;
+    confirm_password.onkeyup = validatePassword;
   </script>
 </html>
