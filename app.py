@@ -28,4 +28,4 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(__name__)
     logger.info(f"main app: flask reserver started at: {datetime.datetime.now()}")
-    app.run(host='127.0.0.1', port=5000, debug=False) 
+    app.run(host='127.0.0.1', port=5000, debug=False)

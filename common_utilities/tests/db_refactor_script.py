@@ -24,7 +24,6 @@ def db_connection_details():
 #                                      ML COLLECTION DETAILS
 #<==================================================================================================>
 def database_refactor(collection: (Investor, Startup)):
-    pass
     is_inv = True if collection == Investor else False
     total_count = collection.objects.count()
     ml_collection = db_connection_details()
@@ -62,4 +61,4 @@ def database_refactor(collection: (Investor, Startup)):
 
 
 
-# database_refactor(Startup)
+database_refactor(Startup)

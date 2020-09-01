@@ -27,7 +27,7 @@ class StartupDashboardSchema(ma.Schema):
     id = fd.fields.String()
 
     class Meta:
-        fields = ("bio", "raised", "sectors", "location", "id", "progress", "round_size",
+        fields = ("startup_pitch", "raised", "sectors", "location", "id", "progress", "round_size",
                   "slide_deck", "co_founders", "company_link", "profile_pic_link", "company_name")
 
 

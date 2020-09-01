@@ -811,13 +811,14 @@ def investors_dashboard():
         user_obj = jwt_decode["user_obj"]
 
         matching_obj = get_inv_matching_data(user_obj.email)
+        print(matching_obj)
 
         if matching_obj == {}:
             return {"result": False, "error": "no match found"}
 
         _id = matching_obj.get("_id")
 
-        if not _id:
+        if _id == None:
             return {"result": False, "error": "no id found"}
 
         discover = get_discover(_id)
