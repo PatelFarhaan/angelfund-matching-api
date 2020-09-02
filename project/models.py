@@ -298,12 +298,3 @@ class StartupUserAnalytics(db.Document):
     email = db.EmailField(required=True, unique=True)
 
     meta = dict(indexes=['email'])
-
-
-#<==================================================================================================>
-#                                     ANGEL GROUP
-#<==================================================================================================>
-class AngelGroup(db.Document):
-    name = db.StringField()
-
-    meta = dict(indexes=['name'])

@@ -11,10 +11,10 @@ import threading
 from project import serial
 from common_utilities import CONSTANT
 from flask_login import login_required, login_user
+from project.models import Investor, Startup, Referrals
 from common_utilities.jwt_decoder import investor_jwt_decoder
 from common_utilities.company_images import company_images_api
 from common_utilities.emails.referral_email import email_referral
-from project.models import Investor, Startup, Referrals, AngelGroup
 from common_utilities.emails.connected_emails import email_connected
 from project.investor.marshmallow_serialize import InvestorUserSchema
 from common_utilities.emails.password_reset import password_reset_email
@@ -23,7 +23,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.emails.email_confirmation import email_confirmation
 from common_utilities.emails.google_email import google_email_confirmation
 from common_utilities.emails.wait_list_email_inv import wait_list_user_inv
-from common_utilities.data_processing.startup_dp import get_all_startup_data
 from common_utilities.common_mappings import sector_data, accreditation_data
 from common_utilities.emails.account_delete_email import delete_user_account
 from common_utilities.analytics.user_signin_analytics import login_analytics
@@ -31,12 +30,13 @@ from common_utilities.analytics.user_signup_analytics import signup_analytics
 from flask import url_for, request, Blueprint, jsonify, redirect, session, render_template
 from common_utilities.reverse_common_mapping import rev_accreditation_data, rev_sector_data
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.data_processing.startup_dp import get_all_startup_data, remove_data_from_discover
 from project.startup.marshmallow_serialize import StartupConnectedSchema, StartupPassedSchema, StartupDashboardSchema
 from common_utilities.json_schema_investor_validation import (validate_inv_first_page_schema, validate_email_schema, validate_dashboard_schema,
                                                               validate_referrer_schema, validate_company_schema, validate_inv_passed_recvisit_schema,
                                                               validate_google_schema, validate_inv_login_schema, validate_delete_acc_schema,
                                                               validate_inv_monday_notification_schema, validate_profile_vis_schema,
-                                                              validate_inv_angel_group_name_schema, validate_delete_acc_conf_schema)
+                                                              validate_delete_acc_conf_schema)
 
 
 #<==================================================================================================>
@@ -746,8 +746,15 @@ def investors_dashboard():
             return jsonify(jwt_decode)
 
         user_obj = jwt_decode["user_obj"]
+
         cards = user_obj.discover_cards
-        str_data = get_all_startup_data(cards)
+        if not cards:
+            return jsonify({"result": False, "data": "no deals for this user"})
+
+        if user_obj.total_transaction_this_week >= user_obj.show_limit:
+            return jsonify({"result": False, "data": "all data shown for this user for this week"})
+
+        str_data = get_all_startup_data(cards, user_obj)
         return jsonify({"result": True, "data": str_data})
 
     elif request.method == "POST":
@@ -756,7 +763,6 @@ def investors_dashboard():
             return jsonify(jwt_decode)
 
         inv_obj = jwt_decode["user_obj"]
-
         inv_email = inv_obj.email
 
         response = validate_dashboard_schema(request.get_json())
@@ -776,7 +782,6 @@ def investors_dashboard():
             return jsonify({"result": False, "error": "already connected"})
 
         if not str_invite:
-
             if not response["data"].get("feedback"):
                 logger.debug(f"investor: dashboard: feedback is mandatory: {inv_obj.email}")
                 return jsonify({"result": False, "error": "feedback is mandatory"})
@@ -800,6 +805,11 @@ def investors_dashboard():
             if inv_connected_requests.get(str_email):
                 inv_connected_requests.pop(str_email)
             inv_obj.connected = inv_connected_requests
+
+            all_transactional_data = dict(inv_obj.all_transaction_fields)
+            all_transactional_data[str_email] = True
+            inv_obj.all_transaction_fields = all_transactional_data
+            remove_data_from_discover(inv_obj, str_email)
 
             inv_obj.save()
             str_obj.save()
@@ -839,6 +849,10 @@ def investors_dashboard():
                 str_connected_requests[inv_email] = True
                 str_obj.connected = str_connected_requests
 
+                all_transactional_data = dict(inv_obj.all_transaction_fields)
+                all_transactional_data[str_email] = True
+                inv_obj.all_transaction_fields = all_transactional_data
+                remove_data_from_discover(inv_obj, str_email)
                 inv_obj.save()
                 str_obj.save()
 
@@ -865,6 +879,10 @@ def investors_dashboard():
                 inv_pending_req[str_email] = True
                 inv_obj.pending = inv_pending_req
 
+                all_transactional_data = dict(inv_obj.all_transaction_fields)
+                all_transactional_data[str_email] = True
+                inv_obj.all_transaction_fields = all_transactional_data
+                remove_data_from_discover(inv_obj, str_email)
                 inv_obj.save()
                 return jsonify({"result": True, "message": "invitation"})
 
@@ -1139,96 +1157,3 @@ def jwt_for_confirmation_page():
         return jsonify(ret_obj)
     else:
         return jsonify(response)
-
-
-#<==================================================================================================>
-#                                       DELETE EMAIL ADDRESSES
-#<==================================================================================================>
-@investor_blueprint.route('/delete-email-address', methods=['POST'])
-def delete_email_address():
-    def db_details(database, collection):
-        from pymongo import MongoClient
-        remote_mongo_uri = CONSTANT.CURRENT_DATABASE.value
-        mongo_client = MongoClient(remote_mongo_uri)
-        db = mongo_client[database]
-        collection = db[collection]
-        return collection
-
-    if request.method == "POST":
-        input_request = request.get_json()
-        emails_list = input_request.get("emails_list")
-        api_key = input_request.get("api_key")
-
-        if api_key != "***REMOVED***`NqU":
-            logger.debug(f"investor: delete-email-address: invalid api key: angelfund-team")
-            return jsonify({"result": False, "error": "Invalid API key"})
-
-        if not emails_list:
-            logger.debug(f"investor: delete-email-address: email address not present in input body: angelfund-team")
-            return jsonify({"result": False, "error": "emails list not present in the input body"})
-
-        ml_collection = db_details("matching", "users")
-        inv_collection = db_details("admin", "investor")
-        str_collection = db_details("admin", "startup")
-
-        for email in emails_list:
-            my_query = {"email": email}
-
-            ml_query = ml_collection.find_one(my_query)
-            inv_query = inv_collection.find_one(my_query)
-            str_query = str_collection.find_one(my_query)
-
-            if ml_query:
-                ml_collection.delete_many(my_query)
-                logger.debug(f"investor: delete-email-address: email address deleted from ML model: {email}: angelfund-team")
-                print("User Deleted from Machine Learning")
-
-            if str_query:
-                str_collection.delete_one(my_query)
-                logger.debug(f"investor: delete-email-address: email address deleted from startup model: {email}: angelfund-team")
-
-            if inv_query:
-                inv_collection.delete_one(my_query)
-                logger.debug(f"investor: delete-email-address: email address deleted from investor model: {email}: angelfund-team")
-
-        return jsonify({"result": True, "message": "All emails deleted if existed"})
-
-
-#<==================================================================================================>
-#                                    STRING TO EMAIL MAPPING
-#<==================================================================================================>
-@investor_blueprint.route('/ste-mapping', methods=['POST'])
-def string_to_email_mapping():
-    input_req = request.get_json()
-    response = validate_inv_passed_recvisit_schema(input_req)
-
-    if response["result"]:
-        user_id = response["data"]["user_id"]
-        str_obj = Startup.objects.filter(id=user_id).first()
-        if not str_obj:
-            return jsonify({"result": False, "error": "user does not exist"})
-        else:
-            email = str_obj.email
-            return jsonify({"result": True, "email": email})
-    return response
-
-
-#<==================================================================================================>
-#                                    ANGEL GROUP NAME SEARCH
-#<==================================================================================================>
-@investor_blueprint.route('/angelgroup-name-search', methods=['POST'])
-def angel_group_name_search():
-    input_req = request.get_json()
-    response = validate_inv_angel_group_name_schema(input_req)
-    if response["result"]:
-        import re
-        regex_obj = re.compile(f".*{response['data']['angel_group_name']}.*")
-        matching_objs = AngelGroup.objects(name=regex_obj)
-        if matching_objs:
-            final_resp = {
-                "result": True,
-                "data": [i.name for i in matching_objs]
-            }
-            return jsonify(final_resp)
-        return jsonify({"result": False, "data": None})
-    return response

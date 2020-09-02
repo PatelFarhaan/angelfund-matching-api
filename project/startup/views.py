@@ -24,13 +24,13 @@ from common_utilities.emails.google_email import google_email_confirmation
 from common_utilities.analytics.user_signin_analytics import login_analytics
 from common_utilities.emails.account_delete_email import delete_user_account
 from common_utilities.analytics.user_signup_analytics import signup_analytics
-from common_utilities.data_processing.investor_dp import get_all_investor_data
-from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
+from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
+from common_utilities.data_processing.investor_dp import get_all_investor_data, remove_data_from_discover
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema,
@@ -855,7 +855,13 @@ def startup_dashboard():
         user_obj = jwt_decode["user_obj"]
 
         cards = user_obj.discover_cards
-        inv_data = get_all_investor_data(cards)
+        if not cards:
+            return jsonify({"result": False, "data": "no data for this user"})
+
+        if user_obj.total_transaction_this_week >= user_obj.show_limit:
+            return jsonify({"result": False, "data": "all data shown for this user for this week"})
+
+        inv_data = get_all_investor_data(cards, user_obj)
         return jsonify({"result": True, "data": inv_data})
 
     elif request.method == "POST":
@@ -864,7 +870,6 @@ def startup_dashboard():
             return jsonify(jwt_decode)
 
         str_obj = jwt_decode["user_obj"]
-
         str_email = str_obj.email
 
         response = validate_dashboard_schema(request.get_json())
@@ -897,6 +902,10 @@ def startup_dashboard():
             str_passed_requests[inv_email] = True
             str_obj.passed = str_passed_requests
 
+            all_transactional_fields = str_obj.all_transaction_fields
+            all_transactional_fields[inv_email] = True
+            inv_obj.all_transaction_fields = all_transactional_fields
+            remove_data_from_discover(str_obj, inv_email)
             str_obj.save()
             return jsonify({"result": True, "message": "passed"})
 
@@ -945,6 +954,10 @@ def startup_dashboard():
                 str_connected_requests[inv_email] = True
                 str_obj.connected = str_connected_requests
 
+                all_transactional_fields = str_obj.all_transaction_fields
+                all_transactional_fields[inv_email] = True
+                inv_obj.all_transaction_fields = all_transactional_fields
+                remove_data_from_discover(str_obj, inv_email)
                 inv_obj.save()
                 str_obj.save()
 
@@ -966,6 +979,10 @@ def startup_dashboard():
                 str_connected_requests[inv_email] = True
                 str_obj.connected = str_connected_requests
 
+                all_transactional_fields = str_obj.all_transaction_fields
+                all_transactional_fields[inv_email] = True
+                inv_obj.all_transaction_fields = all_transactional_fields
+                remove_data_from_discover(str_obj, inv_email)
                 inv_obj.save()
                 str_obj.save()
 
@@ -986,6 +1003,10 @@ def startup_dashboard():
                 str_pending_req[inv_email] = True
                 str_obj.pending = str_pending_req
 
+                all_transactional_fields = str_obj.all_transaction_fields
+                all_transactional_fields[inv_email] = True
+                inv_obj.all_transaction_fields = all_transactional_fields
+                remove_data_from_discover(str_obj, inv_email)
                 str_obj.save()
                 return jsonify({"result": True, "message": "invitation"})
 
