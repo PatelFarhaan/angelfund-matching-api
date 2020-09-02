@@ -7,6 +7,6 @@ sudo chmod +x start.sh
 
 cd /home/ubuntu/flask/common_utilities/shell_scripts
 sudo chmod +x secondary_upgrade.sh
-sudo chmod +x clear_discover_and_reset_matched_week.sh
+sudo chmod +x monday_notifications_script.sh
 
 sudo systemctl restart supervisor.service

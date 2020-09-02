@@ -14,33 +14,29 @@ from flask_login import login_user, login_required
 from project.models import Startup, Investor, Referrals
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.emails.referral_email import email_referral
-from common_utilities.technical_error_mail import technical_errors
+from project.startup.marshmallow_serialize import StartupUserSchema
 from common_utilities.emails.connected_emails import email_connected
 from common_utilities.emails.password_reset import password_reset_email
 from werkzeug.security import generate_password_hash, check_password_hash
 from common_utilities.emails.email_confirmation import email_confirmation
 from common_utilities.emails.wait_list_email_str import wait_list_user_str
 from common_utilities.emails.google_email import google_email_confirmation
-from common_utilities.emails.account_delete_email import delete_user_account
 from common_utilities.analytics.user_signin_analytics import login_analytics
+from common_utilities.emails.account_delete_email import delete_user_account
 from common_utilities.analytics.user_signup_analytics import signup_analytics
-from project.startup.marshmallow_serialize import StartupUserSchema, StartupMLSchema
+from common_utilities.data_processing.investor_dp import get_all_investor_data
 from common_utilities.common_mappings import sector_data, progress_mapping, round_def
 from common_utilities.json_schema_investor_validation import validate_referrer_schema
-from common_utilities.machine_learning.hide_user_profile import hide_user, unhide_user
 from common_utilities.mime_files_upload import profile_pic_upload_to_s3, pdf_upload_to_s3
 from common_utilities.reverse_common_mapping import rev_sector_data, rev_progress_mapping
 from flask import url_for, request, session, Blueprint, jsonify, redirect, render_template
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
-from common_utilities.machine_learning.investor_matching_db import inv_mutual_updates, get_inv_matching_data
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
 from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
-from common_utilities.machine_learning.ml_apis import get_discover, set_response, delete_user_ml, reset_settings, hide_profile_from_discover
-from common_utilities.machine_learning.startup_matching_db import insert_into_matching, update_into_matching, get_str_matching_data, process_all_str_data, \
-    str_mutual_updates
-from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema, validate_str_monday_notification_schema,
-                                                             validate_referrer_schema, validate_delete_acc_schema, validate_google_schema, validate_str_login_schema,
-                                                             validate_email_schema, validate_profile_vis_schema, validate_remove_slide_deck_schema)
+from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema,
+                                                             validate_str_monday_notification_schema, validate_remove_slide_deck_schema,
+                                                             validate_referrer_schema, validate_delete_acc_schema, validate_google_schema,
+                                                             validate_str_login_schema, validate_email_schema, validate_profile_vis_schema)
 
 
 #<==================================================================================================>
@@ -115,12 +111,7 @@ def google_token():
                         new_user = Startup(**user_dict)
                         new_user.save()
 
-                        ml_schema = StartupMLSchema()
                         user = Startup.objects.filter(email=email).first()
-                        ml_schema_resp = ml_schema.dump(user)
-                        if not insert_into_matching(email, ml_schema_resp):
-                            technical_errors("STARTUP: SIGNUP FLOW UPDATE UNSUCCESSFUL", email)
-
                         logger.debug(f"startup: google-token: created via Google OAuth: {email}")
 
                         thread = threading.Thread(target=google_email_confirmation, args=(user,))
@@ -312,13 +303,7 @@ def register():
         new_user = Startup(**input_request)
         new_user.save()
 
-        ml_schema = StartupMLSchema()
         user = Startup.objects.filter(email=email).first()
-        ml_schema_resp = ml_schema.dump(user)
-
-        if not insert_into_matching(email, ml_schema_resp):
-            technical_errors("STARTUP: REGISTER FLOW UPDATE UNSUCCESSFUL", email)
-
         logger.debug(f"startup: register: created {email}")
 
         token = serial.dumps(email, salt='email_confirm')
@@ -360,9 +345,6 @@ def email_confirmed(token):
             user.email_confirmed = True
             user.save()
             logger.debug(f"startup: email-confirmed: email confirmed: {email}")
-
-        if not update_into_matching(email, {"email_confirmed": True}):
-            technical_errors("STARTUP: EMAIL CONFIRMED UPDATE UNSUCCESSFUL", email)
 
         login_user(user)
         user.is_logged_in = True
@@ -553,17 +535,11 @@ def update_info():
                     setattr(user_obj, field, res)
                     logger.info(f"startup: update-info: {field } updated to {res}: {user_obj.email}")
 
-                    if not update_into_matching(user_obj.email, {field: res}):
-                        technical_errors("STARTUP: SECTORS DATA UPDATE UNSUCCESSFUL", user_obj.email)
-
                 elif field == "progress":
                     progress_map = progress_mapping()
                     res = [ progress_map.get(i) for i in input_data[field] if progress_map.get(i) != None ]
                     setattr(user_obj, field, res)
                     logger.info(f"startup: update-info: {field} updated to {res}: {user_obj.email}")
-
-                    if not update_into_matching(user_obj.email, {field: res}):
-                        technical_errors("STARTUP: PROGRESS DATA UPDATE UNSUCCESSFUL", user_obj.email)
 
                 elif field == "bio":
                     setattr(user_obj, field, input_data[field])
@@ -572,8 +548,6 @@ def update_info():
                         if str_co_founders[0].get("bio"):
                             str_co_founders[0]["bio"] = input_data[field]
                     logger.info(f"startup: update-info: {field} updated to {input_data[field]}: {user_obj.email}")
-                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
-                        technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
 
                 elif field == "round_size":
                     setattr(user_obj, field, input_data[field])
@@ -581,27 +555,11 @@ def update_info():
                     setattr(user_obj, "deals", [round_def(input_data[field])])
                     logger.info(f"startup: update-info: deals updated to {input_data[field]}: {user_obj.email}")
 
-                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
-                        technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
-                    if not update_into_matching(user_obj.email, {"deals": [round_def(input_data[field])]}):
-                        technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
-
                 else:
                     setattr(user_obj, field, input_data[field])
                     logger.info(f"startup: update-info: {field} updated to {input_data[field]}: {user_obj.email}")
-                    if not update_into_matching(user_obj.email, {field: input_data[field]}):
-                        technical_errors("STARTUP: UPDATE-INFO API DATA UPDATE UNSUCCESSFUL", user_obj.email)
 
                 user_obj.save()
-                matching_obj = get_str_matching_data(user_obj.email)
-
-                if matching_obj == {}:
-                    technical_errors("STARTUP: NO DATA FOUND FOR USER IN MACHINE LEARNING COLLECTION", user_obj.email)
-
-                _id = matching_obj.get("_id")
-
-                if not reset_settings(_id):
-                    technical_errors("STARTUP: WEIGHT ADJUSTMENT UPDATE UNSUCCESSFUL", user_obj.email)
 
             else:
                 jsonify({"result": False, "error": "invalid user field"})
@@ -644,9 +602,6 @@ def monday_notifications():
             str_obj.save()
             logger.debug(f"startup: monday-notifications: monday notification set to {inp_data}: {str_obj.email}")
 
-            if not update_into_matching(str_obj.email, {"monday_notification": response["data"]["monday_notification"]}):
-                technical_errors("STARTUP: MONDAY NOTIFICATIONS UPDATE UNSUCCESSFUL", str_obj.email)
-
             return jsonify({"result": True, "message": "value updated"})
         else:
             return jsonify(response)
@@ -687,7 +642,6 @@ def profile_complete_check():
             break
 
     if not co_founders_check:
-        # str_obj.company_logo_check = profile_pic_check
         str_obj.co_founders_check = False
         str_obj.save()
 
@@ -723,26 +677,6 @@ def profile_visibility():
         str_obj.save()
         logger.debug(f"startup: profile-visibility: profile visibility set to {visible}: {str_obj.email}")
 
-        matching_obj = get_str_matching_data(str_obj.email)
-
-        if matching_obj == {}:
-            return {"result": False, "message": "no match found"}
-
-        _id = matching_obj.get("_id")
-
-        if visible:
-            if not unhide_user(email=str_obj.email, id=_id):
-                technical_errors("STARTUP: UNHIDE PROFILE UPDATE UNSUCCESSFUL INTO HIDE PROFILE COLLECTION", str_obj.email)
-        elif not visible:
-            if not hide_user(email=str_obj.email, id=_id):
-                technical_errors("STARTUP: HIDE PROFILE UPDATE UNSUCCESSFUL INTO HIDE PROFILE COLLECTION", str_obj.email)
-
-            if not hide_profile_from_discover(_id):
-                technical_errors("STARTUP: HIDE PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING CODE", str_obj.email)
-
-        if not update_into_matching(str_obj.email, {"show_profile": visible}):
-            technical_errors("STARTUP: SHOW PROFILE UPDATE UNSUCCESSFUL INTO MACHINE LEARNING COLLECTION", str_obj.email)
-
         return jsonify({"result": True, "message": "value updated"})
     else:
         return jsonify(response)
@@ -767,9 +701,6 @@ def remove_slide_deck():
             setattr(str_obj, "slide_deck", None)
             str_obj.save()
             logger.debug(f"startup: remove-slide-deck: slide removed for user: {str_obj.email}")
-
-        if not update_into_matching(str_obj.email, {"slide_deck": None}):
-            technical_errors("STARTUP: SLIDE DECK UPDATE UNSUCCESSFUL", str_obj.email)
 
         return jsonify({"result": True, "message": "value updated"})
     else:
@@ -922,29 +853,10 @@ def startup_dashboard():
             return jsonify(jwt_decode)
 
         user_obj = jwt_decode["user_obj"]
-        matching_obj = get_str_matching_data(user_obj.email)
 
-        if matching_obj == {}:
-            return {"result": False, "message": "no match found"}
-
-        _id = matching_obj.get("_id")
-        if not _id:
-            return {"result": False, "message": "no id found"}
-
-        discover = get_discover(_id)
-
-        if not discover["result"]:
-            logger.debug(f"startup: dashboard: no match found: {user_obj.email}")
-            return {"result": False, "message": "no match found"}
-
-        elif discover["result"] and discover["data"] == []:
-            logger.debug(f"startup: dashboard: no match found: {user_obj.email}")
-            return {"result": False, "message": "no match found"}
-
-        else:
-            logger.debug(f"startup: dashboard: data found: {user_obj.email}")
-            str_data = process_all_str_data(discover["data"], user_obj)
-            return jsonify({"result": True, "data": str_data})
+        cards = user_obj.discover_cards
+        inv_data = get_all_investor_data(cards)
+        return jsonify({"result": True, "data": inv_data})
 
     elif request.method == "POST":
         jwt_decode = startup_jwt_decoder(get_jwt_identity())
@@ -978,31 +890,6 @@ def startup_dashboard():
                 pending_obj.pop(inv_email)
                 str_obj.pending = pending_obj
                 str_obj.save()
-
-                inv_transactional_replicas = inv_mutual_updates(inv_obj)
-                str_transactional_replicas = str_mutual_updates(str_obj)
-
-                if not inv_transactional_replicas:
-                    logger.debug(f"startup: dashboard: dashboard update unsuccessful: {inv_obj.email}")
-                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
-
-                if not str_transactional_replicas:
-                    logger.debug(f"startup: dashboard: dashboard update unsuccessful: {str_obj.email}")
-                    technical_errors("STARTUP: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
-
-                str_matching_obj = get_str_matching_data(str_email)
-                str_id = str_matching_obj.get("_id")
-
-                inv_matching_obj = get_inv_matching_data(inv_email)
-                inv_id = inv_matching_obj.get("_id")
-
-                resp = set_response(str_id, inv_id, True)
-                if not resp.get("result"):
-                    logger.debug(f"startup: dashboard: set response unsuccessful from: {str_id} to {inv_id}: True: {str_obj.email}")
-                    technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
-                else:
-                    logger.debug(f"startup: dashboard: set response successful from: {str_id} to {inv_id}: True: {str_obj.email}")
-
             return jsonify({"result": False, "message": "already passed"})
 
         if not inv_invite:
@@ -1011,31 +898,6 @@ def startup_dashboard():
             str_obj.passed = str_passed_requests
 
             str_obj.save()
-
-            inv_transactional_replicas = inv_mutual_updates(inv_obj)
-            str_transactional_replicas = str_mutual_updates(str_obj)
-
-            if not inv_transactional_replicas:
-                logger.debug(f"startup: dashboard: dashboard update unsuccessful: {inv_obj.email}")
-                technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
-
-            if not str_transactional_replicas:
-                logger.debug(f"startup: dashboard: dashboard update unsuccessful: {str_obj.email}")
-                technical_errors("STARTUP: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
-
-            str_matching_obj = get_str_matching_data(str_email)
-            str_id = str_matching_obj.get("_id")
-
-            inv_matching_obj = get_inv_matching_data(inv_email)
-            inv_id = inv_matching_obj.get("_id")
-
-            resp = set_response(str_id, inv_id, False)
-            if not resp.get("result"):
-                logger.debug(f"startup: dashboard: set response unsuccessful from: {str_id} to {inv_id}: False: {str_obj.email}")
-                technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
-            else:
-                logger.debug(f"startup: dashboard: set response successful from: {str_id} to {inv_id}: False: {inv_obj.email}")
-
             return jsonify({"result": True, "message": "passed"})
 
         if inv_invite:
@@ -1086,30 +948,7 @@ def startup_dashboard():
                 inv_obj.save()
                 str_obj.save()
 
-                inv_transactional_replicas = inv_mutual_updates(inv_obj)
-                str_transactional_replicas = str_mutual_updates(str_obj)
-
-                if not inv_transactional_replicas:
-                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
-
-                if not str_transactional_replicas:
-                    technical_errors("STARTUP: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
-
                 email_connected(inv_email, str_email, all_info())
-
-                str_matching_obj = get_str_matching_data(str_email)
-                str_id = str_matching_obj.get("_id")
-
-                inv_matching_obj = get_inv_matching_data(inv_email)
-                inv_id = inv_matching_obj.get("_id")
-
-                resp = set_response(str_id, inv_id, True)
-                if not resp.get("result"):
-                    logger.debug(f"startup: dashboard: set response unsuccessful from: {str_id} to {inv_id}: True: {str_obj.email}")
-                    technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
-                else:
-                    logger.debug(f"startup: dashboard: set response successful from: {str_id} to {inv_id}: True: {str_obj.email}")
-
                 return jsonify({"result": True, "message": "connected"})
 
             elif inv_connected_requests.get(inv_email):
@@ -1130,32 +969,7 @@ def startup_dashboard():
                 inv_obj.save()
                 str_obj.save()
 
-                inv_transactional_replicas = inv_mutual_updates(inv_obj)
-                str_transactional_replicas = str_mutual_updates(str_obj)
-
-                if not inv_transactional_replicas:
-                    logger.debug(f"startup: dashboard: dashboard update unsuccessful: {inv_obj.email}")
-                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
-
-                if not str_transactional_replicas:
-                    logger.debug(f"startup: dashboard: dashboard update unsuccessful: {str_obj.email}")
-                    technical_errors("STARTUP: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
-
-                str_matching_obj = get_str_matching_data(str_email)
-                str_id = str_matching_obj.get("_id")
-
-                inv_matching_obj = get_inv_matching_data(inv_email)
-                inv_id = inv_matching_obj.get("_id")
-
-                resp = set_response(str_id, inv_id, True)
-                if not resp.get("result"):
-                    logger.debug(f"startup: dashboard: set response unsuccessful from: {str_id} to {inv_id}: True: {str_obj.email}")
-                    technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
-                else:
-                    logger.debug(f"startup: dashboard: set response successful from: {str_id} to {inv_id}: True: {str_obj.email}")
-
                 email_connected(inv_email, str_email, all_info())
-
                 return jsonify({"result": True, "message": "connected"})
             else:
                 str_passed_requests = dict(str_obj.passed)
@@ -1173,31 +987,6 @@ def startup_dashboard():
                 str_obj.pending = str_pending_req
 
                 str_obj.save()
-
-                inv_transactional_replicas = inv_mutual_updates(inv_obj)
-                str_transactional_replicas = str_mutual_updates(str_obj)
-
-                if not inv_transactional_replicas:
-                    logger.debug(f"startup: dashboard: dashboard update unsuccessful: {inv_obj.email}")
-                    technical_errors("INVESTOR: DASHBOARD UPDATE UNSUCCESSFUL", inv_obj.email)
-
-                if not str_transactional_replicas:
-                    logger.debug(f"startup: dashboard: dashboard update unsuccessful: {str_obj.email}")
-                    technical_errors("STARTUP: DASHBOARD UPDATE UNSUCCESSFUL", str_obj.email)
-
-                str_matching_obj = get_str_matching_data(str_email)
-                str_id = str_matching_obj.get("_id")
-
-                inv_matching_obj = get_inv_matching_data(inv_email)
-                inv_id = inv_matching_obj.get("_id")
-
-                resp = set_response(str_id, inv_id, True)
-                if not resp.get("result"):
-                    logger.debug(f"startup: dashboard: set response unsuccessful from: {str_id} to {inv_id}: True: {str_obj.email}")
-                    technical_errors("STARTUP: SET RESPONSE UNSUCCESSFUL", str_obj.email)
-                else:
-                    logger.debug(f"startup: dashboard: set response successful from: {str_id} to {inv_id}: True: {str_obj.email}")
-
                 return jsonify({"result": True, "message": "invitation"})
 
 
@@ -1385,12 +1174,6 @@ def delete_account():
                 setattr(str_obj, "delete_account", delete)
                 str_obj.save()
                 logger.debug(f"startup: delete-account: account deleted: {str_obj.email}")
-
-                matching_obj = get_str_matching_data(str_obj.email)
-                str_id = matching_obj.get("_id")
-                if not delete_user_ml(str_id):
-                    technical_errors("STARTUP: DELETE ACCOUNT UPDATE UNSUCCESSFUL", str_obj.email)
-
                 thread = threading.Thread(target=delete_user_account, args=(str_obj.email, ))
                 thread.start()
 
