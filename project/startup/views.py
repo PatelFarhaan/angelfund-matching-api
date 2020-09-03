@@ -904,7 +904,7 @@ def startup_dashboard():
 
             all_transactional_fields = str_obj.all_transaction_fields
             all_transactional_fields[inv_email] = True
-            inv_obj.all_transaction_fields = all_transactional_fields
+            str_obj.all_transaction_fields = all_transactional_fields
             remove_data_from_discover(str_obj, inv_email)
             str_obj.save()
             return jsonify({"result": True, "message": "passed"})
@@ -956,7 +956,7 @@ def startup_dashboard():
 
                 all_transactional_fields = str_obj.all_transaction_fields
                 all_transactional_fields[inv_email] = True
-                inv_obj.all_transaction_fields = all_transactional_fields
+                str_obj.all_transaction_fields = all_transactional_fields
                 remove_data_from_discover(str_obj, inv_email)
                 inv_obj.save()
                 str_obj.save()
@@ -981,7 +981,7 @@ def startup_dashboard():
 
                 all_transactional_fields = str_obj.all_transaction_fields
                 all_transactional_fields[inv_email] = True
-                inv_obj.all_transaction_fields = all_transactional_fields
+                str_obj.all_transaction_fields = all_transactional_fields
                 remove_data_from_discover(str_obj, inv_email)
                 inv_obj.save()
                 str_obj.save()
@@ -1005,7 +1005,7 @@ def startup_dashboard():
 
                 all_transactional_fields = str_obj.all_transaction_fields
                 all_transactional_fields[inv_email] = True
-                inv_obj.all_transaction_fields = all_transactional_fields
+                str_obj.all_transaction_fields = all_transactional_fields
                 remove_data_from_discover(str_obj, inv_email)
                 str_obj.save()
                 return jsonify({"result": True, "message": "invitation"})
