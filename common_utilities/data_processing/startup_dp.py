@@ -28,8 +28,8 @@ def get_all_startup_data(data: list, inv_obj: Investor) -> list:
     res = []
     current_count = 0
     data = list(set(data))
-    total_count = inv_obj.show_limit
     all_transactional_data = inv_obj.all_transaction_fields
+    total_count = inv_obj.show_limit - inv_obj.total_transaction_this_week
 
     for str_email in data:
         if not str_email in all_transactional_data:
