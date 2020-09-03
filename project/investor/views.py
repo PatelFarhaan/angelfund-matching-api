@@ -748,11 +748,11 @@ def investors_dashboard():
         user_obj = jwt_decode["user_obj"]
 
         cards = user_obj.discover_cards
-        if not cards:
-            return jsonify({"result": False, "data": "no deals for this user"})
-
         if user_obj.total_transaction_this_week >= user_obj.show_limit:
             return jsonify({"result": False, "data": "all data shown for this user for this week"})
+
+        if not cards:
+            return jsonify({"result": False, "data": "no deals for this user"})
 
         str_data = get_all_startup_data(cards, user_obj)
         return jsonify({"result": True, "data": str_data})

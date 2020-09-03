@@ -855,11 +855,13 @@ def startup_dashboard():
         user_obj = jwt_decode["user_obj"]
 
         cards = user_obj.discover_cards
+        if user_obj.total_transaction_this_week >= user_obj.show_limit:
+            return jsonify({"result": False, "data": "all data shown for this user for this week"})
+
         if not cards:
             return jsonify({"result": False, "data": "no data for this user"})
 
-        if user_obj.total_transaction_this_week >= user_obj.show_limit:
-            return jsonify({"result": False, "data": "all data shown for this user for this week"})
+
 
         inv_data = get_all_investor_data(cards, user_obj)
         return jsonify({"result": True, "data": inv_data})
@@ -902,9 +904,9 @@ def startup_dashboard():
             str_passed_requests[inv_email] = True
             str_obj.passed = str_passed_requests
 
-            all_transactional_fields = str_obj.all_transaction_fields
-            all_transactional_fields[inv_email] = True
-            str_obj.all_transaction_fields = all_transactional_fields
+            all_transactional_data = dict(str_obj.all_transaction_fields)
+            all_transactional_data[inv_email] = True
+            str_obj.all_transaction_fields = all_transactional_data
             remove_data_from_discover(str_obj, inv_email)
             str_obj.save()
             return jsonify({"result": True, "message": "passed"})
@@ -954,9 +956,9 @@ def startup_dashboard():
                 str_connected_requests[inv_email] = True
                 str_obj.connected = str_connected_requests
 
-                all_transactional_fields = str_obj.all_transaction_fields
-                all_transactional_fields[inv_email] = True
-                str_obj.all_transaction_fields = all_transactional_fields
+                all_transactional_data = dict(str_obj.all_transaction_fields)
+                all_transactional_data[inv_email] = True
+                str_obj.all_transaction_fields = all_transactional_data
                 remove_data_from_discover(str_obj, inv_email)
                 inv_obj.save()
                 str_obj.save()
@@ -979,9 +981,9 @@ def startup_dashboard():
                 str_connected_requests[inv_email] = True
                 str_obj.connected = str_connected_requests
 
-                all_transactional_fields = str_obj.all_transaction_fields
-                all_transactional_fields[inv_email] = True
-                str_obj.all_transaction_fields = all_transactional_fields
+                all_transactional_data = dict(str_obj.all_transaction_fields)
+                all_transactional_data[inv_email] = True
+                str_obj.all_transaction_fields = all_transactional_data
                 remove_data_from_discover(str_obj, inv_email)
                 inv_obj.save()
                 str_obj.save()
@@ -1003,9 +1005,9 @@ def startup_dashboard():
                 str_pending_req[inv_email] = True
                 str_obj.pending = str_pending_req
 
-                all_transactional_fields = str_obj.all_transaction_fields
-                all_transactional_fields[inv_email] = True
-                str_obj.all_transaction_fields = all_transactional_fields
+                all_transactional_data = dict(str_obj.all_transaction_fields)
+                all_transactional_data[inv_email] = True
+                str_obj.all_transaction_fields = all_transactional_data
                 remove_data_from_discover(str_obj, inv_email)
                 str_obj.save()
                 return jsonify({"result": True, "message": "invitation"})
