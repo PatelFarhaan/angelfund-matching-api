@@ -121,6 +121,30 @@ def validate_email_schema(data):
 
 
 #<==================================================================================================>
+#                                 INVESTOR EMAIL SCHEMA
+#<==================================================================================================>
+invite_code_schema = {
+    "type": "object",
+    "properties": {
+        "invite_code": {
+            "type": "string",
+        }
+    },
+    "required": ["invite_code"],
+    "additionalProperties": False
+}
+
+def validate_invite_code_schema(data):
+    try:
+        validate(instance=data, schema= invite_code_schema)
+    except ValidationError as e:
+        return {'result': False, 'error': e.message}
+    except SchemaError as e:
+        return {'result': False, 'error': e.message}
+    return {'result': True, 'data': data}
+
+
+#<==================================================================================================>
 #                                    INVESTOR GOOGLE SCHEMA
 #<==================================================================================================>
 inv_google_schema = {

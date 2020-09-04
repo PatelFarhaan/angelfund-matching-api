@@ -11,10 +11,10 @@ import threading
 from project import serial
 from common_utilities import CONSTANT
 from flask_login import login_user, login_required
-from project.models import Startup, Investor, Referrals
 from common_utilities.jwt_decoder import startup_jwt_decoder
 from common_utilities.emails.referral_email import email_referral
 from project.startup.marshmallow_serialize import StartupUserSchema
+from project.models import Startup, Investor, Referrals, InviteCodes
 from common_utilities.emails.connected_emails import email_connected
 from common_utilities.emails.password_reset import password_reset_email
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -32,7 +32,8 @@ from flask import url_for, request, session, Blueprint, jsonify, redirect, rende
 from common_utilities.flask_jwt_extended import jwt_required, create_access_token, get_jwt_identity
 from common_utilities.data_processing.investor_dp import get_all_investor_data, remove_data_from_discover
 from project.investor.marshmallow_serialize import InvestorConnectedSchema, InvestorFeedbackSchema, InvestorDashboardSchema
-from common_utilities.json_schema_investor_validation import validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema
+from common_utilities.json_schema_investor_validation import (validate_inv_passed_recvisit_schema, validate_delete_acc_conf_schema,
+                                                              validate_invite_code_schema)
 from common_utilities.json_schema_startup_validation import (validate_str_first_page_schema, validate_dashboard_schema,
                                                              validate_str_monday_notification_schema, validate_remove_slide_deck_schema,
                                                              validate_referrer_schema, validate_delete_acc_schema, validate_google_schema,
@@ -1309,3 +1310,46 @@ def string_to_email_mapping():
             email = str_obj.email
             return jsonify({"result": True, "email": email})
     return response
+
+
+# <==================================================================================================>
+#                                        VERIFY INVITE CODE
+# <==================================================================================================>
+@startup_blueprint.route('/verify-invite-code', methods=['POST'])
+@jwt_required
+def verify_invite_code():
+    jwt_decode = startup_jwt_decoder(get_jwt_identity())
+    if not jwt_decode["result"]:
+        return jsonify(jwt_decode)
+
+    str_obj = jwt_decode["user_obj"]
+
+    input_request = request.get_json()
+    response = validate_invite_code_schema(input_request)
+    if response["result"]:
+        invite_code = response["data"]["invite_code"]
+
+        if not invite_code:
+            return jsonify({"result": False, "error": "wrong invite code"})
+
+        invite_obj = InviteCodes.objects.all()
+        if not invite_code:
+            return jsonify({"result": False, "error": "wrong invite code"})
+
+        invite_obj = invite_obj[0]
+        existing_codes = dict(invite_obj.codes)
+
+        if invite_code in existing_codes:
+            existing_codes.pop(invite_code)
+            invite_obj.codes = existing_codes
+            invite_obj.save()
+
+            str_obj.approved = True
+            str_obj.save()
+
+            return jsonify({"result": True, "message": "correct invite code"})
+        else:
+            return jsonify({"result": False, "error": "wrong invite code"})
+
+    else:
+        return jsonify(response)
